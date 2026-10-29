@@ -173,7 +173,6 @@ let tab = "packages";
 
 const TABS = [
   ["packages", "แพ็กเกจ & ขั้นตอน"],
-  ["samples", "รูปตัวอย่างซิม"],
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
   ["settings", "การตั้งค่า"],
@@ -570,12 +569,8 @@ async function setOrder(id, status) {
 function viewSettings() {
   const ph = settings.photos;
   const slots = [
-    ["orderShot", "📋 รูปคำสั่งซื้อ"],
-    ["simEnvelope", "📦 รูปซองซิม"],
-    ["registerOk", "✅ รูปยืนยันลงทะเบียน"],
-    ["simNumberEx", "🔖 รูปตัวอย่างซิมหมายเลข"],
-    ["trackingEx", "📦 รูปตัวอย่างเลขพัสดุ"],
-    ["receivedPhoneEx", "📱 รูปตัวอย่างเบอร์โทรที่ได้รับ"]
+    ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"],
+    ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม"]
   ];
   return `
     <div class="card">
@@ -613,7 +608,7 @@ function viewSettings() {
 
     <div class="card">
       <h3>📷 รูปตัวอย่างการถ่ายรูป</h3>
-      <p class="hint">รูปที่ลูกค้าเห็นตอนถ่ายส่งข้อมูล</p>
+      <p class="hint">รูปที่ลูกค้าเห็นในฟอร์มลงทะเบียนซิม<br>ขนาดที่แนะนำ: <b>1600 × 1000 px</b> (อัตราส่วน 16:10) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB</p>
       <div class="grid3">
         ${slots.map(([key, label]) => `
           <div class="photo">
