@@ -378,6 +378,67 @@ function updRule(section, i, field, val) {
   markDirty();
 }
 
+// สร้างข้อความวิเคราะห์จากเบอร์ โดยใช้ตารางในหน้า "ตารางวิเคราะห์เบอร์"
+function analysisText(number) {
+  const R = settings.luckyRules || DEFAULT_LUCKY_RULES;
+  const digitMap = {};
+  R.digits.forEach(x => { digitMap[x.d] = x; });
+  const pairMap = {};
+  R.pairs.forEach(x => { if (x.pair) pairMap[x.pair] = x.mean; });
+  const fitMap = {};
+  R.fit.forEach(x => { fitMap[x.n] = x; });
+
+  const digits = String(number || "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  const sum = [...digits].reduce((a, d) => a + Number(d), 0);
+  let root = sum;
+  while (root > 9) root = String(root).split("").reduce((a, d) => a + Number(d), 0);
+  const key = String(root || 9);
+
+  const counts = {};
+  [...digits].forEach(d => { counts[d] = (counts[d] || 0) + 1; });
+  const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
+
+  const pairs = [];
+  for (let i = 0; i < digits.length - 1; i++) {
+    const pr = digits.slice(i, i + 2);
+    if (pairMap[pr] && !pairs.includes(pr)) pairs.push(pr);
+  }
+
+  const fit = fitMap[key] || { who: "-", job: "-", boost: "-" };
+  const topInfo = digitMap[top] || { name: "", mean: "" };
+
+  const lines = [
+    `ผลรวมตัวเลข ${sum} → ${key}`,
+    `เลขเด่นที่สุด: ${top} (${topInfo.name}) ${counts[top]} ตัว — ${topInfo.mean}`,
+    `เหมาะกับ: ${fit.who}`,
+    `อาชีพที่เหมาะ: ${fit.job}`,
+    `ส่งเสริมเรื่อง: ${fit.boost}`,
+    pairs.length
+      ? `เลขคู่มงคลที่พบ: ${pairs.map(p => `${p} (${pairMap[p]})`).join(", ")}`
+      : "เลขคู่มงคลที่พบ: ไม่พบในเบอร์นี้"
+  ];
+  if (digits.includes("4")) lines.push("⚠️ มีเลข 4 ซึ่งบางตำราถือว่าไม่เป็นมงคล");
+  lines.push("หมายเหตุ: เป็นการวิเคราะห์ตามความเชื่อเลขศาสตร์ ไม่ใช่ข้อเท็จจริงทางวิทยาศาสตร์");
+  return lines.join("\n");
+}
+
+function setLuckyNumber(i, val) {
+  const x = settings.luckyNumbers[i];
+  x.number = val.trim();
+  x.analysis = analysisText(x.number);
+  markDirty();
+  render();
+}
+
+function rebuildAnalysis(i) {
+  const x = settings.luckyNumbers[i];
+  x.analysis = analysisText(x.number);
+  markDirty();
+  render();
+}
+
 function addPair() {
   settings.luckyRules.pairs.push({ pair: "", mean: "" });
   markDirty();
@@ -403,7 +464,7 @@ function viewLucky() {
       ${list.length ? list.map((x, i) => `
         <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
           <div class="grid2">
-            <label>เบอร์<input value="${esc(x.number || "")}" placeholder="เช่น 089-999-9999" oninput="upd('luckyNumbers',${i},'number',this.value)"></label>
+            <label>เบอร์ (พิมพ์เสร็จแล้วคลิกที่อื่น ระบบจะวิเคราะห์ให้อัตโนมัติ)<input value="${esc(x.number || "")}" placeholder="เช่น 089-999-9999" onchange="setLuckyNumber(${i}, this.value)"></label>
             <label>ราคา (บาท)<input type="number" min="0" value="${esc(x.price ?? 0)}" oninput="upd('luckyNumbers',${i},'price',Number(this.value)||0)"></label>
           </div>
           <label>หมายเหตุ (ไม่บังคับ)<input value="${esc(x.note || "")}" placeholder="เช่น ผลรวม 9" oninput="upd('luckyNumbers',${i},'note',this.value)"></label>
@@ -412,6 +473,8 @@ function viewLucky() {
             <label>หมวดที่ส่งเสริม (คั่นด้วยเครื่องหมายจุลภาค)<input value="${esc(x.tags || "")}" placeholder="เช่น สุขภาพ, เงิน/งาน, ความรัก, เซ็นส์" oninput="upd('luckyNumbers',${i},'tags',this.value)"></label>
           </div>
           <label><input type="checkbox" style="width:auto" ${x.featured ? "checked" : ""} onchange="upd('luckyNumbers',${i},'featured',this.checked)"> แสดงป้าย "แนะนำ" บนการ์ด</label>
+          <label>ข้อความวิเคราะห์ที่ลูกค้าจะเห็น (สร้างอัตโนมัติ แก้ไขได้)<textarea rows="8" oninput="upd('luckyNumbers',${i},'analysis',this.value)">${esc(x.analysis || "")}</textarea></label>
+          <div style="margin-bottom:8px"><button class="ghost" onclick="rebuildAnalysis(${i})">สร้างวิเคราะห์ใหม่จากเบอร์นี้</button></div>
           <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delLucky(${i})">ลบเบอร์นี้</button></div>
         </div>`).join("") : `<p class="hint">ยังไม่มีเบอร์มงคล</p>`}
     </div>`;
@@ -980,7 +1043,11 @@ async function saveAll() {
     }));
     settings.DISCOUNT_SHOP = Number(settings.DISCOUNT_SHOP) || 0;
     settings.DISCOUNT_SHOP_TYPE = settings.DISCOUNT_SHOP_TYPE === "percent" ? "percent" : "baht";
-    settings.luckyNumbers = (settings.luckyNumbers || []).map(x => ({ ...x, price: Number(x.price) || 0 }));
+    settings.luckyNumbers = (settings.luckyNumbers || []).map(x => ({
+      ...x,
+      price: Number(x.price) || 0,
+      analysis: x.analysis || analysisText(x.number)
+    }));
     await api("/admin/settings", { method: "PUT", json: settings });
     $("dirtyTag").textContent = "";
     toast("บันทึกการตั้งค่าแล้ว");
