@@ -298,11 +298,33 @@ function viewPackages() {
         <button class="ghost" onclick="addPkg()">+ เพิ่มแพ็กเกจ</button></div>
       <p class="hint">ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ)</p>
       ${settings.PACKAGES.length ? settings.PACKAGES.map((p, i) => `
-        <div class="grid4">
-          <label>ชื่อแพ็กเกจ<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
-          <label>ราคา (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
-          <label>รหัสสมัคร<input value="${esc(p.code)}" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
-          <button class="danger" onclick="delPkg(${i})">ลบ</button>
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">
+          <div class="grid2">
+            <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
+            <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
+          </div>
+          <div class="grid2">
+            <label>ราคา (บาท/เดือน)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
+            <label>รหัสสมัคร<input value="${esc(p.code)}" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
+          </div>
+          <div class="grid2">
+            <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
+            <label>สีการ์ด<input type="color" value="${esc(p.color || "#0b5ed7")}" oninput="upd('PACKAGES',${i},'color',this.value)"></label>
+          </div>
+          <div class="grid2">
+            <label>ส่วนลดร้านของแพ็กเกจนี้
+              <select onchange="setDiscType(${i}, this.value)">
+                <option value="" ${!p.discType ? "selected" : ""}>ใช้ค่ากลาง</option>
+                <option value="none" ${p.discType === "none" ? "selected" : ""}>ไม่ลด</option>
+                <option value="baht" ${p.discType === "baht" ? "selected" : ""}>ลดเป็นบาท</option>
+                <option value="percent" ${p.discType === "percent" ? "selected" : ""}>ลดเป็นเปอร์เซ็นต์ (%)</option>
+              </select>
+            </label>
+            <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
+          </div>
+          <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
+          <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
+          <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจนี้</button></div>
         </div>`).join("") : `<p class="hint">ยังไม่มีแพ็กเกจ</p>`}
     </div>
 
@@ -319,9 +341,23 @@ function upd(key, i, field, val) {
 }
 
 function addPkg() {
-  settings.PACKAGES.push({ id: "P" + Date.now().toString(36), name: "", price: 0, code: "" });
+  settings.PACKAGES.push({
+    id: "P" + Date.now().toString(36), name: "", speed: "", desc: "",
+    price: 0, code: "", badge: "", color: "#0b5ed7", features: []
+  });
   markDirty();
   render();
+}
+
+function setDiscType(i, type) {
+  settings.PACKAGES[i].discType = type;
+  markDirty();
+  render();
+}
+
+function setFeatures(i, text) {
+  settings.PACKAGES[i].features = text.split("\n").map(s => s.trim()).filter(Boolean);
+  markDirty();
 }
 
 function delPkg(i) {
@@ -414,11 +450,19 @@ function viewShop() {
     <div class="grid2">
       <div class="card">
         <h3>ส่วนลดสมัครกับทางร้าน</h3>
-        <p class="hint">หักจากราคาแพ็กเกจทุกแพ็กเกจในเมนูกับทางร้าน</p>
-        <label>ส่วนลด (บาท)
-          <input type="number" min="0" value="${esc(settings.DISCOUNT_SHOP)}"
-                 oninput="settings.DISCOUNT_SHOP=Number(this.value)||0;markDirty()">
-        </label>
+        <p class="hint">หักจากราคาแพ็กเกจในเมนูกับทางร้าน ถ้าแพ็กเกจไหนตั้งส่วนลดเองในแท็บแพ็กเกจ จะใช้ค่านั้นแทน</p>
+        <div class="grid2">
+          <label>ประเภทส่วนลด
+            <select onchange="settings.DISCOUNT_SHOP_TYPE=this.value;markDirty();render()">
+              <option value="baht" ${settings.DISCOUNT_SHOP_TYPE !== "percent" ? "selected" : ""}>บาท</option>
+              <option value="percent" ${settings.DISCOUNT_SHOP_TYPE === "percent" ? "selected" : ""}>เปอร์เซ็นต์ (%)</option>
+            </select>
+          </label>
+          <label>ค่าส่วนลด
+            <input type="number" min="0" value="${esc(settings.DISCOUNT_SHOP)}"
+                   oninput="settings.DISCOUNT_SHOP=Number(this.value)||0;markDirty()">
+          </label>
+        </div>
       </div>
       <div class="card">
         <h3>QR พร้อมเพย์ของร้าน</h3>
@@ -721,6 +765,7 @@ async function saveAll() {
   try {
     settings.PACKAGES = settings.PACKAGES.map(p => ({ ...p, price: Number(p.price) || 0 }));
     settings.DISCOUNT_SHOP = Number(settings.DISCOUNT_SHOP) || 0;
+    settings.DISCOUNT_SHOP_TYPE = settings.DISCOUNT_SHOP_TYPE === "percent" ? "percent" : "baht";
     await api("/admin/settings", { method: "PUT", json: settings });
     $("dirtyTag").textContent = "";
     toast("บันทึกการตั้งค่าแล้ว");
