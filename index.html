@@ -173,6 +173,7 @@ let tab = "packages";
 
 const TABS = [
   ["packages", "แพ็กเกจ & ขั้นตอน"],
+  ["lucky", "เบอร์มงคล"],
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
   ["settings", "การตั้งค่า"],
@@ -199,6 +200,7 @@ function normalize(s) {
     QR_IMAGE_URL: "",
     ...s,
     PACKAGES: s.PACKAGES || [],
+    luckyNumbers: s.luckyNumbers || [],
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
@@ -282,7 +284,7 @@ function setTab(t) {
 function render() {
   renderTabs();
   const views = {
-    packages: viewPackages, samples: viewSamples, shop: viewShop,
+    packages: viewPackages, lucky: viewLucky, shop: viewShop,
     orders: viewOrders, settings: viewSettings, danger: viewDanger
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
@@ -291,6 +293,39 @@ function render() {
 /* ==========================================================
    แพ็กเกจ & ขั้นตอน
    ========================================================== */
+function viewLucky() {
+  const list = settings.luckyNumbers || [];
+  return `
+    <div class="card">
+      <div class="head"><h3>🍀 เบอร์มงคล</h3>
+        <button class="ghost" onclick="addLucky()">+ เพิ่มเบอร์</button></div>
+      <p class="hint">เบอร์เหล่านี้จะแสดงใต้เมนูหน้าแรกของหน้าบ้าน ถ้าใส่ราคาเป็น 0 หน้าบ้านจะแสดงว่า "สอบถามราคา"</p>
+      ${list.length ? list.map((x, i) => `
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
+          <div class="grid2">
+            <label>เบอร์<input value="${esc(x.number || "")}" placeholder="เช่น 089-999-9999" oninput="upd('luckyNumbers',${i},'number',this.value)"></label>
+            <label>ราคา (บาท)<input type="number" min="0" value="${esc(x.price ?? 0)}" oninput="upd('luckyNumbers',${i},'price',Number(this.value)||0)"></label>
+          </div>
+          <label>หมายเหตุ (ไม่บังคับ)<input value="${esc(x.note || "")}" placeholder="เช่น ผลรวม 9" oninput="upd('luckyNumbers',${i},'note',this.value)"></label>
+          <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delLucky(${i})">ลบเบอร์นี้</button></div>
+        </div>`).join("") : `<p class="hint">ยังไม่มีเบอร์มงคล</p>`}
+    </div>`;
+}
+
+function addLucky() {
+  settings.luckyNumbers = settings.luckyNumbers || [];
+  settings.luckyNumbers.push({ number: "", price: 0, note: "" });
+  markDirty();
+  render();
+}
+
+function delLucky(i) {
+  if (!confirm("ลบเบอร์นี้?")) return;
+  settings.luckyNumbers.splice(i, 1);
+  markDirty();
+  render();
+}
+
 function viewPackages() {
   return `
     <div class="card">
@@ -304,7 +339,8 @@ function viewPackages() {
             <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
           </div>
           <div class="grid2">
-            <label>ราคา (บาท/เดือน)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
+            <label>ราคาต่อเดือน (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
+            <label>ราคาเดือนแรก (บาท) <small>เว้นว่าง = เท่ากับราคาต่อเดือน</small><input type="number" min="0" value="${esc(p.firstPrice ?? "")}" placeholder="เช่น 250" oninput="upd('PACKAGES',${i},'firstPrice',Number(this.value)||0)"></label>
             <label>รหัสสมัคร<input value="${esc(p.code)}" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
           </div>
           <div class="grid2">
@@ -618,6 +654,20 @@ function viewSettings() {
   ];
   return `
     <div class="card">
+      <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
+      <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
+      ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
+      <div class="photo">
+        <div class="ph" style="aspect-ratio:1/1;max-width:140px;margin:0 auto 8px">${settings.logoImage ? `<img src="${esc(settings.logoImage)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
+        <label style="cursor:pointer;color:var(--blue);font-weight:700">
+          📁 เลือกโลโก้ร้าน
+          <input type="file" accept="image/*" class="hidden" onchange="uploadLogo(this.files[0])">
+        </label>
+        ${settings.logoImage ? `<div style="margin-top:8px"><button class="danger" onclick="clearLogo()">ลบโลโก้</button></div>` : ""}
+      </div>
+    </div>
+
+    <div class="card">
       <h3>🖼️ รูปหัวเว็บ (แบนเนอร์หน้าแรก)</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1200 px</b> (แนวตั้ง) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB<br>
       ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงหัวข้อแบบข้อความตามเดิม</p>
@@ -692,6 +742,24 @@ function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty
 function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
 function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
 
+async function uploadLogo(file) {
+  if (!file) return;
+  try {
+    settings.logoImage = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดโลโก้แล้ว กดบันทึกเพื่อใช้งาน");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+function clearLogo() {
+  settings.logoImage = "";
+  markDirty();
+  render();
+}
+
 async function uploadHero(file) {
   if (!file) return;
   try {
@@ -763,9 +831,14 @@ async function saveAll() {
   const btn = $("saveBtn");
   btn.disabled = true;
   try {
-    settings.PACKAGES = settings.PACKAGES.map(p => ({ ...p, price: Number(p.price) || 0 }));
+    settings.PACKAGES = settings.PACKAGES.map(p => ({
+      ...p,
+      price: Number(p.price) || 0,
+      firstPrice: Number(p.firstPrice) > 0 ? Number(p.firstPrice) : ""
+    }));
     settings.DISCOUNT_SHOP = Number(settings.DISCOUNT_SHOP) || 0;
     settings.DISCOUNT_SHOP_TYPE = settings.DISCOUNT_SHOP_TYPE === "percent" ? "percent" : "baht";
+    settings.luckyNumbers = (settings.luckyNumbers || []).map(x => ({ ...x, price: Number(x.price) || 0 }));
     await api("/admin/settings", { method: "PUT", json: settings });
     $("dirtyTag").textContent = "";
     toast("บันทึกการตั้งค่าแล้ว");
