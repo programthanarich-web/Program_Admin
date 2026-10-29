@@ -174,6 +174,7 @@ let tab = "packages";
 const TABS = [
   ["packages", "แพ็กเกจ & ขั้นตอน"],
   ["lucky", "เบอร์มงคล"],
+  ["luckyrules", "ตารางวิเคราะห์เบอร์"],
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
   ["settings", "การตั้งค่า"],
@@ -201,6 +202,7 @@ function normalize(s) {
     ...s,
     PACKAGES: s.PACKAGES || [],
     luckyNumbers: s.luckyNumbers || [],
+    luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
@@ -284,7 +286,7 @@ function setTab(t) {
 function render() {
   renderTabs();
   const views = {
-    packages: viewPackages, lucky: viewLucky, shop: viewShop,
+    packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
     orders: viewOrders, settings: viewSettings, danger: viewDanger
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
@@ -293,6 +295,101 @@ function render() {
 /* ==========================================================
    แพ็กเกจ & ขั้นตอน
    ========================================================== */
+// ค่าตั้งต้นของตารางวิเคราะห์เบอร์ (แก้ไขได้ในหน้านี้)
+const DEFAULT_LUCKY_RULES = {
+  digits: [
+    { d: "0", name: "ศูนย์", mean: "ความว่าง การเริ่มต้นใหม่ ไร้ขีดจำกัด" },
+    { d: "1", name: "หนึ่ง", mean: "ความเป็นผู้นำ ความก้าวหน้า การเริ่มต้น" },
+    { d: "2", name: "สอง", mean: "ความรัก ความสัมพันธ์ ความร่วมมือ" },
+    { d: "3", name: "สาม", mean: "ความเจริญรุ่งเรือง การเติบโต การค้าขาย" },
+    { d: "4", name: "สี่", mean: "ความมั่นคง ความหนักแน่น" },
+    { d: "5", name: "ห้า", mean: "การเปลี่ยนแปลง ความคล่องตัว การสื่อสาร" },
+    { d: "6", name: "หก", mean: "ความรัก ครอบครัว ความรับผิดชอบ ความลงตัว" },
+    { d: "7", name: "เจ็ด", mean: "ปัญญา การเรียนรู้ จิตใจที่สงบ" },
+    { d: "8", name: "แปด", mean: "ความร่ำรวย ความสำเร็จทางการเงิน ความก้าวหน้า" },
+    { d: "9", name: "เก้า", mean: "ความยิ่งใหญ่ อำนาจ การได้รับการยอมรับ" }
+  ],
+  pairs: [
+    { pair: "19", mean: "ก้าวหน้าในการงาน ได้รับการยอมรับ เป็นผู้นำ" },
+    { pair: "28", mean: "การเงินมั่นคง ร่ำรวย มีโชคลาภ" },
+    { pair: "37", mean: "ความรักและครอบครัวอบอุ่น ความสัมพันธ์ดี" },
+    { pair: "46", mean: "ความมั่นคงในชีวิต มีที่พึ่ง ราบรื่น" },
+    { pair: "55", mean: "การค้า การเจรจา ความเจริญทางธุรกิจ" },
+    { pair: "64", mean: "ความรักและความเข้าใจ ความสามัคคี" },
+    { pair: "73", mean: "ปัญญา การศึกษา ความคิดสร้างสรรค์" },
+    { pair: "82", mean: "ความมั่งคั่ง โชคลาภทางการเงิน ความสำเร็จ" },
+    { pair: "91", mean: "อำนาจ บารมี ความเป็นผู้นำ" },
+    { pair: "99", mean: "ความยิ่งใหญ่ ความสำเร็จสูงสุด" }
+  ],
+  fit: [
+    { n: "1", who: "ผู้ประกอบการ ผู้บริหาร คนที่ชอบเป็นผู้นำ", job: "ผู้จัดการ เจ้าของร้าน หัวหน้าทีม", boost: "การงาน ความก้าวหน้า ความเป็นผู้นำ" },
+    { n: "2", who: "คนที่ทำงานร่วมกับผู้อื่น ชอบความสัมพันธ์และความร่วมมือ", job: "ฝ่ายบริการ ฝ่ายขาย ที่ปรึกษา", boost: "ความรัก ความสัมพันธ์ การเจรจา" },
+    { n: "3", who: "คนค้าขาย คนมีความคิดสร้างสรรค์ ชอบการแสดงออก", job: "ค้าขาย การตลาด ศิลปิน นักเขียน", boost: "การเงิน การค้า ความสำเร็จ" },
+    { n: "4", who: "คนที่ต้องการความมั่นคง ทำงานเป็นระบบ", job: "วิศวกร ช่าง ข้าราชการ ผู้จัดการระบบ", boost: "ความมั่นคง การงานที่แน่นอน" },
+    { n: "5", who: "คนที่ชอบการเดินทาง ความคล่องตัว และการสื่อสาร", job: "นักการตลาด พนักงานขาย สื่อมวลชน", boost: "การสื่อสาร การค้า การเดินทาง" },
+    { n: "6", who: "คนที่ให้ความสำคัญกับครอบครัวและความรับผิดชอบ", job: "ครู พยาบาล ธุรกิจครอบครัว", boost: "ครอบครัว ความรัก ความสมดุล" },
+    { n: "7", who: "คนที่ใช้ความคิดและการเรียนรู้", job: "นักวิชาการ โปรแกรมเมอร์ นักวิจัย นักเขียน", boost: "การศึกษา ปัญญา ความสงบ" },
+    { n: "8", who: "คนที่มุ่งเป้าหมายทางการเงิน", job: "ธุรกิจการเงิน ค้าขาย เจ้าของกิจการ", boost: "การเงิน โชคลาภ ความร่ำรวย" },
+    { n: "9", who: "คนที่ต้องการการยอมรับและความยิ่งใหญ่", job: "ผู้บริหารระดับสูง นักกฎหมาย ผู้นำองค์กร", boost: "อำนาจ บารมี ความสำเร็จสูงสุด" }
+  ]
+};
+
+function viewLuckyRules() {
+  const R = settings.luckyRules || structuredClone(DEFAULT_LUCKY_RULES);
+  return `
+    <div class="card">
+      <h3>🔢 ความหมายของเลขแต่ละตัว</h3>
+      <p class="hint">ใช้หา "เลขเด่นที่สุด" ในเบอร์</p>
+      ${R.digits.map((x, i) => `
+        <div class="grid2" style="margin-bottom:8px">
+          <label>เลข ${esc(x.d)}<input value="${esc(x.name)}" oninput="updRule('digits',${i},'name',this.value)"></label>
+          <label>ความหมาย<input value="${esc(x.mean)}" oninput="updRule('digits',${i},'mean',this.value)"></label>
+        </div>`).join("")}
+    </div>
+
+    <div class="card">
+      <div class="head"><h3>💞 เลขคู่มงคล</h3>
+        <button class="ghost" onclick="addPair()">+ เพิ่มเลขคู่</button></div>
+      <p class="hint">ระบบจะหาคู่เลข 2 หลักที่อยู่ติดกันในเบอร์ แล้วแสดงความหมายตรงนี้</p>
+      ${R.pairs.map((x, i) => `
+        <div class="grid2" style="grid-template-columns:90px 1fr auto;margin-bottom:8px">
+          <input value="${esc(x.pair)}" maxlength="2" placeholder="เช่น 19" oninput="updRule('pairs',${i},'pair',this.value)">
+          <input value="${esc(x.mean)}" placeholder="ความหมาย" oninput="updRule('pairs',${i},'mean',this.value)">
+          <button class="danger" onclick="delPair(${i})">ลบ</button>
+        </div>`).join("")}
+    </div>
+
+    <div class="card">
+      <h3>👤 คนที่เหมาะ ตามผลรวมตัวเลข</h3>
+      <p class="hint">ผลรวมตัวเลขในเบอร์จะถูกลดเหลือหลักเดียว (1–9) แล้วใช้ตารางนี้</p>
+      ${R.fit.map((x, i) => `
+        <div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px">
+          <b>ผลรวม ${esc(x.n)}</b>
+          <label>เหมาะกับ<input value="${esc(x.who)}" oninput="updRule('fit',${i},'who',this.value)"></label>
+          <label>อาชีพที่เหมาะ<input value="${esc(x.job)}" oninput="updRule('fit',${i},'job',this.value)"></label>
+          <label>ส่งเสริมเรื่อง<input value="${esc(x.boost)}" oninput="updRule('fit',${i},'boost',this.value)"></label>
+        </div>`).join("")}
+    </div>`;
+}
+
+function updRule(section, i, field, val) {
+  settings.luckyRules[section][i][field] = val;
+  markDirty();
+}
+
+function addPair() {
+  settings.luckyRules.pairs.push({ pair: "", mean: "" });
+  markDirty();
+  render();
+}
+
+function delPair(i) {
+  if (!confirm("ลบเลขคู่นี้?")) return;
+  settings.luckyRules.pairs.splice(i, 1);
+  markDirty();
+  render();
+}
+
 function viewLucky() {
   const list = settings.luckyNumbers || [];
   return `
