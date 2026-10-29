@@ -404,6 +404,11 @@ function viewLucky() {
             <label>ราคา (บาท)<input type="number" min="0" value="${esc(x.price ?? 0)}" oninput="upd('luckyNumbers',${i},'price',Number(this.value)||0)"></label>
           </div>
           <label>หมายเหตุ (ไม่บังคับ)<input value="${esc(x.note || "")}" placeholder="เช่น ผลรวม 9" oninput="upd('luckyNumbers',${i},'note',this.value)"></label>
+          <div class="grid2">
+            <label>ค่ายมือถือ<input value="${esc(x.carrier || "")}" placeholder="เช่น dtac, true, AIS" oninput="upd('luckyNumbers',${i},'carrier',this.value)"></label>
+            <label>หมวดที่ส่งเสริม (คั่นด้วยเครื่องหมายจุลภาค)<input value="${esc(x.tags || "")}" placeholder="เช่น สุขภาพ, เงิน/งาน, ความรัก, เซ็นส์" oninput="upd('luckyNumbers',${i},'tags',this.value)"></label>
+          </div>
+          <label><input type="checkbox" style="width:auto" ${x.featured ? "checked" : ""} onchange="upd('luckyNumbers',${i},'featured',this.checked)"> แสดงป้าย "แนะนำ" บนการ์ด</label>
           <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delLucky(${i})">ลบเบอร์นี้</button></div>
         </div>`).join("") : `<p class="hint">ยังไม่มีเบอร์มงคล</p>`}
     </div>`;
