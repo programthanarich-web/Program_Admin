@@ -579,6 +579,20 @@ function viewSettings() {
   ];
   return `
     <div class="card">
+      <h3>🖼️ รูปหัวเว็บ (แบนเนอร์หน้าแรก)</h3>
+      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1200 px</b> (แนวตั้ง) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB<br>
+      ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงหัวข้อแบบข้อความตามเดิม</p>
+      <div class="photo">
+        <div class="ph" style="aspect-ratio:9/10;max-width:240px;margin:0 auto 8px">${settings.heroImage ? `<img src="${esc(settings.heroImage)}" alt="">` : "ยังไม่มีรูป"}</div>
+        <label style="cursor:pointer;color:var(--blue);font-weight:700">
+          📁 เลือกรูปหัวเว็บ
+          <input type="file" accept="image/*" class="hidden" onchange="uploadHero(this.files[0])">
+        </label>
+        ${settings.heroImage ? `<div style="margin-top:8px"><button class="danger" onclick="clearHero()">ลบรูปหัวเว็บ</button></div>` : ""}
+      </div>
+    </div>
+
+    <div class="card">
       <div class="head"><h3>🛍️ ช่องทางสั่งซื้อ</h3>
         <button class="ghost" onclick="addChannel()">+ เพิ่มช่องทาง</button></div>
       ${settings.channels.length ? settings.channels.map((c, i) => `
@@ -638,6 +652,24 @@ function viewSettings() {
 function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); render(); }
 function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
 function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
+
+async function uploadHero(file) {
+  if (!file) return;
+  try {
+    settings.heroImage = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดรูปหัวเว็บแล้ว กดบันทึกเพื่อใช้งาน");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+function clearHero() {
+  settings.heroImage = "";
+  markDirty();
+  render();
+}
 
 async function uploadPhoto(key, file) {
   if (!file) return;
