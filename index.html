@@ -202,6 +202,7 @@ function normalize(s) {
     ...s,
     PACKAGES: s.PACKAGES || [],
     luckyNumbers: s.luckyNumbers || [],
+    carrierLogos: s.carrierLogos || {},
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
@@ -390,6 +391,8 @@ function delPair(i) {
   render();
 }
 
+const CARRIERS = ["truemove H", "AIS", "dtac"];
+
 function viewLucky() {
   const list = settings.luckyNumbers || [];
   return `
@@ -405,7 +408,7 @@ function viewLucky() {
           </div>
           <label>หมายเหตุ (ไม่บังคับ)<input value="${esc(x.note || "")}" placeholder="เช่น ผลรวม 9" oninput="upd('luckyNumbers',${i},'note',this.value)"></label>
           <div class="grid2">
-            <label>ค่ายมือถือ<input value="${esc(x.carrier || "")}" placeholder="เช่น dtac, true, AIS" oninput="upd('luckyNumbers',${i},'carrier',this.value)"></label>
+            <label>เครือข่าย (โลโก้จะดึงจากการตั้งค่า)<select onchange="upd('luckyNumbers',${i},'carrier',this.value)"><option value="">— ไม่ระบุ —</option>${CARRIERS.map(c => `<option value="${c}" ${x.carrier === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
             <label>หมวดที่ส่งเสริม (คั่นด้วยเครื่องหมายจุลภาค)<input value="${esc(x.tags || "")}" placeholder="เช่น สุขภาพ, เงิน/งาน, ความรัก, เซ็นส์" oninput="upd('luckyNumbers',${i},'tags',this.value)"></label>
           </div>
           <label><input type="checkbox" style="width:auto" ${x.featured ? "checked" : ""} onchange="upd('luckyNumbers',${i},'featured',this.checked)"> แสดงป้าย "แนะนำ" บนการ์ด</label>
@@ -756,6 +759,24 @@ function viewSettings() {
   ];
   return `
     <div class="card">
+      <h3>📡 โลโก้เครือข่าย</h3>
+      <p class="hint">ใช้แสดงบนการ์ดเบอร์มงคล ตามเครือข่ายที่เลือกในแต่ละเบอร์<br>ขนาดที่แนะนำ: <b>400 × 160 px</b> (แนวนอน) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB</p>
+      ${CARRIERS.map(c => {
+        const url = (settings.carrierLogos || {})[c];
+        return `
+        <div class="photo" style="margin-bottom:10px">
+          <div class="t">${c}</div>
+          <div class="ph" style="aspect-ratio:5/2;max-width:200px;margin:0 auto 8px">${url ? `<img src="${esc(url)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
+          <label style="cursor:pointer;color:var(--blue);font-weight:700">
+            📁 เลือกโลโก้ ${c}
+            <input type="file" accept="image/*" class="hidden" onchange="uploadCarrierLogo('${c}', this.files[0])">
+          </label>
+          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearCarrierLogo('${c}')">ลบโลโก้</button></div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
       <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
       ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
@@ -843,6 +864,25 @@ function viewSettings() {
 function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); render(); }
 function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
 function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
+
+async function uploadCarrierLogo(name, file) {
+  if (!file) return;
+  try {
+    settings.carrierLogos = settings.carrierLogos || {};
+    settings.carrierLogos[name] = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดโลโก้ " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+function clearCarrierLogo(name) {
+  delete settings.carrierLogos[name];
+  markDirty();
+  render();
+}
 
 async function uploadLogo(file) {
   if (!file) return;
