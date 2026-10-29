@@ -1,993 +1,722 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>Shopee Stock Sync</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#06C755">
+<title>หลังบ้าน | ProgramThanarich</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);min-height:100vh;font-family:"Noto Sans Thai",Sarabun,sans-serif;color:white}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.3);border-radius:2px}
-@keyframes spin{to{transform:rotate(360deg)}}
+  :root{--blue:#0b5ed7;--blue-d:#084bb0;--bg:#f3f6fb;--card:#fff;--text:#0f1b33;--muted:#6b7a90;--line:#e3e9f3;--ok:#12a150;--err:#d93434;--amber:#b26a00;--yellow:#ffc233}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+  button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px;color:var(--text);font-weight:600}
+  button:hover{filter:brightness(.97)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.primary:hover{background:var(--blue-d)}
+  button.danger{color:var(--err);border-color:#f3c4c4;background:#fff5f5}
+  button.ok{color:var(--ok);border-color:#bfe7cf;background:#f1fbf5}
+  button.ghost{background:#f4f7fc}
+  input,textarea,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:var(--text)}
+  input:focus,textarea:focus,select:focus{outline:2px solid #8cb8ff;border-color:transparent}
+  input[type=file]{padding:6px;font-size:13px}
+  label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--text)}
+  .hidden{display:none !important}
+  .brand{font-weight:800;color:var(--blue);font-size:16px}
+  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(16,40,80,.06);margin-bottom:14px}
+  .card h3{font-size:16px;margin-bottom:4px}
+  .hint{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+  .err{color:var(--err);font-size:13px;margin:8px 0;display:none}
+  .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .grid4{display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+  .grid4 button{height:38px}
+
+  /* login */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+  .login-card button{padding:11px}
+
+  /* top bar */
+  .top{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+  .dirty{font-size:12px;color:var(--amber);margin-right:6px}
+  .tabs{background:#fff;display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:12px 10px;color:var(--muted);white-space:nowrap}
+  .tabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
+  .tabs .count{background:#e2e8f0;border-radius:99px;padding:0 7px;font-size:11px;margin-left:4px}
+  .tabs .count.hot{background:var(--err);color:#fff}
+  main{max-width:1000px;margin:0 auto;padding:20px}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+  .stat{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(16,40,80,.06)}
+  .stat .k{color:var(--muted);font-size:12px}
+  .stat .v{font-size:22px;font-weight:800;margin-top:2px}
+  .stat .v small{font-size:12px;color:var(--muted);font-weight:600}
+  .bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:18px}
+  .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:11px;color:var(--muted)}
+  .bars .b i{display:block;width:100%;background:var(--blue);border-radius:6px 6px 0 0;min-height:3px;position:relative}
+  .bars .b i b{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:11px;color:var(--text)}
+  .branch{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+  .branch:last-child{border-bottom:0}
+
+  /* orders */
+  .order{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+  .order .top2{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+  .order .meta{color:var(--muted);font-size:12.5px}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:#e8f9ef;color:#0a7a3a}
+  .pill.new{background:#fff4dd;color:var(--amber)}
+  .pill.rejected{background:#fde8ea;color:var(--err)}
+  .order .btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .empty{text-align:center;padding:24px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-weight:700;background:#f8fafd}
+  .table-wrap{overflow-x:auto}
+
+  /* packages & samples */
+  .sample-row{display:grid;grid-template-columns:160px 1fr;gap:14px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+  .thumb{aspect-ratio:16/10;background:#eef3fa;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden;text-align:center;padding:6px}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .fields{display:flex;flex-direction:column;gap:10px}
+  .btns-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .qr-preview{width:160px;height:160px;border-radius:10px;background:#eef3fa;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--muted);font-size:12px;margin-top:8px}
+  .qr-preview img{width:100%;height:100%;object-fit:contain}
+  .photo{border:1px dashed #b9c4d2;border-radius:12px;padding:12px;text-align:center}
+  .photo .t{font-weight:700;font-size:13px;margin-bottom:8px}
+  .photo .ph{aspect-ratio:16/10;background:#f5f7fa;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin-bottom:8px;overflow:hidden}
+  .photo .ph img{width:100%;height:100%;object-fit:cover}
+  .danger-zone{border:1px solid #f2c3c9;background:#fff5f6;border-radius:14px;padding:18px}
+  .danger-zone h3{color:var(--err)}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f1b33;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;font-size:13px;z-index:50;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{background:var(--ok)}
+  .toast.bad{background:var(--err)}
+
+  @media (max-width:720px){
+    .stats{grid-template-columns:1fr 1fr}
+    .grid2,.grid3{grid-template-columns:1fr}
+    .grid4{grid-template-columns:1fr 1fr}
+    .grid4 button{grid-column:span 2}
+    .sample-row{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useCallback}=React;
 
-// ไม่มีความลับใดๆ อยู่ในไฟล์นี้ - Worker URL กับ Access Key ผู้ใช้กรอกเองแล้วเก็บไว้
-// ใน localStorage ของเบราว์เซอร์ตัวเอง (ไม่ได้ commit ขึ้น GitHub)
-const LS_WORKER_URL = "shopee_worker_url";
-const LS_ACCESS_KEY = "shopee_access_key";
+<!-- ============ เข้าสู่ระบบ ============ -->
+<div id="login" class="login hidden">
+  <form class="card login-card" onsubmit="login(event)">
+    <div class="brand">ProgramThanarich · หลังบ้าน</div>
+    <label>รหัสผู้ดูแล
+      <input id="token" type="password" autocomplete="current-password" required>
+    </label>
+    <div class="err" id="loginErr">เข้าสู่ระบบไม่สำเร็จ ตรวจสอบรหัสผู้ดูแลหรือการเชื่อมต่อ</div>
+    <button class="primary" type="submit">เข้าสู่ระบบ</button>
+  </form>
+</div>
 
-const C={
-  card:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:16,margin:"12px 12px 0"},
-  h3:{color:"#e2e8f0",fontSize:15,fontWeight:700,marginBottom:12},
-  inp:{width:"100%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"10px 14px",color:"white",fontSize:14,outline:"none"},
-  btnP:{background:"linear-gradient(135deg,#4f46e5,#7c3aed)",border:"none",borderRadius:10,padding:"10px 18px",color:"white",fontWeight:700,cursor:"pointer",fontSize:14},
-  btnS:{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"10px 14px",color:"#e2e8f0",fontWeight:600,cursor:"pointer",fontSize:13},
-  th:{padding:"8px 10px",background:"rgba(255,255,255,0.06)",color:"#94a3b8",fontSize:12,fontWeight:600,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.08)"},
-  td:{padding:"10px",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#e2e8f0",fontSize:13},
-  label:{color:"#94a3b8",fontSize:12,fontWeight:600,marginBottom:6,display:"block"},
-};
-
-const fmtT=ts=>ts?new Date(ts).toLocaleString("th-TH"):"-";
-const lsG=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-const lsS=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-
-function Toast({toast}){
-  if(!toast)return null;
-  return(
-    <div style={{position:"fixed",top:20,right:16,zIndex:9999,background:toast.type==="err"?"#dc2626":toast.type==="warn"?"#d97706":"#059669",color:"white",padding:"10px 18px",borderRadius:12,fontWeight:600,fontSize:14,boxShadow:"0 4px 20px rgba(0,0,0,0.4)",maxWidth:320}}>{toast.msg}</div>
-  );
-}
-
-// ---------- ขั้นตอนตั้งค่าการเชื่อมต่อ Worker (ทำครั้งเดียวต่อเบราว์เซอร์) ----------
-function WorkerSetup({onReady}){
-  const [workerUrl,setWorkerUrl]=useState(lsG(LS_WORKER_URL)||"");
-  const [accessKey,setAccessKey]=useState(lsG(LS_ACCESS_KEY)||"");
-
-  const save=()=>{
-    if(!workerUrl){alert("กรุณาใส่ Worker URL");return;}
-    lsS(LS_WORKER_URL,workerUrl.replace(/\/$/,""));
-    lsS(LS_ACCESS_KEY,accessKey);
-    onReady();
-  };
-
-  return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{...C.card,margin:0,maxWidth:420,width:"100%"}}>
-        <div style={C.h3}>🛒 ตั้งค่าการเชื่อมต่อ (ทำครั้งเดียว)</div>
-        <div style={{fontSize:12,color:"#8b8fa8",marginBottom:14}}>ใส่ URL ของ Cloudflare Worker และรหัสผ่านที่ตั้งไว้ตอน deploy</div>
-        <label style={C.label}>Worker URL</label>
-        <input style={C.inp} value={workerUrl} onChange={e=>setWorkerUrl(e.target.value)} placeholder="https://shopee-stock-sync.xxxx.workers.dev"/>
-        <label style={{...C.label,marginTop:10}}>Access Key</label>
-        <input style={C.inp} type="password" value={accessKey} onChange={e=>setAccessKey(e.target.value)} placeholder="รหัสผ่านที่ตั้งไว้ (ACCESS_KEY)"/>
-        <button style={{...C.btnP,marginTop:14,width:"100%"}} onClick={save}>บันทึกและเข้าใช้งาน</button>
-      </div>
+<!-- ============ แดชบอร์ด ============ -->
+<div id="dash" class="hidden">
+  <header class="top">
+    <div class="brand">ProgramThanarich · หลังบ้าน</div>
+    <div class="actions">
+      <span class="dirty" id="dirtyTag"></span>
+      <button class="primary" id="saveBtn" onclick="saveAll()">บันทึกการตั้งค่า</button>
+      <button class="ghost" onclick="logout()">ออกจากระบบ</button>
     </div>
-  );
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <main id="content"></main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ==========================================================
+   ตั้งค่า: URL ของ Cloudflare Worker (หลังบ้าน API)
+   ========================================================== */
+const API_BASE = "https://YOUR-WORKER.workers.dev";
+
+/*  API ที่ Worker ต้องมี (ทุกเส้นต้องมี Authorization: Bearer <รหัสผู้ดูแล>)
+    GET    /admin/settings          → ค่าการตั้งค่าทั้งหมด (รูปแบบด้านล่าง)
+    PUT    /admin/settings          → บันทึกค่าการตั้งค่าทั้งหมด (JSON)
+    POST   /admin/upload            → อัปโหลดรูป (multipart field "file") คืน { "url": "..." }
+    GET    /admin/orders            → รายการสั่งซื้อ [{ id, orderNo, createdAt, phone, serial, package, amount, status, branch }]
+    POST   /admin/orders/:id        → เปลี่ยนสถานะ { "status": "confirmed" | "done" | "rejected" }
+    DELETE /admin/history           → ลบประวัติทั้งหมด body { "password": "..." }
+    GET    /settings                → (สาธารณะ) ให้หน้าบ้านดึงค่าไปใช้
+
+    รูปแบบ settings:
+    {
+      DISCOUNT_SHOP, QR_IMAGE_URL,
+      PACKAGES: [{ id, name, price, code }],
+      SELF_STEPS: [ "ขั้นตอน..." ],
+      SIM_SAMPLE_IMAGES: [{ url, caption }],
+      channels: [{ name, url }],
+      trackingHelp, simHelp,
+      photos: { orderShot, simEnvelope, registerOk, simNumberEx, trackingEx, receivedPhoneEx },
+      rejectMessages: [ "..." ],
+      messages: { confirm, done }
+    }
+*/
+
+let token = sessionStorage.getItem("adm_token") || "";
+let settings = null;
+let orders = [];
+let tab = "packages";
+
+const TABS = [
+  ["packages", "แพ็กเกจ & ขั้นตอน"],
+  ["samples", "รูปตัวอย่างซิม"],
+  ["shop", "ส่วนลด & QR"],
+  ["orders", "รายการสั่งซื้อ"],
+  ["settings", "การตั้งค่า"],
+  ["danger", "ลบประวัติ"]
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const fmt = n => "฿" + (Number(n) || 0).toLocaleString("th-TH");
+const pkgName = o => (o.package && o.package.name) || o.package || "";
+const dayOf = o => new Date(o.createdAt || o.time);
+
+function toast(msg, ok = true) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (ok ? "ok" : "bad");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = "toast", 2400);
 }
 
-function ConnectCard({status,onConnected,t3,api}){
-  const [authUrl,setAuthUrl]=useState("");
-  const [code,setCode]=useState("");
-  const [shopId,setShopId]=useState("");
-  const [busy,setBusy]=useState(false);
-
-  const startAuth=async()=>{
-    const res=await api("/auth-url");
-    if(res.error){t3(res.error,"err");return;}
-    setAuthUrl(res.url);
-    window.open(res.url,"_blank");
+function normalize(s) {
+  return {
+    DISCOUNT_SHOP: 0,
+    QR_IMAGE_URL: "",
+    ...s,
+    PACKAGES: s.PACKAGES || [],
+    SELF_STEPS: s.SELF_STEPS || [],
+    SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
+    channels: s.channels || [],
+    trackingHelp: s.trackingHelp || "",
+    simHelp: s.simHelp || "",
+    photos: s.photos || {},
+    rejectMessages: s.rejectMessages || [],
+    messages: { confirm: "", done: "", ...(s.messages || {}) }
   };
+}
 
-  const confirm=async()=>{
-    if(!code||!shopId){t3("กรุณาใส่ code และ shop_id ให้ครบ","warn");return;}
-    setBusy(true);
-    const res=await api("/auth-confirm",{method:"POST",body:JSON.stringify({code,shopId})});
-    setBusy(false);
-    if(res.error){t3("เชื่อมต่อล้มเหลว: "+res.error,"err");return;}
-    t3("✅ เชื่อมต่อร้านสำเร็จ");
-    onConnected();
+async function api(path, opts = {}) {
+  const headers = { Authorization: "Bearer " + token };
+  let body = opts.body;
+  if (opts.json !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(opts.json);
+  }
+  const res = await fetch(API_BASE + path, { method: opts.method || "GET", headers, body });
+  if (res.status === 401) { logout(); throw new Error("unauthorized"); }
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+/* ==========================================================
+   เข้าสู่ระบบ
+   ========================================================== */
+async function login(e) {
+  e.preventDefault();
+  const input = $("token").value.trim();
+  if (!input) return;
+  token = input;
+  try {
+    settings = normalize(await api("/admin/settings"));
+    sessionStorage.setItem("adm_token", token);
+    showDash();
+    loadOrders(true);
+  } catch (err) {
+    token = "";
+    $("loginErr").style.display = "block";
+  }
+}
+
+function logout() {
+  token = "";
+  settings = null;
+  sessionStorage.removeItem("adm_token");
+  $("dash").classList.add("hidden");
+  $("login").classList.remove("hidden");
+  $("token").value = "";
+  $("loginErr").style.display = "none";
+}
+
+function showDash() {
+  $("login").classList.add("hidden");
+  $("dash").classList.remove("hidden");
+  render();
+}
+
+function markDirty() {
+  $("dirtyTag").textContent = "มีการเปลี่ยนแปลงที่ยังไม่บันทึก";
+}
+
+/* ==========================================================
+   แท็บ & การแสดงผล
+   ========================================================== */
+function renderTabs() {
+  const pending = orders.filter(o => o.status === "new").length;
+  $("tabs").innerHTML = TABS.map(([key, label]) => `
+    <button class="${key === tab ? "on" : ""}" onclick="setTab('${key}')">
+      ${label}${key === "orders" && pending ? ` <span class="count hot">${pending}</span>` : ""}
+    </button>`).join("");
+}
+
+function setTab(t) {
+  tab = t;
+  if (t === "orders") { loadOrders(); return; }
+  render();
+}
+
+function render() {
+  renderTabs();
+  const views = {
+    packages: viewPackages, samples: viewSamples, shop: viewShop,
+    orders: viewOrders, settings: viewSettings, danger: viewDanger
   };
+  $("content").innerHTML = (views[tab] || viewPackages)();
+}
 
-  if(status.connected)return null;
-
-  return(
-    <div style={C.card}>
-      <div style={C.h3}>🔗 ขั้นตอนที่ 1 — เชื่อมต่อร้าน Shopee</div>
-      <button style={C.btnP} onClick={startAuth}>เชื่อมต่อร้าน Shopee</button>
-      {authUrl&&<div style={{fontSize:11,color:"#8b8fa8",marginTop:8,wordBreak:"break-all"}}>ถ้าไม่เด้งอัตโนมัติ เปิดเอง: <a href={authUrl} target="_blank" style={{color:"#a78bfa"}}>{authUrl}</a></div>}
-
-      <div style={{marginTop:14}}>
-        <label style={C.label}>code จาก URL ที่เด้งกลับมา</label>
-        <input style={C.inp} value={code} onChange={e=>setCode(e.target.value)} placeholder="code"/>
-      </div>
-      <div style={{marginTop:10}}>
-        <label style={C.label}>shop_id จาก URL ที่เด้งกลับมา</label>
-        <input style={C.inp} value={shopId} onChange={e=>setShopId(e.target.value)} placeholder="shop_id"/>
-      </div>
-      <button style={{...C.btnP,marginTop:12,opacity:busy?0.6:1}} disabled={busy} onClick={confirm}>{busy?"กำลังเชื่อมต่อ...":"ยืนยันการเชื่อมต่อ"}</button>
+/* ==========================================================
+   แพ็กเกจ & ขั้นตอน
+   ========================================================== */
+function viewPackages() {
+  return `
+    <div class="card">
+      <div class="head"><h3>แพ็กเกจเน็ต</h3>
+        <button class="ghost" onclick="addPkg()">+ เพิ่มแพ็กเกจ</button></div>
+      <p class="hint">ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ)</p>
+      ${settings.PACKAGES.length ? settings.PACKAGES.map((p, i) => `
+        <div class="grid4">
+          <label>ชื่อแพ็กเกจ<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
+          <label>ราคา (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
+          <label>รหัสสมัคร<input value="${esc(p.code)}" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
+          <button class="danger" onclick="delPkg(${i})">ลบ</button>
+        </div>`).join("") : `<p class="hint">ยังไม่มีแพ็กเกจ</p>`}
     </div>
-  );
+
+    <div class="card">
+      <h3>ขั้นตอนสมัครเน็ต (เมนูเติมเงินเอง)</h3>
+      <p class="hint">พิมพ์บรรทัดละ 1 ขั้นตอน</p>
+      <textarea rows="5" oninput="setSteps(this.value)">${esc(settings.SELF_STEPS.join("\n"))}</textarea>
+    </div>`;
 }
 
-function StockTab({status,refreshStatus,t3,pushLocalHistory,api}){
-  const [sku,setSku]=useState("");
-  const [qty,setQty]=useState("");
-  const [busy,setBusy]=useState(false);
-  const [mapBusy,setMapBusy]=useState(false);
-  const [skuList,setSkuList]=useState(null);
-  const [search,setSearch]=useState("");
-  const [loadingList,setLoadingList]=useState(false);
+function upd(key, i, field, val) {
+  settings[key][i][field] = val;
+  markDirty();
+}
 
-  const loadSkuList=async()=>{
-    setLoadingList(true);
-    const res=await api("/sku-list");
-    setLoadingList(false);
-    if(res.error){t3("โหลดรายการ SKU ไม่สำเร็จ: "+res.error,"err");return;}
-    setSkuList(res.skus||[]);
-  };
+function addPkg() {
+  settings.PACKAGES.push({ id: "P" + Date.now().toString(36), name: "", price: 0, code: "" });
+  markDirty();
+  render();
+}
 
-  useEffect(()=>{ loadSkuList(); },[]);
+function delPkg(i) {
+  if (!confirm("ลบแพ็กเกจนี้?")) return;
+  settings.PACKAGES.splice(i, 1);
+  markDirty();
+  render();
+}
 
-  const rebuildMap=async()=>{
-    setMapBusy(true);
-    t3("กำลังดึงรายชื่อสินค้า...");
-    const res=await api("/rebuild-map",{method:"POST"});
-    setMapBusy(false);
-    if(res.error){t3("ผิดพลาด: "+res.error,"err");return;}
-    t3("✅ ดึงรายชื่อสินค้าสำเร็จ: "+res.skuCount+" SKU");
-    refreshStatus();
-    loadSkuList();
-  };
+function setSteps(text) {
+  settings.SELF_STEPS = text.split("\n").map(x => x.trim()).filter(Boolean);
+  markDirty();
+}
 
-  const updateOne=async()=>{
-    if(!sku||qty===""){t3("กรุณาใส่ SKU และจำนวน","warn");return;}
-    setBusy(true);
-    const res=await api("/update-one",{method:"POST",body:JSON.stringify({sku,qty})});
-    setBusy(false);
-    if(res.ok){t3("✅ "+sku+" -> "+qty+" สำเร็จ");}
-    else{t3("✗ "+sku+" ล้มเหลว: "+res.error,"err");}
-    pushLocalHistory();
-    loadSkuList();
-    setSku("");setQty("");
-  };
+/* ==========================================================
+   รูปตัวอย่างซิม
+   ========================================================== */
+function viewSamples() {
+  const list = settings.SIM_SAMPLE_IMAGES;
+  return `
+    <div class="card">
+      <div class="head"><h3>รูปตัวอย่างวิธีดูเลขซีเรียลซิม</h3>
+        <button class="ghost" onclick="addSample()">+ เพิ่มรูป</button></div>
+      <p class="hint">รูปจะแสดงในหน้ากรอกข้อมูลซิมของลูกค้า เรียงตามลำดับด้านล่าง</p>
+      ${list.length ? list.map((s, i) => `
+        <div class="sample-row">
+          <div class="thumb">${s.url ? `<img src="${esc(s.url)}" alt="">` : "ยังไม่มีรูป"}</div>
+          <div class="fields">
+            <label>ลิงก์รูป<input value="${esc(s.url)}" oninput="upd('SIM_SAMPLE_IMAGES',${i},'url',this.value)"></label>
+            <label>คำอธิบายใต้รูป<input value="${esc(s.caption)}" oninput="upd('SIM_SAMPLE_IMAGES',${i},'caption',this.value)"></label>
+            <div class="btns-row">
+              <label style="flex-direction:row;align-items:center;gap:6px">
+                อัปโหลดรูปใหม่ <input type="file" accept="image/*" style="width:auto" onchange="uploadSample(${i},this.files[0])">
+              </label>
+              <button onclick="moveSample(${i},-1)" ${i === 0 ? "disabled" : ""}>▲ ขึ้น</button>
+              <button onclick="moveSample(${i},1)" ${i === list.length - 1 ? "disabled" : ""}>▼ ลง</button>
+              <button class="danger" onclick="delSample(${i})">ลบ</button>
+            </div>
+          </div>
+        </div>`).join("") : `<p class="hint">ยังไม่มีรูปตัวอย่าง</p>`}
+    </div>`;
+}
 
-  const filtered=(skuList||[]).filter(s=>
-    !search || s.sku.toLowerCase().includes(search.toLowerCase()) || (s.name||"").toLowerCase().includes(search.toLowerCase())
-  );
+function addSample() {
+  settings.SIM_SAMPLE_IMAGES.push({ url: "", caption: "" });
+  markDirty();
+  render();
+}
 
-  return(
-    <React.Fragment>
-      <div style={C.card}>
-        <div style={C.h3}>📦 ดึงรายชื่อสินค้าจากร้าน</div>
-        <div style={{fontSize:12,color:"#8b8fa8",marginBottom:10}}>ทำทุกครั้งที่มีการเพิ่ม/แก้ไขสินค้าในร้าน เพื่ออัปเดตตาราง SKU (ตอนนี้มี {status.skuCount} SKU)</div>
-        <button style={{...C.btnS,opacity:mapBusy?0.6:1}} disabled={mapBusy} onClick={rebuildMap}>{mapBusy?"กำลังดึง...":"ดึงรายชื่อสินค้า"}</button>
+function delSample(i) {
+  if (!confirm("ลบรูปนี้?")) return;
+  settings.SIM_SAMPLE_IMAGES.splice(i, 1);
+  markDirty();
+  render();
+}
+
+function moveSample(i, dir) {
+  const arr = settings.SIM_SAMPLE_IMAGES;
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  markDirty();
+  render();
+}
+
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const r = await api("/admin/upload", { method: "POST", body: fd });
+  return r.url;
+}
+
+async function uploadSample(i, file) {
+  if (!file) return;
+  try {
+    settings.SIM_SAMPLE_IMAGES[i].url = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดรูปแล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+/* ==========================================================
+   ส่วนลด & QR
+   ========================================================== */
+function viewShop() {
+  return `
+    <div class="grid2">
+      <div class="card">
+        <h3>ส่วนลดสมัครกับทางร้าน</h3>
+        <p class="hint">หักจากราคาแพ็กเกจทุกแพ็กเกจในเมนูกับทางร้าน</p>
+        <label>ส่วนลด (บาท)
+          <input type="number" min="0" value="${esc(settings.DISCOUNT_SHOP)}"
+                 oninput="settings.DISCOUNT_SHOP=Number(this.value)||0;markDirty()">
+        </label>
       </div>
-
-      <div style={C.card}>
-        <div style={C.h3}>✏️ ปรับสต๊อกทีละ SKU</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <div style={{flex:2,minWidth:140}}>
-            <label style={C.label}>SKU</label>
-            <input style={C.inp} value={sku} onChange={e=>setSku(e.target.value)} placeholder="เช่น SKU001"/>
-          </div>
-          <div style={{flex:1,minWidth:100}}>
-            <label style={C.label}>จำนวนใหม่</label>
-            <input style={C.inp} type="number" value={qty} onChange={e=>setQty(e.target.value)} placeholder="50"/>
-          </div>
-        </div>
-        <button style={{...C.btnP,marginTop:12,opacity:busy?0.6:1}} disabled={busy} onClick={updateOne}>{busy?"กำลังปรับ...":"ปรับสต๊อก"}</button>
+      <div class="card">
+        <h3>QR พร้อมเพย์ของร้าน</h3>
+        <p class="hint">รูปที่ลูกค้าใช้สแกนชำระเงิน</p>
+        <label>ลิงก์รูป QR
+          <input value="${esc(settings.QR_IMAGE_URL)}" oninput="setQR(this.value)">
+        </label>
+        <label style="margin-top:10px">อัปโหลดรูป QR ใหม่
+          <input type="file" accept="image/*" onchange="uploadQR(this.files[0])">
+        </label>
+        <div class="qr-preview" id="qrPreview">${qrImg()}</div>
       </div>
-
-      <div style={C.card}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div style={C.h3}>📋 SKU ที่เคยเพิ่ม + สต๊อกคงเหลือใน Shopee {skuList?`(${skuList.length})`:""}</div>
-          <button style={C.btnS} onClick={loadSkuList} disabled={loadingList}>{loadingList?"กำลังโหลด...":"รีเฟรช"}</button>
-        </div>
-        <input style={{...C.inp,marginBottom:12}} placeholder="ค้นหา SKU หรือชื่อสินค้า..." value={search} onChange={e=>setSearch(e.target.value)}/>
-
-        {loadingList&&!skuList&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>กำลังโหลด...</div>}
-        {skuList&&skuList.length===0&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>ยังไม่มี SKU — กด "ดึงรายชื่อสินค้า" ด้านบนก่อน</div>}
-        {skuList&&skuList.length>0&&(
-          <div style={{overflowX:"auto",maxHeight:420,overflowY:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
-              <thead><tr>
-                <th style={C.th}>SKU</th>
-                <th style={C.th}>ชื่อสินค้า</th>
-                <th style={C.th}>สต๊อกคงเหลือ</th>
-                <th style={C.th}></th>
-              </tr></thead>
-              <tbody>
-                {filtered.map((s,i)=>(
-                  <tr key={i}>
-                    <td style={{...C.td,fontWeight:700}}>{s.sku}</td>
-                    <td style={C.td}>{s.name}</td>
-                    <td style={{...C.td,fontWeight:700,color:s.stock===0?"#f87171":"#6ee7b7"}}>
-                      {s.stock===null||s.stock===undefined?"-":s.stock}
-                    </td>
-                    <td style={C.td}>
-                      <button style={{...C.btnS,padding:"4px 10px",fontSize:11}} onClick={()=>{setSku(s.sku);setQty(String(s.stock??""));}}>เลือก</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length===0&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>ไม่พบ SKU ที่ตรงกับคำค้นหา</div>}
-          </div>
-        )}
-      </div>
-    </React.Fragment>
-  );
+    </div>`;
 }
 
-function BulkTab({t3,pushLocalHistory,api}){
-  const [text,setText]=useState("");
-  const [busy,setBusy]=useState(false);
-
-  const run=async()=>{
-    const rows=text.trim().split("\n").map(line=>{
-      const [sku,qty]=line.split(",").map(s=>s&&s.trim());
-      return{sku,qty};
-    }).filter(r=>r.sku);
-    if(rows.length===0){t3("กรุณาวางข้อมูลก่อน","warn");return;}
-    if(rows.length>50){t3("ต่อครั้งไม่ควรเกิน 50 รายการ (ข้อจำกัดเวลาของ Worker ฟรี) แบ่งเป็นหลายรอบ","warn");return;}
-    setBusy(true);
-    t3("กำลังปรับสต๊อก "+rows.length+" รายการ...");
-    const res=await api("/update-bulk",{method:"POST",body:JSON.stringify({rows})});
-    setBusy(false);
-    const ok=res.results.filter(r=>r.ok).length;
-    const fail=res.results.length-ok;
-    t3("เสร็จสิ้น: สำเร็จ "+ok+" ล้มเหลว "+fail,fail>0?"warn":"ok");
-    pushLocalHistory();
-    setText("");
-  };
-
-  return(
-    <div style={C.card}>
-      <div style={C.h3}>📋 ปรับสต๊อกหลายรายการพร้อมกัน</div>
-      <div style={{fontSize:12,color:"#8b8fa8",marginBottom:8}}>วางทีละบรรทัด รูปแบบ <code>sku,จำนวน</code> (สูงสุด 50 รายการต่อครั้ง)</div>
-      <textarea style={{...C.inp,minHeight:140,fontFamily:"monospace",resize:"vertical"}} value={text} onChange={e=>setText(e.target.value)} placeholder={"SKU001,120\nSKU002,0\nSKU003-RED,45"}/>
-      <button style={{...C.btnP,marginTop:12,opacity:busy?0.6:1}} disabled={busy} onClick={run}>{busy?"กำลังปรับ...":"ปรับสต๊อกทั้งหมด"}</button>
-    </div>
-  );
+function qrImg() {
+  return settings.QR_IMAGE_URL ? `<img src="${esc(settings.QR_IMAGE_URL)}" alt="">` : "ยังไม่มี QR";
 }
 
-// ---------- แยกไฟล์ PDF ใบปะหน้า: อ่านที่อยู่ผู้รับ (TO) ตรงจากไฟล์ ไม่ต้องพึ่ง Shopee API ----------
-if (typeof pdfjsLib !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+function setQR(url) {
+  settings.QR_IMAGE_URL = url;
+  markDirty();
+  $("qrPreview").innerHTML = qrImg();
 }
 
-const ORDER_SN_REGEX = /Shopee\s*Order\s*No\.?\s*[:\s]*([A-Z0-9]{10,16})/i;
-// จับข้อความตั้งแต่ "ผู้รับ (TO)" ไปจนถึงจุดที่ label เริ่มพูดถึงวันที่รับพัสดุ (PICKUP DATE) —
-// เพื่อดึงเฉพาะบล็อกที่อยู่ผู้รับ ไม่เอาที่อยู่ผู้ส่งมาปน
-// ผ.{0,2}รับ กันเคสฟอนต์ที่ทำให้สระ/วรรณยุกต์ในคำว่า "ผู้รับ" หายไปกลายเป็น □ (เช่น "ผ□รับ")
-const RECIPIENT_REGEX = /ผ.{0,2}รับ\s*\(?\s*TO\s*\)?\s*([\s\S]*?)(?:PICKUP\s*DATE|SHIP\s*BY\s*DATE|NOTE\b)/i;
-
-/** จัดเรียง text item ของหน้า PDF ตามตำแหน่งจริง (บนลงล่าง, ซ้ายไปขวา)
- *  แทนลำดับดิบจาก content stream ซึ่งบางทีสลับ FROM/TO กันได้
- *  ใช้ระยะห่างระหว่างตัวอักษร (ไม่ใช่ space คงที่) ตัดสินว่าควรมีช่องว่างหรือไม่
- *  กันปัญหาตัวอักษรไทยถูกแยกเป็นชิ้นๆ แล้วมี space แทรกจนคำผิดเพี้ยน (เช่น "ผู้รับ" กลายเป็น "ผ ู ้ ร ั บ") */
-function reconstructPageText(content){
-  const items = content.items.map(it=>({
-    str: it.str, x: it.transform[4], y: it.transform[5],
-    width: it.width||0, height: Math.abs(it.height||it.transform[3]||10),
-  }));
-  items.sort((a,b)=> b.y-a.y || a.x-b.x);
-  const lines=[]; let cur=[]; let curY=null;
-  const TOL=3;
-  for(const it of items){
-    if(curY===null || Math.abs(it.y-curY)<=TOL){ cur.push(it); if(curY===null)curY=it.y; }
-    else { lines.push(finalizeLine(cur)); cur=[it]; curY=it.y; }
+async function uploadQR(file) {
+  if (!file) return;
+  try {
+    settings.QR_IMAGE_URL = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลด QR แล้ว");
+  } catch (e) {
+    toast("อัปโหลด QR ไม่สำเร็จ", false);
   }
-  if(cur.length) lines.push(finalizeLine(cur));
-  return lines.join("\n");
 }
 
-function finalizeLine(lineItems){
-  lineItems.sort((a,b)=>a.x-b.x);
-  let line=""; let prevEndX=null;
-  for(const it of lineItems){
-    if(prevEndX!==null){
-      const gap = it.x - prevEndX;
-      if(gap > it.height*0.25) line += " "; // ห่างพอสมควรถึงจะถือว่าเป็นช่องว่างจริง
-    }
-    line += it.str;
-    prevEndX = it.x + it.width;
+/* ==========================================================
+   รายการสั่งซื้อ (สถิติ + จัดการสถานะ)
+   ========================================================== */
+async function loadOrders(silent = false) {
+  if (!silent && tab === "orders") $("content").innerHTML = `<div class="card">กำลังโหลด...</div>`;
+  try {
+    orders = await api("/admin/orders");
+  } catch (e) {
+    orders = [];
+    if (!silent) toast("โหลดรายการไม่สำเร็จ", false);
   }
-  return line;
+  render();
 }
 
-function cleanAddressText(raw){
-  return (raw||"")
-    .replace(/[\u25A1\uFFFD□]/g, "") // ตัดสัญลักษณ์ □ (ตัวอักษรที่ฟอนต์แปลไม่ได้) ออก กันเทียบที่อยู่ผิดพลาด
-    .replace(/\s+/g," ")
-    .trim();
-}
+function viewOrders() {
+  const today = new Date().toDateString();
+  const now = new Date();
+  const monthList = orders.filter(o => dayOf(o).getMonth() === now.getMonth() && dayOf(o).getFullYear() === now.getFullYear());
+  const todayN = orders.filter(o => dayOf(o).toDateString() === today).length;
+  const pending = orders.filter(o => o.status === "new").length;
+  const revenue = monthList.reduce((s, o) => s + (Number(o.amount) || 0), 0);
 
-/** เหมือน normalizeAddress ฝั่ง Worker ใช้เช็คที่อยู่ซ้ำกันเองภายในไฟล์ชุดที่อัปโหลดพร้อมกัน */
-function normalizeAddressClient(addr){
-  return (addr||"").toLowerCase().replace(/[\s,.\-]+/g," ").trim();
-}
-
-/** ดึงข้อความ "ตัวเลือกสินค้า" แบบเจาะจง แทนการเทียบคำทั้งหน้า
- *  สังเกตว่าในตารางสินค้า แต่ละแถวจะจบด้วยตัวเลขจำนวนสั้นๆ (เช่น "...TRUE2MB159(FREE) 1")
- *  เก็บเฉพาะข้อความก่อนตัวเลขนั้นมาเป็นตัวเลือกสินค้า กันการเทียบคำผิดจากชื่อสินค้า/คำโฆษณา */
-function extractVariantCandidates(rawText){
-  const lines = (rawText||"").split("\n");
-  const candidates = [];
-  for(const line of lines){
-    const m = line.match(/(\S.{0,40}?)\s+\d{1,3}\s*$/);
-    if(m) candidates.push(m[1]);
-  }
-  return candidates.join(" | ");
-}
-
-async function extractPagesInfo(arrayBuffer){
-  const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
-  const pages=[]; // {pageIdx, sn, address, isFree, hasRealProductSignal, variantTextLower}
-  for(let i=1;i<=pdf.numPages;i++){
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = reconstructPageText(content);
-
-    const snMatch = text.match(ORDER_SN_REGEX);
-    const sn = snMatch ? snMatch[1].toUpperCase() : null;
-
-    const addrMatch = text.match(RECIPIENT_REGEX);
-    const address = addrMatch ? cleanAddressText(addrMatch[1]) : null;
-
-    const variantText = extractVariantCandidates(text);
-    const variantTextLower = variantText.toLowerCase();
-    const flat = variantTextLower.replace(/\s+/g,"");
-
-    const isFree = /free/i.test(variantTextLower); // เช็คจากตัวเลือกสินค้าเท่านั้น ไม่ใช่ทั้งหน้า
-    const aisKeywords=["ais","เอไอเอส"];
-    const myanmarKeywords=["15m300","8m250","ซิมสมัครได้ทุกโปร"];
-    const hasAis = aisKeywords.some(k=>flat.includes(k));
-    const hasMyanmar = myanmarKeywords.some(k=>flat.includes(k));
-    const hasRealProductSignal = hasAis || hasMyanmar;
-
-    pages.push({pageIdx:i-1, sn, address, isFree, hasAis, hasMyanmar, hasRealProductSignal, variantText, rawText:text});
-  }
-  return pages;
-}
-
-function UnmatchedRow({u}){
-  const [open,setOpen]=useState(false);
-  const preview = (u.rawText||"").replace(/\n/g," ⏎ ").slice(0,180);
-  return(
-    <React.Fragment>
-      <tr>
-        <td style={{...C.td,fontSize:11}}>{u.file}</td>
-        <td style={C.td}>{u.page}</td>
-        <td style={C.td}>
-          <div>{u.sn} — {u.reason}</div>
-          <div style={{fontSize:10,color:"#64748b",fontFamily:"monospace",marginTop:4,wordBreak:"break-all"}}>
-            {preview}{(u.rawText||"").length>180?"...":""}
-          </div>
-          <button style={{...C.btnS,padding:"3px 8px",fontSize:11,marginTop:6}} onClick={()=>setOpen(!open)}>{open?"ซ่อนข้อความเต็ม":"ดูข้อความเต็ม (copy ได้)"}</button>
-        </td>
-      </tr>
-      {open&&(
-        <tr>
-          <td colSpan={3} style={{...C.td,background:"rgba(0,0,0,0.3)"}}>
-            <textarea readOnly value={u.rawText||""} style={{width:"100%",height:160,background:"rgba(255,255,255,0.05)",color:"#e2e8f0",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:8,fontSize:11,fontFamily:"monospace"}}/>
-          </td>
-        </tr>
-      )}
-    </React.Fragment>
-  );
-}
-
-function classifyPage({isFree, hasAis, hasMyanmar, hasRealProductSignal, duplicate, firstSeenOrderSn}){
-  // ยกเว้นการเช็คซ้ำเฉพาะกรณี Free ล้วนๆ เท่านั้น — ถ้าในใบเดียวกันมีตัวเลือกสินค้าจริงปนอยู่ด้วย
-  // (เช่นสั่ง Free 1 ตัวเลือก + สินค้าจริงอีก 1 ตัวเลือกในออเดอร์เดียวกัน) ต้องเช็คซ้ำตามปกติ ไม่ยกเว้น
-  const isFreeOnly = isFree && !hasRealProductSignal;
-  if(isFreeOnly) return {group:"free", label:"ซิมฟรีเดือนแรก"};
-  if(duplicate) return {group:"blocked", label:"ซิมไม่เข้าเงื่อนไข", reason:"ที่อยู่นี้เคยส่งสินค้าไปแล้ว (ออเดอร์แรก: "+firstSeenOrderSn+")"};
-  if(hasAis) return {group:"ais", label:"ซิมเอไอเอส"};
-  if(hasMyanmar) return {group:"myanmar", label:"ซิมพม่า"};
-  return {group:"donjai", label:"ซิมโดนใจ"};
-}
-
-async function buildSplitPdfMulti(filesBytes, items){
-  // items: [{fileIndex, pageIdx, sn}] — อาจมาจากหลายไฟล์ปนกัน
-  const { PDFDocument } = PDFLib;
-  const outDoc = await PDFDocument.create();
-  const srcDocCache = {};
-  for(const item of items){
-    if(!srcDocCache[item.fileIndex]){
-      srcDocCache[item.fileIndex] = await PDFDocument.load(filesBytes[item.fileIndex]);
-    }
-    const [copied] = await outDoc.copyPages(srcDocCache[item.fileIndex], [item.pageIdx]);
-    outDoc.addPage(copied);
-  }
-  return await outDoc.save();
-}
-
-function downloadOrOpenPdf(bytes, filename){
-  const blob = new Blob([bytes], {type:"application/pdf"});
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
-}
-
-function PdfSplitTab({t3,api}){
-  const [fileNames,setFileNames]=useState([]);
-  const [processing,setProcessing]=useState(false);
-  const [result,setResult]=useState(null);
-  const [checkingShopee,setCheckingShopee]=useState(false);
-
-  const runShopeeCheck=async()=>{
-    setCheckingShopee(true);
-    t3("กำลังดึงคำสั่งซื้อจาก Shopee มาตรวจสอบ...");
-    const res=await api("/check-shopee-orders",{method:"POST",body:JSON.stringify({daysBack:30})});
-    setCheckingShopee(false);
-    if(res.error||!res.ok){t3("ดึงคำสั่งซื้อจาก Shopee ไม่สำเร็จ: "+(res.error||"unknown"),"err");return;}
-    t3(`✅ ตรวจสอบจาก Shopee เสร็จ: รวม ${res.total} | Free ${res.free} | เอไอเอส ${res.ais} | พม่า ${res.myanmar} | โดนใจ ${res.donjai} | ไม่เข้าเงื่อนไข ${res.blocked}`);
-  };
-
-  const handleFiles=async(e)=>{
-    const files=Array.from(e.target.files||[]);
-    if(files.length===0)return;
-    if(typeof pdfjsLib==="undefined"||typeof PDFLib==="undefined"){
-      t3("โหลดไลบรารีอ่าน PDF ไม่สำเร็จ ลองรีเฟรชหน้าใหม่","err");
-      return;
-    }
-    setFileNames(files.map(f=>f.name));
-    setProcessing(true);
-    setResult(null);
-    try{
-      const filesBytes=[];
-      const allPages=[]; // {fileIndex,pageIdx,sn,address,isFree,hasAis,hasMyanmar,hasRealProductSignal}
-      let totalPagesCount=0;
-
-      for(let fi=0;fi<files.length;fi++){
-        const buf=await files[fi].arrayBuffer();
-        filesBytes.push(buf.slice(0));
-        const pages=await extractPagesInfo(buf.slice(0));
-        pages.forEach(p=>{allPages.push({fileIndex:fi,...p});totalPagesCount++;});
-      }
-
-      const unmatched=[];
-      const withSn=[];
-      allPages.forEach(p=>{
-        if(!p.sn){
-          unmatched.push({file:files[p.fileIndex].name,page:p.pageIdx+1,sn:"(อ่านเลขไม่พบ)",reason:"หาเลขคำสั่งซื้อไม่พบ",rawText:p.rawText});
-          return;
-        }
-        withSn.push(p);
-      });
-
-      // ขั้นแรก: เช็คว่ามีข้อมูลที่ดึงมาจาก Shopee API ไว้ล่วงหน้าแล้วหรือยัง (แม่นกว่าอ่าน PDF)
-      let shopeeStatusMap={};
-      if(withSn.length>0){
-        const res=await api("/shopee-order-status",{method:"POST",body:JSON.stringify({orderSns:withSn.map(p=>p.sn)})});
-        if(!res.error) shopeeStatusMap=res.statusMap||{};
-      }
-
-      const preChecked=withSn.filter(p=>shopeeStatusMap[p.sn]);
-      const needsFallback=withSn.filter(p=>!shopeeStatusMap[p.sn]);
-
-      // สำหรับที่ไม่มีข้อมูล Shopee ล่วงหน้า ต้องพึ่งการอ่านที่อยู่จาก PDF เหมือนเดิม
-      const validPages=[];
-      needsFallback.forEach(p=>{
-        if(!p.address){
-          unmatched.push({file:files[p.fileIndex].name,page:p.pageIdx+1,sn:p.sn,reason:"หาที่อยู่ผู้รับไม่พบ (และไม่มีข้อมูลจาก Shopee ล่วงหน้า)",rawText:p.rawText});
-          return;
-        }
-        validPages.push(p);
-      });
-
-      const withFreeOnlyFlag = validPages.map(p=>({...p, isFreeOnly: p.isFree && !p.hasRealProductSignal}));
-      const freePages=withFreeOnlyFlag.filter(p=>p.isFreeOnly);
-      const nonFreePages=withFreeOnlyFlag.filter(p=>!p.isFreeOnly);
-
-      // เช็คที่อยู่ซ้ำสำหรับทุกรายการที่ไม่ใช่ Free ล้วนๆ (รวมออเดอร์ผสม Free+สินค้าจริงด้วย)
-      let addressResults={};
-      if(nonFreePages.length>0){
-        const res=await api("/check-addresses",{method:"POST",body:JSON.stringify({
-          items: nonFreePages.map(p=>({orderSn:p.sn, address:p.address}))
-        })});
-        if(res.error){t3("ตรวจสอบที่อยู่ไม่สำเร็จ: "+res.error,"err");setProcessing(false);return;}
-        (res.results||[]).forEach(r=>{addressResults[r.orderSn]=r;});
-      }
-
-      // เช็คสถานะพิมพ์แล้วสำหรับทุกรายการที่มี sn (ทั้งที่มี precheck และ fallback)
-      let printedMap={};
-      if(withSn.length>0){
-        const res=await api("/printed-status",{method:"POST",body:JSON.stringify({orderSns:withSn.map(p=>p.sn)})});
-        if(!res.error) printedMap=res.printedAt||{};
-      }
-
-      // เช็คที่อยู่ซ้ำกันเองภายในไฟล์ชุดที่อัปโหลดพร้อมกันด้วย — ถ้าซ้ำ ให้ไปกลุ่ม
-      // "ไม่เข้าเงื่อนไข" ทั้งหมดทุกใบ (รวมใบแรกด้วย ไม่ใช่แค่ใบหลังๆ)
-      const addressCounts={};
-      nonFreePages.forEach(p=>{
-        const key=normalizeAddressClient(p.address);
-        addressCounts[key]=(addressCounts[key]||0)+1;
-      });
-
-      const groups={free:[],ais:[],myanmar:[],donjai:[],blocked:[]};
-      const alreadyPrintedPages=[];
-      const debugRows=[];
-      let preCheckedCount=preChecked.length;
-
-      // 1) รายการที่มีข้อมูลจาก Shopee ล่วงหน้า — ใช้ผลตรงจากที่ดึงมา ไม่ต้องอ่าน PDF อีก
-      preChecked.forEach(p=>{
-        const sc=shopeeStatusMap[p.sn];
-        const printedAt=printedMap[p.sn];
-        const item={fileIndex:p.fileIndex,pageIdx:p.pageIdx,sn:p.sn,reason:sc.reason};
-        debugRows.push({file:files[p.fileIndex].name,page:p.pageIdx+1,sn:p.sn,source:"shopee-api",group:sc.group,printedAt,address:sc.address,variantText:sc.itemNames});
-        if(printedAt){
-          alreadyPrintedPages.push({...item,printedAt,categoryLabel:sc.label,group:sc.group});
-        }else{
-          groups[sc.group].push(item);
-        }
-      });
-
-      // 2) รายการที่ต้องอ่านจาก PDF เอง (fallback)
-      nonFreePages.forEach(p=>{
-        const ar=addressResults[p.sn]||{};
-        const addrKey=normalizeAddressClient(p.address);
-        const dupInBatch=addressCounts[addrKey]>1;
-        const duplicate=ar.duplicate||dupInBatch;
-        const reasonOverride = !ar.duplicate && dupInBatch
-          ? "ที่อยู่นี้ซ้ำกับคำสั่งซื้ออื่นในไฟล์ที่อัปโหลดพร้อมกัน"
-          : undefined;
-        const cat=classifyPage({isFree:p.isFree, hasAis:p.hasAis, hasMyanmar:p.hasMyanmar, hasRealProductSignal:p.hasRealProductSignal, duplicate, firstSeenOrderSn:ar.firstSeenOrderSn});
-        if(reasonOverride) cat.reason=reasonOverride;
-        const printedAt=printedMap[p.sn];
-        const item={fileIndex:p.fileIndex,pageIdx:p.pageIdx,sn:p.sn,reason:cat.reason};
-        debugRows.push({file:files[p.fileIndex].name,page:p.pageIdx+1,sn:p.sn,source:"pdf-fallback",isFree:p.isFree,hasAis:p.hasAis,hasMyanmar:p.hasMyanmar,hasRealProductSignal:p.hasRealProductSignal,duplicate,printedAt,group:cat.group,variantText:p.variantText,address:p.address});
-        if(printedAt){
-          alreadyPrintedPages.push({...item,printedAt,categoryLabel:cat.label,group:cat.group});
-        }else{
-          groups[cat.group].push(item);
-        }
-      });
-
-      freePages.forEach(p=>{
-        const item={fileIndex:p.fileIndex,pageIdx:p.pageIdx,sn:p.sn};
-        const printedAt=printedMap[p.sn];
-        debugRows.push({file:files[p.fileIndex].name,page:p.pageIdx+1,sn:p.sn,source:"pdf-fallback",isFree:p.isFree,hasAis:p.hasAis,hasMyanmar:p.hasMyanmar,hasRealProductSignal:p.hasRealProductSignal,duplicate:false,printedAt,group:"free",variantText:p.variantText,address:p.address});
-        if(printedAt){
-          alreadyPrintedPages.push({...item,printedAt,categoryLabel:"ซิมฟรีเดือนแรก",group:"free"});
-        }else{
-          groups.free.push(item);
-        }
-      });
-
-      setResult({groups,alreadyPrintedPages,unmatched,filesBytes,totalPages:totalPagesCount,debugRows,preCheckedCount});
-      t3(`✅ วิเคราะห์เสร็จ (${files.length} ไฟล์, ${totalPagesCount} หน้า, ใช้ข้อมูล Shopee ล่วงหน้า ${preCheckedCount} รายการ): Free ${groups.free.length} | เอไอเอส ${groups.ais.length} | พม่า ${groups.myanmar.length} | โดนใจ ${groups.donjai.length} | ไม่เข้าเงื่อนไข ${groups.blocked.length} | พิมพ์แล้ว ${alreadyPrintedPages.length} | จับคู่ไม่ได้ ${unmatched.length}`);
-    }catch(err){
-      t3("อ่านไฟล์ PDF ไม่สำเร็จ: "+err.message,"err");
-    }
-    setProcessing(false);
-  };
-
-  const exportGroup=async(items,label,markPrinted)=>{
-    if(!result||items.length===0){t3("ไม่มีหน้าในกลุ่มนี้","warn");return;}
-    try{
-      const bytes=await buildSplitPdfMulti(result.filesBytes,items);
-      downloadOrOpenPdf(bytes,label+".pdf");
-      t3("✅ สร้างไฟล์ "+label+" สำเร็จ ("+items.length+" หน้า)");
-
-      if(markPrinted){
-        const sns=items.map(it=>it.sn);
-        const res=await api("/mark-printed",{method:"POST",body:JSON.stringify({orderSns:sns})});
-        if(!res.error){
-          t3("บันทึกแล้วว่า "+sns.length+" ออเดอร์นี้พิมพ์ไปแล้ว");
-        }
-      }
-    }catch(err){
-      t3("สร้างไฟล์ไม่สำเร็จ: "+err.message,"err");
-    }
-  };
-
-  const unmarkPrinted=async(sns)=>{
-    if(!sns||sns.length===0)return;
-    const res=await api("/unmark-printed",{method:"POST",body:JSON.stringify({orderSns:sns})});
-    if(res.error||!res.ok){t3("คืนสถานะไม่สำเร็จ: "+(res.error||"unknown"),"err");return;}
-    t3("คืนสถานะ "+sns.length+" ออเดอร์เป็นยังไม่พิมพ์แล้ว");
-
-    setResult(prev=>{
-      if(!prev)return prev;
-      const snSet=new Set(sns);
-      const movedBack=prev.alreadyPrintedPages.filter(it=>snSet.has(it.sn));
-      const remaining=prev.alreadyPrintedPages.filter(it=>!snSet.has(it.sn));
-      const newGroups={...prev.groups};
-      Object.keys(newGroups).forEach(k=>{newGroups[k]=[...newGroups[k]];});
-      movedBack.forEach(it=>{
-        const {printedAt,categoryLabel,group,...item}=it;
-        if(newGroups[group]) newGroups[group].push(item);
-      });
-      return {...prev, alreadyPrintedPages:remaining, groups:newGroups};
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push({
+      label: d.toLocaleDateString("th-TH", { weekday: "short" }),
+      n: orders.filter(o => dayOf(o).toDateString() === d.toDateString()).length
     });
-  };
-
-  const exportDebugInfo=()=>{
-    if(!result||!result.debugRows){t3("ยังไม่มีข้อมูลให้ export","warn");return;}
-    const header="file\tpage\tsn\tgroup\tisFree\thasAis\thasMyanmar\thasRealProductSignal\tduplicate\tprintedAt\tvariantText\taddress";
-    const rows=result.debugRows.map(r=>[
-      r.file,r.page,r.sn,r.group,r.isFree,r.hasAis,r.hasMyanmar,r.hasRealProductSignal,
-      r.duplicate||false,r.printedAt?new Date(r.printedAt).toISOString():"",
-      (r.variantText||"").replace(/\t/g," "),(r.address||"").replace(/\t/g," ")
-    ].join("\t"));
-    const content=[header,...rows].join("\n");
-    const blob=new Blob([content],{type:"text/plain;charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url; a.download="debug_pdf_split.txt"; a.click();
-    t3("ดาวน์โหลดไฟล์ debug แล้ว");
-  };
-
-  return(
-    <div style={C.card}>
-      <div style={C.h3}>📎 แยกใบปะหน้าจากไฟล์ PDF (bulk export)</div>
-      <div style={{fontSize:12,color:"#8b8fa8",marginBottom:12}}>
-        อัปโหลดไฟล์ PDF ใบปะหน้าที่ปริ้น/ส่งออกจาก Shopee Seller Centre ได้ <b>ทีละหลายไฟล์พร้อมกัน</b>
-        {" "}<b>แนะนำ: กดปุ่ม "ดึงคำสั่งซื้อจาก Shopee มาตรวจสอบ" ด้านล่างก่อนเสมอ</b> — จะได้ข้อมูลที่อยู่/ตัวเลือกสินค้า
-        ตรงจาก Shopee (แม่นกว่าอ่าน PDF มาก) ถ้าไม่กดหรือหาไม่เจอ ระบบจะ fallback ไปอ่านที่อยู่ผู้รับ (TO) จากไฟล์ PDF แทนอัตโนมัติ
-        แล้วแยกเป็น 5 กลุ่ม: <b>ซิมฟรีเดือนแรก</b>, <b>ซิมเอไอเอส</b>, <b>ซิมพม่า</b> (15M300/8M250/ซิมสมัครได้ทุกโปร),{" "}
-        <b>ซิมโดนใจ</b> (ตัวเลือกอื่น), และ <b>ซิมไม่เข้าเงื่อนไข</b> (ที่อยู่ผู้รับซ้ำ) — ออเดอร์ที่เคยพิมพ์ไปแล้วจะถูกแยกออกต่างหากกันพิมพ์ซ้ำ
-      </div>
-
-      <button style={{...C.btnP,background:"linear-gradient(135deg,#0891b2,#06b6d4)",opacity:checkingShopee?0.6:1,marginBottom:14}} disabled={checkingShopee} onClick={runShopeeCheck}>
-        {checkingShopee?"กำลังดึงจาก Shopee...":"🔄 ดึงคำสั่งซื้อจาก Shopee มาตรวจสอบล่วงหน้า (ย้อนหลัง 30 วัน)"}
-      </button>
-
-      <input type="file" accept="application/pdf" multiple onChange={handleFiles}
-        style={{...C.inp,padding:8}} disabled={processing}/>
-      {fileNames.length>0&&(
-        <div style={{fontSize:12,color:"#8b8fa8",marginTop:6}}>
-          ไฟล์ที่เลือก ({fileNames.length}): {fileNames.join(", ")}
-        </div>
-      )}
-      {processing&&<div style={{fontSize:13,color:"#a78bfa",marginTop:10}}>กำลังวิเคราะห์ไฟล์...</div>}
-
-      {result&&(
-        <React.Fragment>
-          <div style={{display:"flex",gap:16,fontSize:13,marginTop:16,flexWrap:"wrap"}}>
-            <div>รวม: <b>{result.totalPages}</b> หน้า</div>
-            <div style={{color:"#a78bfa"}}>Free เดือนแรก: <b>{result.groups.free.length}</b></div>
-            <div style={{color:"#34d399"}}>ซิมเอไอเอส: <b>{result.groups.ais.length}</b></div>
-            <div style={{color:"#38bdf8"}}>ซิมพม่า: <b>{result.groups.myanmar.length}</b></div>
-            <div style={{color:"#6ee7b7"}}>ซิมโดนใจ: <b>{result.groups.donjai.length}</b></div>
-            <div style={{color:"#f87171"}}>ไม่เข้าเงื่อนไข: <b>{result.groups.blocked.length}</b></div>
-            <div style={{color:"#64748b"}}>พิมพ์ไปแล้ว: <b>{result.alreadyPrintedPages.length}</b></div>
-            <div style={{color:"#fbbf24"}}>จับคู่ไม่ได้: <b>{result.unmatched.length}</b></div>
-            <button style={{...C.btnS,fontSize:11,padding:"4px 10px"}} onClick={exportDebugInfo}>📝 ส่งออกข้อมูล Debug ทั้งหมด (.txt)</button>
-          </div>
-
-          <div style={{display:"flex",gap:8,marginTop:14,flexWrap:"wrap"}}>
-            <button style={{...C.btnP,background:"linear-gradient(135deg,#7c3aed,#a78bfa)"}} onClick={()=>exportGroup(result.groups.free,"ใบปะหน้า_ซิมฟรีเดือนแรก",true)} disabled={result.groups.free.length===0}>
-              📄 ดาวน์โหลด/พิมพ์ ซิมฟรีเดือนแรก ({result.groups.free.length})
-            </button>
-            <button style={{...C.btnP,background:"linear-gradient(135deg,#059669,#34d399)"}} onClick={()=>exportGroup(result.groups.ais,"ใบปะหน้า_ซิมเอไอเอส",true)} disabled={result.groups.ais.length===0}>
-              📄 ดาวน์โหลด/พิมพ์ ซิมเอไอเอส ({result.groups.ais.length})
-            </button>
-            <button style={{...C.btnP,background:"linear-gradient(135deg,#0284c7,#38bdf8)"}} onClick={()=>exportGroup(result.groups.myanmar,"ใบปะหน้า_ซิมพม่า",true)} disabled={result.groups.myanmar.length===0}>
-              📄 ดาวน์โหลด/พิมพ์ ซิมพม่า ({result.groups.myanmar.length})
-            </button>
-            <button style={C.btnP} onClick={()=>exportGroup(result.groups.donjai,"ใบปะหน้า_ซิมโดนใจ",true)} disabled={result.groups.donjai.length===0}>
-              📄 ดาวน์โหลด/พิมพ์ ซิมโดนใจ ({result.groups.donjai.length})
-            </button>
-            <button style={{...C.btnP,background:"linear-gradient(135deg,#dc2626,#991b1b)"}} onClick={()=>exportGroup(result.groups.blocked,"ใบปะหน้า_ไม่เข้าเงื่อนไข",true)} disabled={result.groups.blocked.length===0}>
-              📄 ดาวน์โหลด/พิมพ์ ซิมไม่เข้าเงื่อนไข ({result.groups.blocked.length})
-            </button>
-          </div>
-
-          {result.groups.blocked.length>0&&(
-            <div style={{marginTop:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#f87171",marginBottom:8}}>❌ รายการที่ไม่เข้าเงื่อนไข พร้อมเหตุผล:</div>
-              <div style={{overflowX:"auto",maxHeight:200,overflowY:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse"}}>
-                  <thead><tr><th style={C.th}>Order SN</th><th style={C.th}>เหตุผลที่ไม่เข้าเงื่อนไข</th></tr></thead>
-                  <tbody>
-                    {result.groups.blocked.map((it,i)=>(
-                      <tr key={i}><td style={{...C.td,fontWeight:700}}>{it.sn}</td><td style={{...C.td,color:"#f87171"}}>{it.reason}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {result.alreadyPrintedPages.length>0&&(
-            <div style={{marginTop:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#64748b",marginBottom:8}}>
-                🔁 ออเดอร์เหล่านี้เคยพิมพ์ไปแล้ว (แยกไว้กันพิมพ์ซ้ำ)
-              </div>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                <button style={C.btnS} onClick={()=>exportGroup(result.alreadyPrintedPages,"ใบปะหน้า_พิมพ์ซ้ำ",false)}>
-                  📄 ดาวน์โหลดอีกครั้งถ้าจำเป็น ({result.alreadyPrintedPages.length})
-                </button>
-                <button style={{...C.btnS,color:"#fbbf24",borderColor:"rgba(251,191,36,0.3)"}} onClick={()=>unmarkPrinted(result.alreadyPrintedPages.map(it=>it.sn))}>
-                  ↩️ คืนทั้งหมดเป็นยังไม่พิมพ์
-                </button>
-              </div>
-              <div style={{overflowX:"auto",maxHeight:220,overflowY:"auto",marginTop:8}}>
-                <table style={{width:"100%",borderCollapse:"collapse"}}>
-                  <thead><tr><th style={C.th}>Order SN</th><th style={C.th}>กลุ่มเดิม</th><th style={C.th}>พิมพ์เมื่อ</th><th style={C.th}>คืนสถานะ</th></tr></thead>
-                  <tbody>
-                    {result.alreadyPrintedPages.map((it,i)=>(
-                      <tr key={i}>
-                        <td style={C.td}>{it.sn}</td>
-                        <td style={C.td}>{it.categoryLabel}</td>
-                        <td style={C.td}>{new Date(it.printedAt).toLocaleString("th-TH")}</td>
-                        <td style={C.td}><button style={{...C.btnS,padding:"3px 8px",fontSize:11}} onClick={()=>unmarkPrinted([it.sn])}>คืนเป็นยังไม่พิมพ์</button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {result.unmatched.length>0&&(
-            <div style={{marginTop:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:"#fbbf24",marginBottom:8}}>⚠️ หน้าที่จับคู่ไม่ได้ (ตรวจสอบเอง):</div>
-              <div style={{overflowX:"auto",maxHeight:300,overflowY:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse"}}>
-                  <thead><tr><th style={C.th}>ไฟล์</th><th style={C.th}>หน้าที่</th><th style={C.th}>เลข/สาเหตุ/ข้อความ</th></tr></thead>
-                  <tbody>
-                    {result.unmatched.map((u,i)=>(
-                      <UnmatchedRow key={i} u={u}/>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{fontSize:11,color:"#8b8fa8",marginTop:6}}>
-                สาเหตุที่พบบ่อย: รูปแบบใบปะหน้าจากขนส่งเจ้านี้ไม่ตรงกับที่ระบบคาดไว้ (ระบบยึดรูปแบบ SPX Express เป็นหลัก)
-              </div>
-            </div>
-          )}
-        </React.Fragment>
-      )}
-    </div>
-  );
-}
-
-function SkuListTab({t3,api}){
-  const [skus,setSkus]=useState(null);
-  const [search,setSearch]=useState("");
-  const [loading,setLoading]=useState(false);
-
-  const load=async()=>{
-    setLoading(true);
-    const res=await api("/sku-list");
-    setLoading(false);
-    if(res.error){t3("โหลดรายการ SKU ไม่สำเร็จ: "+res.error,"err");return;}
-    setSkus(res.skus||[]);
-  };
-
-  useEffect(()=>{ load(); },[]);
-
-  const filtered=(skus||[]).filter(s=>
-    !search || s.sku.toLowerCase().includes(search.toLowerCase()) || (s.name||"").toLowerCase().includes(search.toLowerCase())
-  );
-
-  return(
-    <div style={C.card}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div style={C.h3}>📋 รายการ SKU ทั้งหมด {skus?`(${skus.length})`:""}</div>
-        <button style={C.btnS} onClick={load} disabled={loading}>{loading?"กำลังโหลด...":"รีเฟรช"}</button>
-      </div>
-      <input style={{...C.inp,marginBottom:12}} placeholder="ค้นหา SKU หรือชื่อสินค้า..." value={search} onChange={e=>setSearch(e.target.value)}/>
-
-      {loading&&!skus&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>กำลังโหลด...</div>}
-      {skus&&skus.length===0&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>ยังไม่มี SKU — กดปุ่ม "ดึงรายชื่อสินค้า" ในแท็บปรับสต๊อกก่อน</div>}
-      {skus&&skus.length>0&&(
-        <div style={{overflowX:"auto",maxHeight:420,overflowY:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead><tr>
-              <th style={C.th}>SKU</th>
-              <th style={C.th}>ชื่อสินค้า</th>
-              <th style={C.th}>item_id</th>
-              <th style={C.th}>model_id</th>
-            </tr></thead>
-            <tbody>
-              {filtered.map((s,i)=>(
-                <tr key={i}>
-                  <td style={{...C.td,fontWeight:700}}>{s.sku}</td>
-                  <td style={C.td}>{s.name}</td>
-                  <td style={C.td}>{s.itemId}</td>
-                  <td style={C.td}>{s.modelId}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length===0&&<div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>ไม่พบ SKU ที่ตรงกับคำค้นหา</div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HistoryTab({history}){
-  if(history.length===0){
-    return <div style={C.card}><div style={{fontSize:13,color:"#8b8fa8",textAlign:"center",padding:"20px 0"}}>ยังไม่มีประวัติการปรับสต๊อก</div></div>;
   }
-  return(
-    <div style={C.card}>
-      <div style={C.h3}>📊 ประวัติล่าสุด</div>
-      <div style={{overflowX:"auto"}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr>
-            <th style={C.th}>เวลา</th>
-            <th style={C.th}>SKU</th>
-            <th style={C.th}>จำนวน</th>
-            <th style={C.th}>สถานะ</th>
-          </tr></thead>
-          <tbody>
-            {history.map((h,i)=>(
-              <tr key={i}>
-                <td style={C.td}>{fmtT(h.time)}</td>
-                <td style={C.td}>{h.sku}</td>
-                <td style={C.td}>{h.qty}</td>
-                <td style={{...C.td,color:h.ok?"#6ee7b7":"#f87171"}}>{h.ok?"✅ สำเร็จ":"✗ "+(h.error||"ล้มเหลว")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  const max = Math.max(1, ...days.map(d => d.n));
+
+  const branches = [["K", "กาฬสินธุ์"], ["L", "เลย"]].map(([code, name]) => {
+    const bo = orders.filter(o => o.branch === code);
+    const td = bo.filter(o => dayOf(o).toDateString() === today).length;
+    const mo = bo.filter(o => dayOf(o).getMonth() === now.getMonth());
+    const rev = mo.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+    return `<div class="branch"><b>🏪 ${code} — ${name}</b><span>วันนี้ ${td} · เดือนนี้ ${mo.length} · ${fmt(rev)}</span></div>`;
+  }).join("");
+
+  return `
+    <div class="stats">
+      <div class="stat"><div class="k">📅 วันนี้</div><div class="v">${todayN} <small>คำสั่ง</small></div></div>
+      <div class="stat"><div class="k">📆 เดือนนี้</div><div class="v">${monthList.length} <small>คำสั่ง</small></div></div>
+      <div class="stat"><div class="k">🎯 รอตรวจ</div><div class="v">${pending} <small>รายการ</small></div></div>
+      <div class="stat"><div class="k">📈 ยอดเดือนนี้</div><div class="v">${fmt(revenue)}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="head"><h3>📊 7 วันย้อนหลัง</h3><button class="ghost" onclick="loadOrders()">🔄 รีเฟรช</button></div>
+      <div class="bars">
+        ${days.map(d => `<div class="b"><i style="height:${(d.n / max) * 100}%"><b>${d.n}</b></i>${d.label}</div>`).join("")}
       </div>
     </div>
-  );
-}
 
-function SettingsTab({info,onDisconnectWorker}){
-  return(
-    <div style={C.card}>
-      <div style={C.h3}>⚙️ ข้อมูลระบบ</div>
-      <div style={{fontSize:13,color:"#e2e8f0",lineHeight:2}}>
-        <div>โหมด: <b style={{color:info.env==="live"?"#f87171":"#6ee7b7"}}>{info.env==="live"?"LIVE (ร้านจริง)":"TEST (ทดสอบ)"}</b></div>
-        <div>Partner ID: {info.partnerId||"-"}</div>
-        <div>Shop ID: {info.shopId||"ยังไม่เชื่อมต่อ"}</div>
-      </div>
-      <button style={{...C.btnS,marginTop:14}} onClick={onDisconnectWorker}>ล้างค่า Worker URL / Access Key ของเบราว์เซอร์นี้</button>
+    <div class="card">
+      <h3>🏪 สถิติแยกสาขา</h3>
+      ${branches}
     </div>
-  );
+
+    <div class="card">
+      <div class="head"><h3>รายการคำสั่งซื้อ (${orders.length})</h3></div>
+      <input placeholder="ค้นหาเลขคำสั่งซื้อ เบอร์ หรือซีเรียลซิม" oninput="filterOrders(this.value)" style="margin-bottom:12px">
+      <div id="orderList">${orderListHTML(orders)}</div>
+    </div>`;
 }
 
-function Dashboard(){
-  const [tab,setTab]=useState("stock");
-  const [status,setStatus]=useState({connected:false,skuCount:0});
-  const [history,setHistory]=useState([]);
-  const [info,setInfo]=useState({});
-  const [toast,setToast]=useState(null);
-  const [loading,setLoading]=useState(true);
-  const [fatalError,setFatalError]=useState("");
+function filterOrders(q) {
+  q = q.trim().toLowerCase();
+  const list = !q ? orders : orders.filter(o =>
+    [o.orderNo, o.phone, o.serial].some(v => String(v || "").toLowerCase().includes(q)));
+  $("orderList").innerHTML = orderListHTML(list);
+}
 
-  const t3=(msg,type)=>{setToast({msg,type:type||"ok"});setTimeout(()=>setToast(null),3000);};
+function orderListHTML(list) {
+  if (!list.length) return `<div class="empty">📭 ยังไม่มีรายการ</div>`;
+  const label = { new: "รอตรวจ", confirmed: "ยืนยันแล้ว", done: "สมัครแล้ว", rejected: "ปฏิเสธ" };
+  return list.map(o => `
+    <div class="order">
+      <div class="top2">
+        <div>
+          <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
+          <div class="meta">SIM ${esc(o.phone)} · ซีเรียล ${esc(o.serial)} · ${fmt(o.amount)}</div>
+          <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
+        </div>
+        <span class="pill ${esc(o.status)}">${esc(label[o.status] || o.status || "-")}</span>
+      </div>
+      <div class="btns">
+        <button class="primary" onclick="setOrder('${esc(o.id)}','confirmed')">ยืนยันแพ็กเกจ</button>
+        <button class="ok" onclick="setOrder('${esc(o.id)}','done')">สมัครแล้ว</button>
+        <button class="danger" onclick="setOrder('${esc(o.id)}','rejected')">ปฏิเสธ</button>
+      </div>
+    </div>`).join("");
+}
 
-  const api=useCallback(async(path,opts)=>{
-    const workerUrl=lsG(LS_WORKER_URL);
-    const accessKey=lsG(LS_ACCESS_KEY)||"";
-    try{
-      const res=await fetch(workerUrl+path,{
-        ...opts,
-        headers:{"Content-Type":"application/json","X-Access-Key":accessKey,...(opts&&opts.headers)},
-      });
-      return await res.json();
-    }catch(e){
-      return{error:"เชื่อมต่อ Worker ไม่ได้ ตรวจสอบ Worker URL ในหน้าตั้งค่า ("+e.message+")"};
-    }
-  },[]);
+async function setOrder(id, status) {
+  try {
+    await api("/admin/orders/" + encodeURIComponent(id), { method: "POST", json: { status } });
+    const o = orders.find(x => x.id === id);
+    if (o) o.status = status;
+    render();
+    toast("อัปเดตสถานะแล้ว");
+  } catch (e) {
+    toast("อัปเดตสถานะไม่สำเร็จ", false);
+  }
+}
 
-  const refreshStatus=useCallback(async()=>{
-    const res=await api("/status");
-    if(res.error){setFatalError(res.error);return;}
-    setStatus(res);
-  },[api]);
-
-  const refreshHistory=useCallback(async()=>{
-    const res=await api("/history");
-    setHistory(res.history||[]);
-  },[api]);
-
-  useEffect(()=>{
-    (async()=>{
-      await refreshStatus();
-      await refreshHistory();
-      const ci=await api("/config-info");
-      setInfo(ci);
-      setLoading(false);
-    })();
-  },[]);
-
-  const disconnectWorker=()=>{
-    localStorage.removeItem(LS_WORKER_URL);
-    localStorage.removeItem(LS_ACCESS_KEY);
-    location.reload();
-  };
-
-  const tabs=[
-    {id:"stock",label:"📦 ปรับสต๊อก"},
-    {id:"bulk",label:"📋 หลายรายการ"},
-    {id:"pdfsplit",label:"📎 แยกใบปะหน้า PDF"},
-    {id:"skulist",label:"🗂️ รายการ SKU"},
-    {id:"history",label:"📊 ประวัติ ("+history.length+")"},
-    {id:"settings",label:"⚙️ ตั้งค่า"},
+/* ==========================================================
+   การตั้งค่า (ช่องทาง คู่มือ รูปคู่มือ ข้อความ)
+   ========================================================== */
+function viewSettings() {
+  const ph = settings.photos;
+  const slots = [
+    ["orderShot", "📋 รูปคำสั่งซื้อ"],
+    ["simEnvelope", "📦 รูปซองซิม"],
+    ["registerOk", "✅ รูปยืนยันลงทะเบียน"],
+    ["simNumberEx", "🔖 รูปตัวอย่างซิมหมายเลข"],
+    ["trackingEx", "📦 รูปตัวอย่างเลขพัสดุ"],
+    ["receivedPhoneEx", "📱 รูปตัวอย่างเบอร์โทรที่ได้รับ"]
   ];
-
-  if(loading)return(
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
-      <div style={{fontSize:52}}>🛒</div>
-      <div style={{fontSize:18,fontWeight:700}}>Shopee Stock Sync</div>
-      <div style={{color:"#8b8fa8",fontSize:13}}>กำลังโหลด...</div>
-      <div style={{width:36,height:36,border:"3px solid rgba(255,255,255,0.1)",borderTop:"3px solid #a78bfa",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+  return `
+    <div class="card">
+      <div class="head"><h3>🛍️ ช่องทางสั่งซื้อ</h3>
+        <button class="ghost" onclick="addChannel()">+ เพิ่มช่องทาง</button></div>
+      ${settings.channels.length ? settings.channels.map((c, i) => `
+        <div class="grid2" style="margin-bottom:8px">
+          <input value="${esc(c.name)}" placeholder="ชื่อช่องทาง" oninput="settings.channels[${i}].name=this.value;markDirty()">
+          <input value="${esc(c.url)}" placeholder="ลิงก์" oninput="settings.channels[${i}].url=this.value;markDirty()">
+        </div>`).join("") : `<p class="hint">ยังไม่มีช่องทาง</p>`}
     </div>
-  );
 
-  return(
-    <div style={{minHeight:"100vh"}}>
-      <Toast toast={toast}/>
+    <div class="card">
+      <h3>📦 คำอธิบายเลขพัสดุ</h3>
+      <textarea rows="3" oninput="settings.trackingHelp=this.value;markDirty()">${esc(settings.trackingHelp)}</textarea>
+    </div>
+    <div class="card">
+      <h3>🔖 คำอธิบายซิมหมายเลข</h3>
+      <textarea rows="3" oninput="settings.simHelp=this.value;markDirty()">${esc(settings.simHelp)}</textarea>
+    </div>
 
-      <div style={{background:"rgba(15,15,40,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.08)",padding:"12px 16px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:100}}>
-        <div style={{width:40,height:40,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🛒</div>
-        <div style={{flex:1}}>
-          <div style={{color:"white",fontWeight:800,fontSize:16}}>Shopee Stock Sync</div>
-          <div style={{color:"#8b8fa8",fontSize:11}}>ระบบปรับสต๊อกสินค้าตาม SKU</div>
-        </div>
-        <div style={{textAlign:"center"}}>
-          <div style={{color:status.connected?"#6ee7b7":"#f87171",fontWeight:800,fontSize:13}}>{status.connected?"● เชื่อมต่อแล้ว":"● ยังไม่เชื่อมต่อ"}</div>
-          <div style={{color:"#8b8fa8",fontSize:10}}>{status.skuCount} SKU</div>
-        </div>
+    <div class="card">
+      <h3>📷 รูปตัวอย่างการถ่ายรูป</h3>
+      <p class="hint">รูปที่ลูกค้าเห็นตอนถ่ายส่งข้อมูล</p>
+      <div class="grid3">
+        ${slots.map(([key, label]) => `
+          <div class="photo">
+            <div class="t">${label}</div>
+            <div class="ph">${ph[key] ? `<img src="${esc(ph[key])}" alt="">` : "ยังไม่มีรูป"}</div>
+            <label style="cursor:pointer;color:var(--blue);font-weight:700;align-items:center">
+              📁 เลือกรูปตัวอย่าง
+              <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto('${key}', this.files[0])">
+            </label>
+          </div>`).join("")}
       </div>
-
-      {fatalError&&(
-        <div style={{...C.card,borderColor:"rgba(239,68,68,0.4)"}}>
-          <div style={{color:"#f87171",fontSize:13,fontWeight:700}}>เชื่อมต่อ Worker ไม่สำเร็จ</div>
-          <div style={{color:"#8b8fa8",fontSize:12,marginTop:6}}>{fatalError}</div>
-          <button style={{...C.btnS,marginTop:10}} onClick={disconnectWorker}>ตั้งค่า Worker URL ใหม่</button>
-        </div>
-      )}
-
-      {!fatalError&&!status.connected&&<ConnectCard status={status} onConnected={refreshStatus} t3={t3} api={api}/>}
-
-      {!fatalError&&status.connected&&(
-        <React.Fragment>
-          <div style={{display:"flex",overflowX:"auto",borderBottom:"1px solid rgba(255,255,255,0.08)",background:"rgba(15,15,40,0.6)",marginTop:12}}>
-            {tabs.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)}
-                style={{padding:"12px 14px",border:"none",borderBottom:tab===t.id?"2px solid #a78bfa":"2px solid transparent",background:"transparent",color:tab===t.id?"#a78bfa":"#64748b",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:12,whiteSpace:"nowrap"}}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{padding:"0 0 40px"}}>
-            {tab==="stock"&&<StockTab status={status} refreshStatus={refreshStatus} t3={t3} pushLocalHistory={refreshHistory} api={api}/>}
-            {tab==="bulk"&&<BulkTab t3={t3} pushLocalHistory={refreshHistory} api={api}/>}
-            {tab==="pdfsplit"&&<PdfSplitTab t3={t3} api={api}/>}
-            {tab==="skulist"&&<SkuListTab t3={t3} api={api}/>}
-            {tab==="history"&&<HistoryTab history={history}/>}
-            {tab==="settings"&&<SettingsTab info={info} onDisconnectWorker={disconnectWorker}/>}
-          </div>
-        </React.Fragment>
-      )}
     </div>
-  );
+
+    <div class="card">
+      <div class="head"><h3>✉️ ข้อความปฏิเสธ</h3>
+        <button class="ghost" onclick="addReject()">+ เพิ่มข้อความ</button></div>
+      ${settings.rejectMessages.length ? settings.rejectMessages.map((m, i) => `
+        <div class="grid2" style="grid-template-columns:1fr auto;margin-bottom:8px">
+          <input value="${esc(m)}" oninput="settings.rejectMessages[${i}]=this.value;markDirty()">
+          <button class="danger" onclick="delReject(${i})">ลบ</button>
+        </div>`).join("") : `<p class="hint">ยังไม่มีข้อความ</p>`}
+    </div>
+
+    <div class="card">
+      <h3>💬 ข้อความแจ้งลูกค้า</h3>
+      <p class="hint">ตัวแปรที่ใช้ได้: {simPhone} {orderNo} {pkgName} {simCode} {remaining} {maxQuota}</p>
+      <label>ยืนยันแพ็กเกจ — ส่งวิธีสมัครเน็ต
+        <textarea rows="3" oninput="settings.messages.confirm=this.value;markDirty()">${esc(settings.messages.confirm)}</textarea>
+      </label>
+      <label style="margin-top:10px">สมัครเน็ตแล้ว — กดยืนยัน
+        <textarea rows="3" oninput="settings.messages.done=this.value;markDirty()">${esc(settings.messages.done)}</textarea>
+      </label>
+    </div>`;
 }
 
-function App(){
-  const [ready,setReady]=useState(Boolean(lsG(LS_WORKER_URL)));
-  if(!ready)return <WorkerSetup onReady={()=>setReady(true)}/>;
-  return <Dashboard/>;
+function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); render(); }
+function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
+function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
+
+async function uploadPhoto(key, file) {
+  if (!file) return;
+  try {
+    settings.photos[key] = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดรูปแล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
 }
 
-const root=ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+/* ==========================================================
+   ลบประวัติคำขอ
+   ========================================================== */
+function viewDanger() {
+  return `
+    <div class="danger-zone">
+      <h3>🗑️ ลบประวัติคำขอ</h3>
+      <p class="hint" style="color:var(--err)">การลบจะลบประวัติทั้งหมดในระบบอย่างถาวร กู้คืนไม่ได้</p>
+      <label>ยืนยันด้วยรหัสผู้ดูแล
+        <input id="delPw" type="password" placeholder="รหัสผู้ดูแล">
+      </label>
+      <div class="err" id="delErr">❌ รหัสไม่ถูกต้อง</div>
+      <div class="actions" style="justify-content:flex-end;margin-top:12px">
+        <button onclick="setTab('packages')">ยกเลิก</button>
+        <button class="danger" onclick="confirmDelete()">🗑️ ยืนยันลบ</button>
+      </div>
+    </div>`;
+}
+
+async function confirmDelete() {
+  const p = $("delPw").value;
+  if (!p) { $("delErr").style.display = "block"; return; }
+  if (!confirm("ยืนยันลบประวัติทั้งหมด?")) return;
+  try {
+    await api("/admin/history", { method: "DELETE", json: { password: p } });
+    orders = [];
+    toast("ลบประวัติแล้ว");
+    setTab("orders");
+  } catch (e) {
+    $("delErr").style.display = "block";
+    toast("ลบไม่สำเร็จ", false);
+  }
+}
+
+/* ==========================================================
+   บันทึก
+   ========================================================== */
+async function saveAll() {
+  const btn = $("saveBtn");
+  btn.disabled = true;
+  try {
+    settings.PACKAGES = settings.PACKAGES.map(p => ({ ...p, price: Number(p.price) || 0 }));
+    settings.DISCOUNT_SHOP = Number(settings.DISCOUNT_SHOP) || 0;
+    await api("/admin/settings", { method: "PUT", json: settings });
+    $("dirtyTag").textContent = "";
+    toast("บันทึกการตั้งค่าแล้ว");
+  } catch (e) {
+    toast("บันทึกไม่สำเร็จ: " + e.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ==========================================================
+   เริ่มต้น
+   ========================================================== */
+(async function init() {
+  if (token) {
+    try {
+      settings = normalize(await api("/admin/settings"));
+      showDash();
+      loadOrders(true);
+      return;
+    } catch (e) { /* token ไม่ถูกต้องหรือ API ไม่ตอบ → ให้เข้าสู่ระบบใหม่ */ }
+  }
+  $("login").classList.remove("hidden");
+})();
 </script>
 </body>
 </html>
