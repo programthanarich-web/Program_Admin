@@ -903,6 +903,12 @@ function viewSettings() {
     </div>
 
     <div class="card">
+      <h3>💬 ช่องทางติดต่อร้าน (LINE)</h3>
+      <p class="hint">ใส่ลิงก์ LINE Official ของร้าน เช่น https://line.me/R/ti/p/@xxxx ถ้าเว้นว่าง ปุ่มติดต่อร้านจะไม่แสดงในหน้าที่มีปัญหา</p>
+      <input value="${esc(settings.lineContactUrl || "")}" placeholder="https://line.me/R/ti/p/@..." oninput="settings.lineContactUrl=this.value;markDirty()">
+    </div>
+
+    <div class="card">
       <h3>📦 คำอธิบายเลขพัสดุ</h3>
       <textarea rows="3" oninput="settings.trackingHelp=this.value;markDirty()">${esc(settings.trackingHelp)}</textarea>
     </div>
