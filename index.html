@@ -166,6 +166,14 @@ const API_BASE = "https://program-api.programthanarich.workers.dev";
     }
 */
 
+const MENU_TEXT_DEFAULT = {
+  menuTitle: "สมัครแพ็กเกจเน็ต",
+  selfTitle: "เติมเงินสมัครเน็ตเอง",
+  selfDesc: "เติมเงินและสมัครด้วยตัวเอง",
+  shopTitle: "สมัครเน็ตกับทางร้าน",
+  shopDesc: "ชำระผ่านสลิป ตรวจสอบอัตโนมัติ"
+};
+
 let token = sessionStorage.getItem("adm_token") || "";
 let settings = null;
 let orders = [];
@@ -207,6 +215,7 @@ function normalize(s) {
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
+    menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
     trackingHelp: s.trackingHelp || "",
     simHelp: s.simHelp || "",
     photos: s.photos || {},
@@ -526,6 +535,7 @@ function viewPackages() {
             </label>
             <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
           </div>
+          <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
           <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
           <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
           <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจนี้</button></div>
@@ -875,6 +885,21 @@ function viewSettings() {
           <input value="${esc(c.name)}" placeholder="ชื่อช่องทาง" oninput="settings.channels[${i}].name=this.value;markDirty()">
           <input value="${esc(c.url)}" placeholder="ลิงก์" oninput="settings.channels[${i}].url=this.value;markDirty()">
         </div>`).join("") : `<p class="hint">ยังไม่มีช่องทาง</p>`}
+    </div>
+
+    <div class="card">
+      <h3>🧭 ข้อความหน้าเมนูสมัคร</h3>
+      <p class="hint">เว้นว่างช่องไหนไว้ ระบบจะใช้ข้อความเดิม · ป้าย "ลด ..." ดึงจากแท็บ "ส่วนลด & QR" อัตโนมัติ</p>
+      ${[
+        ["menuTitle", "หัวข้อเมนูสมัคร"],
+        ["selfTitle", "ชื่อตัวเลือก: เติมเงินสมัครเอง"],
+        ["selfDesc", "คำอธิบาย: เติมเงินสมัครเอง"],
+        ["shopTitle", "ชื่อตัวเลือก: สมัครกับทางร้าน"],
+        ["shopDesc", "คำอธิบาย: สมัครกับทางร้าน"]
+      ].map(([k, label]) => `
+        <label style="margin-bottom:8px">${label}
+          <input value="${esc(settings.menuTexts[k])}" oninput="settings.menuTexts['${k}']=this.value;markDirty()">
+        </label>`).join("")}
     </div>
 
     <div class="card">
