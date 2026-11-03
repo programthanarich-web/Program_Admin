@@ -586,75 +586,6 @@ function setSteps(text) {
   markDirty();
 }
 
-/* ==========================================================
-   รูปตัวอย่างซิม
-   ========================================================== */
-function viewSamples() {
-  const list = settings.SIM_SAMPLE_IMAGES;
-  return `
-    <div class="card">
-      <div class="head"><h3>รูปตัวอย่างวิธีดูเลขซีเรียลซิม</h3>
-        <button class="ghost" onclick="addSample()">+ เพิ่มรูป</button></div>
-      <p class="hint">รูปจะแสดงในหน้ากรอกข้อมูลซิมของลูกค้า เรียงตามลำดับด้านล่าง</p>
-      ${list.length ? list.map((s, i) => `
-        <div class="sample-row">
-          <div class="thumb">${s.url ? `<img src="${esc(s.url)}" alt="">` : "ยังไม่มีรูป"}</div>
-          <div class="fields">
-            <label>ลิงก์รูป<input value="${esc(s.url)}" oninput="upd('SIM_SAMPLE_IMAGES',${i},'url',this.value)"></label>
-            <label>คำอธิบายใต้รูป<input value="${esc(s.caption)}" oninput="upd('SIM_SAMPLE_IMAGES',${i},'caption',this.value)"></label>
-            <div class="btns-row">
-              <label style="flex-direction:row;align-items:center;gap:6px">
-                อัปโหลดรูปใหม่ <input type="file" accept="image/*" style="width:auto" onchange="uploadSample(${i},this.files[0])">
-              </label>
-              <button onclick="moveSample(${i},-1)" ${i === 0 ? "disabled" : ""}>▲ ขึ้น</button>
-              <button onclick="moveSample(${i},1)" ${i === list.length - 1 ? "disabled" : ""}>▼ ลง</button>
-              <button class="danger" onclick="delSample(${i})">ลบ</button>
-            </div>
-          </div>
-        </div>`).join("") : `<p class="hint">ยังไม่มีรูปตัวอย่าง</p>`}
-    </div>`;
-}
-
-function addSample() {
-  settings.SIM_SAMPLE_IMAGES.push({ url: "", caption: "" });
-  markDirty();
-  render();
-}
-
-function delSample(i) {
-  if (!confirm("ลบรูปนี้?")) return;
-  settings.SIM_SAMPLE_IMAGES.splice(i, 1);
-  markDirty();
-  render();
-}
-
-function moveSample(i, dir) {
-  const arr = settings.SIM_SAMPLE_IMAGES;
-  const j = i + dir;
-  if (j < 0 || j >= arr.length) return;
-  [arr[i], arr[j]] = [arr[j], arr[i]];
-  markDirty();
-  render();
-}
-
-async function uploadFile(file) {
-  const fd = new FormData();
-  fd.append("file", file);
-  const r = await api("/admin/upload", { method: "POST", body: fd });
-  return r.url;
-}
-
-async function uploadSample(i, file) {
-  if (!file) return;
-  try {
-    settings.SIM_SAMPLE_IMAGES[i].url = await uploadFile(file);
-    markDirty();
-    render();
-    toast("อัปโหลดรูปแล้ว");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
-  }
-}
 
 /* ==========================================================
    ส่วนลด & QR
@@ -796,7 +727,7 @@ function orderListHTML(list) {
       <div class="top2">
         <div>
           <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
-          <div class="meta">SIM ${esc(o.phone)} · ซีเรียล ${esc(o.serial)} · ${fmt(o.amount)}</div>
+          <div class="meta">SIM ${esc(o.phone)}${o.serial ? ` · ซีเรียล ${esc(o.serial)}` : ""} · ${fmt(o.amount)}</div>
           <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
         </div>
         <span class="pill ${esc(o.status)}">${esc(label[o.status] || o.status || "-")}</span>
@@ -827,8 +758,7 @@ async function setOrder(id, status) {
 function viewSettings() {
   const ph = settings.photos;
   const slots = [
-    ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"],
-    ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม"]
+    ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"]
   ];
   return `
     <div class="card">
