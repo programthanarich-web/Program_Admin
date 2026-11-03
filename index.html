@@ -213,6 +213,7 @@ function normalize(s) {
     carrierLogos: s.carrierLogos || {},
     carrierRegister: s.carrierRegister || {},
     menuIcons: s.menuIcons || {},
+    banners: s.banners || [],
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
@@ -782,9 +783,30 @@ function viewSettings() {
     </div>
 
     <div class="card">
-      <h3>🖼️ ไอคอนเมนูสมัครเน็ต</h3>
-      <p class="hint">ไอคอนหน้าเมนู "เติมเงินสมัครเน็ตเอง" และ "สมัครเน็ตกับทางร้าน"<br>ขนาดที่แนะนำ: <b>256 × 256 px</b> (จัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB<br>ถ้าไม่ตั้งรูป จะแสดงไอคอนเดิม</p>
-      ${[["self", "💳 เติมเงินสมัครเน็ตเอง"], ["shop", "🏪 สมัครเน็ตกับทางร้าน"]].map(([k, label]) => {
+      <h3>🎞️ แบนเนอร์หน้าแรก</h3>
+      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 540 px</b> (อัตราส่วน 2:1) · JPG หรือ PNG ไม่เกิน 5 MB · สูงสุด 5 รูป · ลิงก์ไม่บังคับ</p>
+      <button class="ghost" onclick="addBanner()">+ เพิ่มแบนเนอร์</button>
+      ${(settings.banners || []).map((b, i, arr) => `
+        <div class="sample-row">
+          <div class="thumb">${b.url ? `<img src="${esc(b.url)}" alt="">` : "ยังไม่มีรูป"}</div>
+          <div class="fields">
+            <label>ลิงก์เมื่อกดแบนเนอร์ (ไม่บังคับ)<input value="${esc(b.link || "")}" oninput="setBanner(${i},'link',this.value)"></label>
+            <div class="btns-row">
+              <label style="flex-direction:row;align-items:center;gap:6px">
+                อัปโหลดรูป <input type="file" accept="image/*" style="width:auto" onchange="uploadBanner(${i},this.files[0])">
+              </label>
+              <button onclick="moveBanner(${i},-1)" ${i === 0 ? "disabled" : ""}>▲ ขึ้น</button>
+              <button onclick="moveBanner(${i},1)" ${i === arr.length - 1 ? "disabled" : ""}>▼ ลง</button>
+              <button class="danger" onclick="delBanner(${i})">ลบ</button>
+            </div>
+          </div>
+        </div>`).join("") || `<p class="hint">ยังไม่มีแบนเนอร์</p>`}
+    </div>
+
+    <div class="card">
+      <h3>🖼️ ไอคอนเมนูหน้าแรกและเมนูสมัครเน็ต</h3>
+      <p class="hint">ขนาดที่แนะนำ: <b>256 × 256 px</b> (จัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB<br>ถ้าไม่ตั้งรูป จะแสดงไอคอนเดิม</p>
+      ${[["register", "🗂️ ลงทะเบียนซิม"], ["net", "📶 สมัครแพ็กเกจเน็ต"], ["port", "🔄 สมัครโปรเบอร์เดิม"], ["esim", "📱 รับ E-Sim"], ["self", "💳 เติมเงินสมัครเน็ตเอง (เมนูสมัครเน็ต)"], ["shop", "🏪 สมัครเน็ตกับทางร้าน (เมนูสมัครเน็ต)"]].map(([k, label]) => {
         const url = (settings.menuIcons || {})[k];
         return `
         <div class="photo" style="margin-bottom:10px">
@@ -1006,6 +1028,47 @@ async function uploadCarrierSample(name, file) {
   } catch (e) {
     toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
   }
+}
+
+function addBanner() {
+  settings.banners = settings.banners || [];
+  if (settings.banners.length >= 5) { toast("ใส่แบนเนอร์ได้สูงสุด 5 รูป", false); return; }
+  settings.banners.push({ url: "", link: "" });
+  markDirty();
+  render();
+}
+
+function setBanner(i, field, value) {
+  settings.banners[i][field] = value.trim();
+  markDirty();
+}
+
+async function uploadBanner(i, file) {
+  if (!file) return;
+  try {
+    settings.banners[i].url = await uploadFile(file);
+    markDirty();
+    render();
+    toast("อัปโหลดแบนเนอร์แล้ว กดบันทึกเพื่อใช้งาน");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
+  }
+}
+
+function delBanner(i) {
+  if (!confirm("ลบแบนเนอร์นี้?")) return;
+  settings.banners.splice(i, 1);
+  markDirty();
+  render();
+}
+
+function moveBanner(i, dir) {
+  const arr = settings.banners;
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  markDirty();
+  render();
 }
 
 async function uploadMenuIcon(key, file) {
