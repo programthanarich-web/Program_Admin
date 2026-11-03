@@ -213,6 +213,7 @@ function normalize(s) {
     carrierLogos: s.carrierLogos || {},
     carrierRegister: s.carrierRegister || {},
     menuIcons: s.menuIcons || {},
+    quickMenu: s.quickMenu || {},
     banners: s.banners || [],
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
@@ -804,9 +805,30 @@ function viewSettings() {
     </div>
 
     <div class="card">
-      <h3>🖼️ ไอคอนเมนูหน้าแรกและเมนูสมัครเน็ต</h3>
+      <h3>🧩 เมนูลัดหน้าแรก (ชื่อและไอคอน)</h3>
+      <p class="hint">ไอคอน: <b>256 × 256 px</b> (จัตุรัส) PNG พื้นหลังโปร่งใส ไม่เกิน 1 MB · แสดงบนหน้าจอประมาณ 56 px<br>พิมพ์ชื่อเมนูแล้วกดบันทึกการตั้งค่า · ถ้าไม่ตั้งชื่อ จะใช้ชื่อเดิม</p>
+      ${[["register", "ลงทะเบียนซิม"], ["net", "สมัครแพ็กเกจเน็ต"], ["port", "สมัครโปรเบอร์เดิม"], ["esim", "รับ E-Sim"]].map(([k, def]) => {
+        const q = (settings.quickMenu || {})[k] || {};
+        const url = (settings.menuIcons || {})[k];
+        return `
+        <div class="photo" style="margin-bottom:12px">
+          <label style="display:block;margin:6px 0">ชื่อเมนู (ชื่อเดิม: ${def})
+            <input value="${esc(q.label || "")}" placeholder="${def}" oninput="setQuickLabel('${k}', this.value)">
+          </label>
+          <div class="ph" style="aspect-ratio:1/1;max-width:140px;margin:8px auto">${url ? `<img src="${esc(url)}" alt="" style="object-fit:contain">` : "ยังไม่มีไอคอน"}</div>
+          <label style="cursor:pointer;color:var(--blue);font-weight:700">
+            📁 เลือกไอคอน
+            <input type="file" accept="image/*" class="hidden" onchange="uploadMenuIcon('${k}', this.files[0])">
+          </label>
+          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearMenuIcon('${k}')">ลบไอคอน</button></div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
+      <h3>🖼️ ไอคอนเมนูสมัครเน็ต</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>256 × 256 px</b> (จัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB<br>ถ้าไม่ตั้งรูป จะแสดงไอคอนเดิม</p>
-      ${[["register", "🗂️ ลงทะเบียนซิม"], ["net", "📶 สมัครแพ็กเกจเน็ต"], ["port", "🔄 สมัครโปรเบอร์เดิม"], ["esim", "📱 รับ E-Sim"], ["self", "💳 เติมเงินสมัครเน็ตเอง (เมนูสมัครเน็ต)"], ["shop", "🏪 สมัครเน็ตกับทางร้าน (เมนูสมัครเน็ต)"]].map(([k, label]) => {
+      ${[["self", "💳 เติมเงินสมัครเน็ตเอง"], ["shop", "🏪 สมัครเน็ตกับทางร้าน"]].map(([k, label]) => {
         const url = (settings.menuIcons || {})[k];
         return `
         <div class="photo" style="margin-bottom:10px">
@@ -1008,6 +1030,12 @@ function clearCarrierLogo(name) {
   delete settings.carrierLogos[name];
   markDirty(); saveAll();
   render();
+}
+
+function setQuickLabel(key, value) {
+  settings.quickMenu = settings.quickMenu || {};
+  settings.quickMenu[key] = { ...(settings.quickMenu[key] || {}), label: value.trim() };
+  markDirty();
 }
 
 function setCarrierReg(name, field, value) {
