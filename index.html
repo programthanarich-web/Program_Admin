@@ -460,7 +460,7 @@ function addPair() {
 function delPair(i) {
   if (!confirm("ลบเลขคู่นี้?")) return;
   settings.luckyRules.pairs.splice(i, 1);
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -502,7 +502,7 @@ function addLucky() {
 function delLucky(i) {
   if (!confirm("ลบเบอร์นี้?")) return;
   settings.luckyNumbers.splice(i, 1);
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -580,7 +580,7 @@ function setFeatures(i, text) {
 function delPkg(i) {
   if (!confirm("ลบแพ็กเกจนี้?")) return;
   settings.PACKAGES.splice(i, 1);
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -640,7 +640,7 @@ async function uploadQR(file) {
   if (!file) return;
   try {
     settings.QR_IMAGE_URL = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลด QR แล้ว");
   } catch (e) {
@@ -951,9 +951,9 @@ function viewSettings() {
     </div>`;
 }
 
-function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); render(); }
-function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
-function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
+function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); saveAll(); render(); }
+function addReject() { settings.rejectMessages.push(""); markDirty(); saveAll(); render(); }
+function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); saveAll(); render(); }
 
 // ย่อรูปที่ใหญ่เกิน 4 MB ก่อนอัพโหลด (เซิร์ฟเวอร์รับได้ไม่เกิน 5 MB) โดยให้ด้านยาวสุดไม่เกิน 1600 px
 async function shrinkImage(file) {
@@ -996,7 +996,7 @@ async function uploadCarrierLogo(name, file) {
   try {
     settings.carrierLogos = settings.carrierLogos || {};
     settings.carrierLogos[name] = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดโลโก้ " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1006,7 +1006,7 @@ async function uploadCarrierLogo(name, file) {
 
 function clearCarrierLogo(name) {
   delete settings.carrierLogos[name];
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -1022,7 +1022,7 @@ async function uploadCarrierSample(name, file) {
     const url = await uploadFile(file);
     settings.carrierRegister = settings.carrierRegister || {};
     settings.carrierRegister[name] = { ...(settings.carrierRegister[name] || {}), sample: url };
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดรูปตัวอย่าง " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1034,7 +1034,7 @@ function addBanner() {
   settings.banners = settings.banners || [];
   if (settings.banners.length >= 5) { toast("ใส่แบนเนอร์ได้สูงสุด 5 รูป", false); return; }
   settings.banners.push({ url: "", link: "" });
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -1047,7 +1047,7 @@ async function uploadBanner(i, file) {
   if (!file) return;
   try {
     settings.banners[i].url = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดแบนเนอร์แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1058,7 +1058,7 @@ async function uploadBanner(i, file) {
 function delBanner(i) {
   if (!confirm("ลบแบนเนอร์นี้?")) return;
   settings.banners.splice(i, 1);
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -1067,7 +1067,7 @@ function moveBanner(i, dir) {
   const j = i + dir;
   if (j < 0 || j >= arr.length) return;
   [arr[i], arr[j]] = [arr[j], arr[i]];
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -1076,7 +1076,7 @@ async function uploadMenuIcon(key, file) {
   try {
     settings.menuIcons = settings.menuIcons || {};
     settings.menuIcons[key] = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดไอคอนแล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1086,13 +1086,13 @@ async function uploadMenuIcon(key, file) {
 
 function clearMenuIcon(key) {
   if (settings.menuIcons) delete settings.menuIcons[key];
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
 function clearCarrierSample(name) {
   if (settings.carrierRegister && settings.carrierRegister[name]) delete settings.carrierRegister[name].sample;
-  markDirty();
+  markDirty(); saveAll();
   render();
 }
 
@@ -1100,7 +1100,7 @@ async function uploadLogo(file) {
   if (!file) return;
   try {
     settings.logoImage = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดโลโก้แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1118,7 +1118,7 @@ async function uploadHero(file) {
   if (!file) return;
   try {
     settings.heroImage = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดรูปหัวเว็บแล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
@@ -1136,7 +1136,7 @@ async function uploadPhoto(key, file) {
   if (!file) return;
   try {
     settings.photos[key] = await uploadFile(file);
-    markDirty();
+    markDirty(); saveAll();
     render();
     toast("อัปโหลดรูปแล้ว");
   } catch (e) {
