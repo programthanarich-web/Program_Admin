@@ -211,6 +211,7 @@ function normalize(s) {
     PACKAGES: s.PACKAGES || [],
     luckyNumbers: s.luckyNumbers || [],
     carrierLogos: s.carrierLogos || {},
+    carrierRegister: s.carrierRegister || {},
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
@@ -780,6 +781,27 @@ function viewSettings() {
     </div>
 
     <div class="card">
+      <h3>🔗 ลิงก์และรูปตัวอย่างลงทะเบียนซิม</h3>
+      <p class="hint">หน้าเลือกเครือข่ายของลูกค้า: เมื่อกดเครือข่ายจะแสดงรูปตัวอย่างและปุ่มลงทะเบียน ปุ่มจะเปิดลิงก์ที่ตั้งไว้ในแท็บนี้<br>ขนาดที่แนะนำรูปตัวอย่าง: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
+      ${CARRIERS.map(c => {
+        const reg = (settings.carrierRegister || {})[c] || {};
+        return `
+        <div class="photo" style="margin-bottom:12px">
+          <div class="t">${c}</div>
+          <label style="display:block;margin:6px 0">ลิงก์ลงทะเบียนของ ${c}
+            <input value="${esc(reg.url || "")}" placeholder="https://..." oninput="setCarrierReg('${c}','url',this.value)">
+          </label>
+          <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${reg.sample ? `<img src="${esc(reg.sample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
+          <label style="cursor:pointer;color:var(--blue);font-weight:700">
+            📁 เลือกรูปตัวอย่างลงทะเบียน ${c}
+            <input type="file" accept="image/*" class="hidden" onchange="uploadCarrierSample('${c}', this.files[0])">
+          </label>
+          ${reg.sample ? `<div style="margin-top:6px"><button class="danger" onclick="clearCarrierSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
       <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
       ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
@@ -907,6 +929,32 @@ async function uploadCarrierLogo(name, file) {
 
 function clearCarrierLogo(name) {
   delete settings.carrierLogos[name];
+  markDirty();
+  render();
+}
+
+function setCarrierReg(name, field, value) {
+  settings.carrierRegister = settings.carrierRegister || {};
+  settings.carrierRegister[name] = { ...(settings.carrierRegister[name] || {}), [field]: value.trim() };
+  markDirty();
+}
+
+async function uploadCarrierSample(name, file) {
+  if (!file) return;
+  try {
+    const url = await uploadFile(file);
+    settings.carrierRegister = settings.carrierRegister || {};
+    settings.carrierRegister[name] = { ...(settings.carrierRegister[name] || {}), sample: url };
+    markDirty();
+    render();
+    toast("อัปโหลดรูปตัวอย่าง " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+function clearCarrierSample(name) {
+  if (settings.carrierRegister && settings.carrierRegister[name]) delete settings.carrierRegister[name].sample;
   markDirty();
   render();
 }
