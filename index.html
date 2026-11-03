@@ -755,6 +755,12 @@ function orderListHTML(list) {
           <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
           <div class="meta">SIM ${esc(o.phone)}${o.serial ? ` · ซีเรียล ${esc(o.serial)}` : ""} · ${fmt(o.amount)}</div>
           <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
+          ${o.shipping ? `
+          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
+            <b>📦 ส่งถึง:</b> ${esc(o.shipping.name)} · ${esc(o.shipping.phone)}<br>
+            ${esc([o.shipping.addr1, o.shipping.road, o.shipping.sub && "ต." + o.shipping.sub, o.shipping.dist && "อ." + o.shipping.dist, o.shipping.prov, o.shipping.zip].filter(Boolean).join(" "))}
+            ${o.shipping.note ? `<br><span style="color:#64748b">หมายเหตุ: ${esc(o.shipping.note)}</span>` : ""}
+          </div>` : ""}
         </div>
         <span class="pill ${esc(o.status)}">${esc(label[o.status] || o.status || "-")}</span>
       </div>
