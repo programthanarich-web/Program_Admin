@@ -214,6 +214,7 @@ function normalize(s) {
     carrierRegister: s.carrierRegister || {},
     menuIcons: s.menuIcons || {},
     quickMenu: s.quickMenu || {},
+    heroImage: "",
     banners: s.banners || [],
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
@@ -785,7 +786,7 @@ function viewSettings() {
 
     <div class="card">
       <h3>🎞️ แบนเนอร์หน้าแรก</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 540 px</b> (อัตราส่วน 2:1) · JPG หรือ PNG ไม่เกิน 5 MB · สูงสุด 5 รูป · ลิงก์ไม่บังคับ</p>
+      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1200 px</b> (แนวตั้ง) · JPG หรือ PNG ไม่เกิน 5 MB · สูงสุด 5 รูป · ลิงก์ไม่บังคับ</p>
       <button class="ghost" onclick="addBanner()">+ เพิ่มแบนเนอร์</button>
       ${(settings.banners || []).map((b, i, arr) => `
         <div class="sample-row">
@@ -878,19 +879,6 @@ function viewSettings() {
       </div>
     </div>
 
-    <div class="card">
-      <h3>🖼️ รูปหัวเว็บ (แบนเนอร์หน้าแรก)</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1200 px</b> (แนวตั้ง) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB<br>
-      ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงหัวข้อแบบข้อความตามเดิม</p>
-      <div class="photo">
-        <div class="ph" style="aspect-ratio:9/10;max-width:240px;margin:0 auto 8px">${settings.heroImage ? `<img src="${esc(settings.heroImage)}" alt="">` : "ยังไม่มีรูป"}</div>
-        <label style="cursor:pointer;color:var(--blue);font-weight:700">
-          📁 เลือกรูปหัวเว็บ
-          <input type="file" accept="image/*" class="hidden" onchange="uploadHero(this.files[0])">
-        </label>
-        ${settings.heroImage ? `<div style="margin-top:8px"><button class="danger" onclick="clearHero()">ลบรูปหัวเว็บ</button></div>` : ""}
-      </div>
-    </div>
 
     <div class="card">
       <div class="head"><h3>🛍️ ช่องทางสั่งซื้อ</h3>
