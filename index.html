@@ -914,6 +914,42 @@ function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty
 function addReject() { settings.rejectMessages.push(""); markDirty(); render(); }
 function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); render(); }
 
+// ย่อรูปที่ใหญ่เกิน 4 MB ก่อนอัพโหลด (เซิร์ฟเวอร์รับได้ไม่เกิน 5 MB) โดยให้ด้านยาวสุดไม่เกิน 1600 px
+async function shrinkImage(file) {
+  if (!file.type.startsWith("image/") || file.size <= 4 * 1024 * 1024) return file;
+  const src = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("อ่านรูปไม่ได้"));
+      i.src = src;
+    });
+    const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
+    if (!blob) throw new Error("ย่อรูปไม่ได้");
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } finally {
+    URL.revokeObjectURL(src);
+  }
+}
+
+// อัพโหลดรูปไปที่หลังบ้าน (คืนลิงก์รูป)
+async function uploadFile(file) {
+  const prepared = await shrinkImage(file);
+  const fd = new FormData();
+  fd.append("file", prepared, prepared.name);
+  const r = await api("/admin/upload", { method: "POST", body: fd });
+  return r.url;
+}
+
 async function uploadCarrierLogo(name, file) {
   if (!file) return;
   try {
@@ -949,7 +985,7 @@ async function uploadCarrierSample(name, file) {
     render();
     toast("อัปโหลดรูปตัวอย่าง " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
   }
 }
 
