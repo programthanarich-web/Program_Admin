@@ -765,10 +765,56 @@ function orderListHTML(list) {
       </div>
       <div class="btns" style="margin-top:6px">
         ${o.lineUserId
-          ? `<button class="ghost" onclick="messageCustomer('${esc(o.id)}')">💬 ส่งข้อความหาลูกค้าทาง LINE</button>`
+          ? `<button class="ghost" onclick="sendSteps('${esc(o.id)}')">📋 ส่งขั้นตอนหลังชำระเงิน</button>
+             <button class="ghost" onclick="messageCustomer('${esc(o.id)}')">💬 พิมพ์ข้อความเอง</button>`
           : `<span class="meta">ลูกค้าไม่ได้เปิดจากแอป LINE จึงส่งข้อความไม่ได้ ติดต่อทางเบอร์โทรแทน</span>`}
       </div>
     </div>`).join("");
+}
+
+// ข้อความขั้นตอนหลังชำระเงิน (แก้ได้ในหน้าตั้งค่า > ข้อความแจ้งลูกค้า)
+const STEPS_TEMPLATE = [
+  "✅ ได้รับข้อมูลเรียบร้อยแล้ว",
+  "หมายเลขคำสั่งซื้อ: {orderNo}",
+  "แพ็กเกจ: {pkgName}",
+  "เบอร์โทรศัพท์: {simPhone}",
+  "",
+  "⏳ รอดำเนินการ สักครู่นะครับ",
+  "",
+  "‼️ เปลี่ยนเป็นใช้เมนูภาษาไทย",
+  "- TRUE 🔴 กด 9304 โทรออก กด 1",
+  "- DTAC 🔵 กด 1007 โทรออก กด 1",
+  "",
+  "‼️ นำซิม ✅ ใส่ไว้ในโทรศัพท์",
+  "⏳ รอทำตามขั้นตอนที่แอดมินแจ้ง",
+  "‼️ เมื่อได้รับสถานะ 🟢 สีเขียว อ่าน ✅ รายละเอียดโปรให้ครบก่อนใช้งาน",
+  "",
+  "‼️ ดำเนินการให้ตามคิวที่ส่งเข้ามา ‼️",
+  "เวลาทำการ 09.00 น. ถึง 21.00 น.",
+  "✅ ทุกคนจะได้รับโปรหากทำตามขั้นตอน",
+  "ตอบกลับตามข้อความที่ส่งให้เท่านั้น",
+  "❌ ส่งในแชท = ไม่ได้ทำรายการ ❌",
+  "📌 ขอความร่วมมือด้วยครับ"
+].join("\n");
+
+function fillTemplate(tpl, o) {
+  return String(tpl || "")
+    .replaceAll("{orderNo}", o.orderNo || o.id || "")
+    .replaceAll("{pkgName}", pkgName(o))
+    .replaceAll("{simPhone}", o.phone || "");
+}
+
+async function sendSteps(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const text = fillTemplate(settings.messages?.steps ?? STEPS_TEMPLATE, o);
+  if (!confirm("ส่งขั้นตอนหลังชำระเงินให้ลูกค้าคนนี้ทาง LINE?")) return;
+  try {
+    await api("/admin/orders/" + encodeURIComponent(id) + "/message", { method: "POST", json: { text } });
+    toast("ส่งขั้นตอนให้ลูกค้าแล้ว");
+  } catch (e) {
+    toast("ส่งไม่สำเร็จ: " + e.message, false);
+  }
 }
 
 async function messageCustomer(id) {
@@ -1009,6 +1055,9 @@ function viewSettings() {
       </label>
       <label style="margin-top:10px">สมัครเน็ตแล้ว — กดยืนยัน
         <textarea rows="3" oninput="settings.messages.done=this.value;markDirty()">${esc(settings.messages.done)}</textarea>
+      </label>
+      <label style="margin-top:10px">ขั้นตอนหลังชำระเงิน — กดปุ่ม "ส่งขั้นตอน" ในรายการสั่งซื้อ
+        <textarea rows="12" oninput="settings.messages.steps=this.value;markDirty()">${esc(settings.messages.steps ?? STEPS_TEMPLATE)}</textarea>
       </label>
     </div>`;
 }
