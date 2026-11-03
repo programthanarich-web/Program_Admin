@@ -281,6 +281,15 @@ function markDirty() {
   $("dirtyTag").textContent = "มีการเปลี่ยนแปลงที่ยังไม่บันทึก";
 }
 
+async function runMigrate() {
+  try {
+    const r = await api("/admin/migrate", { method: "POST", json: {} });
+    toast(r.message || "อัปเดตฐานข้อมูลแล้ว");
+  } catch (e) {
+    toast("อัปเดตไม่สำเร็จ: " + e.message, false);
+  }
+}
+
 // เปิด/ปิดการตรวจสลิป แล้วบันทึกทันที (ใช้กับทุกเครื่องที่เปิดหลังบ้าน)
 async function setSlipCheck(on) {
   if (!on && !confirm("ปิดการตรวจสลิป? ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง ควรเปิดกลับหลังทดสอบเสร็จ")) {
@@ -796,6 +805,12 @@ function viewSettings() {
   ];
   const slipOn = settings.SLIP_CHECK !== false;
   return `
+    <div class="card">
+      <h3>🛠️ อัปเดตฐานข้อมูล</h3>
+      <p class="hint">กดครั้งเดียวเพื่อเปิดใช้ฟังก์ชันส่งข้อความหาลูกค้าทาง LINE ถ้ากดซ้ำก็ไม่เป็นไร ระบบจะแจ้งว่าอัปเดตแล้ว</p>
+      <button class="ghost" onclick="runMigrate()">อัปเดตฐานข้อมูล</button>
+    </div>
+
     <div class="card">
       <h3>🧪 โหมดตรวจสอบสลิป</h3>
       <p class="hint"><b>เปิด</b> = ลูกค้าต้องแนบสลิปที่ระบบตรวจผ่านก่อนจึงส่งคำสั่งซื้อได้ (ใช้งานจริง)<br><b>ปิด</b> = ไม่ตรวจสลิป ลูกค้าส่งคำสั่งซื้อได้โดยไม่ต้องจ่ายจริง ใช้เฉพาะตอนทดสอบระบบ และต้องเปิดกลับทุกครั้งหลังทดสอบเสร็จ</p>
