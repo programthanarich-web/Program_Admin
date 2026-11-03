@@ -926,12 +926,12 @@ function viewSettings() {
 
     <div class="card">
       <h3>📷 รูปตัวอย่างการถ่ายรูป</h3>
-      <p class="hint">รูปที่ลูกค้าเห็นในฟอร์มลงทะเบียนซิม<br>ขนาดที่แนะนำ: <b>1600 × 1000 px</b> (อัตราส่วน 16:10) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB</p>
+      <p class="hint">รูปที่ลูกค้าเห็นในฟอร์มกรอกข้อมูลซิม (เบอร์มือถือและซีเรียลซิม)<br>ขนาดที่แนะนำ: <b>526 × 526 px</b> (จัตุรัส) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB</p>
       <div class="grid3">
         ${slots.map(([key, label]) => `
           <div class="photo">
             <div class="t">${label}</div>
-            <div class="ph">${ph[key] ? `<img src="${esc(ph[key])}" alt="">` : "ยังไม่มีรูป"}</div>
+            <div class="ph" style="aspect-ratio:1/1">${ph[key] ? `<img src="${esc(ph[key])}" alt="" style="object-fit:contain">` : "ยังไม่มีรูป"}</div>
             <label style="cursor:pointer;color:var(--blue);font-weight:700;align-items:center">
               📁 เลือกรูปตัวอย่าง
               <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto('${key}', this.files[0])">
