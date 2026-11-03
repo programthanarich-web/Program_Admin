@@ -754,7 +754,23 @@ function orderListHTML(list) {
         <button class="ok" onclick="setOrder('${esc(o.id)}','done')">สมัครแล้ว</button>
         <button class="danger" onclick="setOrder('${esc(o.id)}','rejected')">ปฏิเสธ</button>
       </div>
+      <div class="btns" style="margin-top:6px">
+        ${o.lineUserId
+          ? `<button class="ghost" onclick="messageCustomer('${esc(o.id)}')">💬 ส่งข้อความหาลูกค้าทาง LINE</button>`
+          : `<span class="meta">ลูกค้าไม่ได้เปิดจากแอป LINE จึงส่งข้อความไม่ได้ ติดต่อทางเบอร์โทรแทน</span>`}
+      </div>
     </div>`).join("");
+}
+
+async function messageCustomer(id) {
+  const text = prompt("พิมพ์ข้อความที่จะส่งให้ลูกค้า (เช่น แจ้งปัญหาแพ็กเกจ หรือขอข้อมูลเพิ่ม)");
+  if (!text || !text.trim()) return;
+  try {
+    await api("/admin/orders/" + encodeURIComponent(id) + "/message", { method: "POST", json: { text } });
+    toast("ส่งข้อความให้ลูกค้าแล้ว");
+  } catch (e) {
+    toast("ส่งไม่สำเร็จ: " + e.message, false);
+  }
 }
 
 async function setOrder(id, status) {
