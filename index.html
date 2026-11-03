@@ -281,6 +281,18 @@ function markDirty() {
   $("dirtyTag").textContent = "มีการเปลี่ยนแปลงที่ยังไม่บันทึก";
 }
 
+// เปิด/ปิดการตรวจสลิป แล้วบันทึกทันที (ใช้กับทุกเครื่องที่เปิดหลังบ้าน)
+async function setSlipCheck(on) {
+  if (!on && !confirm("ปิดการตรวจสลิป? ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง ควรเปิดกลับหลังทดสอบเสร็จ")) {
+    $("content").innerHTML = viewSettings();
+    return;
+  }
+  settings.SLIP_CHECK = on;
+  markDirty();
+  await saveAll();
+  $("content").innerHTML = viewSettings();
+}
+
 /* ==========================================================
    แท็บ & การแสดงผล
    ========================================================== */
@@ -766,7 +778,15 @@ function viewSettings() {
     ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"],
     ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม"]
   ];
+  const slipOn = settings.SLIP_CHECK !== false;
   return `
+    <div class="card">
+      <h3>🧪 โหมดตรวจสอบสลิป</h3>
+      <p class="hint"><b>เปิด</b> = ลูกค้าต้องแนบสลิปที่ระบบตรวจผ่านก่อนจึงส่งคำสั่งซื้อได้ (ใช้งานจริง)<br><b>ปิด</b> = ไม่ตรวจสลิป ลูกค้าส่งคำสั่งซื้อได้โดยไม่ต้องจ่ายจริง ใช้เฉพาะตอนทดสอบระบบ และต้องเปิดกลับทุกครั้งหลังทดสอบเสร็จ</p>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${slipOn ? "checked" : ""} onchange="setSlipCheck(this.checked)"> ตรวจสอบสลิปอัตโนมัติ</label>
+      ${slipOn ? "" : `<p class="hint" style="color:#b91c1c;font-weight:700">⚠️ ตอนนี้ปิดการตรวจสลิปอยู่ ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง</p>`}
+    </div>
+
     <div class="card">
       <h3>📡 โลโก้เครือข่าย</h3>
       <p class="hint">ใช้แสดงบนการ์ดเบอร์มงคล ตามเครือข่ายที่เลือกในแต่ละเบอร์<br>ขนาดที่แนะนำ: <b>400 × 160 px</b> (แนวนอน) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB</p>
