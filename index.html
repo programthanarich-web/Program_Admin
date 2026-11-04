@@ -580,6 +580,7 @@ function pkgCardHTML(p, i) {
           <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
         </div>
         <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.month2 ? "checked" : ""} onchange="setMonth2(${i},this.checked)"> ใช้เป็นแพ็กเกจเดือนที่ 2 (แสดงในเมนูต่อแพ็กเกจเดือนที่ 2 แทนเมนูเดือนแรก)</label>
 
         <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);text-align:right">
           <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${i + 1}</button>
@@ -589,15 +590,27 @@ function pkgCardHTML(p, i) {
 }
 
 function viewPackages() {
+  const all = settings.PACKAGES.map((p, i) => ({ p, i }));
+  const first = all.filter(x => !x.p.month2);
+  const second = all.filter(x => x.p.month2);
+  const list = (rows) => rows.length
+    ? rows.map(x => pkgCardHTML(x.p, x.i)).join("")
+    : `<p class="hint">ยังไม่มีแพ็กเกจในกลุ่มนี้</p>`;
   return `
     <div class="card">
-      <div class="head"><h3>แพ็กเกจเน็ต <small style="color:var(--muted);font-weight:500">(${settings.PACKAGES.length} แพ็กเกจ)</small></h3>
-        <button class="ghost" onclick="addPkg()">+ เพิ่มแพ็กเกจ</button></div>
-      <p class="hint">แต่ละแพ็กเกจแยกเป็นกล่องของตัวเอง กดที่หัวกล่องเพื่อเปิด/ปิดการแก้ไข ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ)</p>
-      ${settings.PACKAGES.length
-        ? settings.PACKAGES.map((p, i) => pkgCardHTML(p, i)).join("")
-        : `<p class="hint">ยังไม่มีแพ็กเกจ กดปุ่ม "+ เพิ่มแพ็กเกจ" เพื่อเริ่มต้น</p>`}
-      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg()">+ เพิ่มแพ็กเกจใหม่</button>
+      <div class="head"><h3>แพ็กเกจเดือนแรก <small style="color:var(--muted);font-weight:500">(${first.length} แพ็กเกจ)</small></h3>
+        <button class="ghost" onclick="addPkg(false)">+ เพิ่มแพ็กเกจ</button></div>
+      <p class="hint">แพ็กเกจที่ลูกค้าเห็นในเมนูสมัครแพ็กเกจเน็ต ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ) แต่ละแพ็กเกจแยกเป็นกล่องของตัวเอง กดที่หัวกล่องเพื่อเปิด/ปิดการแก้ไข</p>
+      ${list(first)}
+      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(false)">+ เพิ่มแพ็กเกจใหม่</button>
+    </div>
+
+    <div class="card">
+      <div class="head"><h3>แพ็กเกจเดือนที่ 2 <small style="color:var(--muted);font-weight:500">(${second.length} แพ็กเกจ)</small></h3>
+        <button class="ghost" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2</button></div>
+      <p class="hint">แพ็กเกจที่ลูกค้าเลือกหลังกดปุ่ม "ต่อแพ็กเกจเดือนที่ 2" (ลูกค้ากรอกเบอร์ อัปโหลดรูปยืนยัน แล้วเลือกแพ็กเกจ) ชำระเงินและแนบสลิปเหมือนเดิม สถานะจะขึ้นเหมือนการสมัครเดือนแรก</p>
+      ${list(second)}
+      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2 ใหม่</button>
     </div>
 
     <div class="card">
@@ -614,13 +627,21 @@ function upd(key, i, field, val) {
   markDirty();
 }
 
-function addPkg() {
+function addPkg(month2 = false) {
   const id = "P" + Date.now().toString(36);
   settings.PACKAGES.push({
     id, name: "", speed: "", desc: "",
-    price: 0, code: "", badge: "", color: "#0b5ed7", features: []
+    price: 0, code: "", badge: "", color: month2 ? "#7c3aed" : "#0b5ed7", features: [],
+    month2: !!month2
   });
   lastAddedPkg = id;
+  markDirty();
+  render();
+}
+
+function setMonth2(i, on) {
+  settings.PACKAGES[i].month2 = !!on;
+  settings.PACKAGES[i].color = settings.PACKAGES[i].color || (on ? "#7c3aed" : "#0b5ed7");
   markDirty();
   render();
 }
@@ -791,7 +812,12 @@ function orderListHTML(list) {
           <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
           <div class="meta">SIM ${esc(o.phone)}${o.serial ? ` · ซีเรียล ${esc(o.serial)}` : ""} · ${fmt(o.amount)}</div>
           <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
-          ${o.shipping ? `
+          ${o.shipping && o.shipping.confirmImg ? `
+          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
+            <b>📶 ต่อแพ็กเกจเดือนที่ 2</b> · ซิม ${esc(o.shipping.carrier || "-")} · เบอร์ ${esc(o.shipping.phone || o.phone || "-")}<br>
+            <a href="${esc(o.shipping.confirmImg)}" target="_blank" rel="noopener" style="color:#0b5ed7;font-weight:700">🖼️ เปิดรูปยืนยันเบอร์</a>
+          </div>` : ""}
+          ${o.shipping && o.shipping.name ? `
           <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
             <b>📦 ส่งถึง:</b> ${esc(o.shipping.name)} · ${esc(o.shipping.phone)}<br>
             ${esc([o.shipping.addr1, o.shipping.road, o.shipping.sub && "ต." + o.shipping.sub, o.shipping.dist && "อ." + o.shipping.dist, o.shipping.prov, o.shipping.zip].filter(Boolean).join(" "))}
@@ -893,6 +919,13 @@ function viewSettings() {
   ];
   const slipOn = settings.SLIP_CHECK !== false;
   return `
+    <div class="card">
+      <h3>👤 แอดมินทาง LINE</h3>
+      <p class="hint">ใส่ LINE userId ของแอดมิน (คั่นด้วยคอมมาถ้ามีหลายคน) แอดมินที่อยู่ในรายการนี้เท่านั้นที่พิมพ์ <b>ยอด</b> / <b>รายการ</b> ในแชท LINE OA และกดอัปเดตสถานะได้<br>
+      ยังไม่รู้ userId? ให้ทักบัญชีทางการหนึ่งครั้ง ระบบจะตอบ userId กลับมา (ระบบจะหยุดตอบเมื่อมีการตั้งค่าแล้ว)</p>
+      <label>LINE userId ของแอดมิน<input value="${esc(settings.adminLineIds || "")}" placeholder="U1234abcd..." oninput="settings.adminLineIds=this.value;markDirty()"></label>
+    </div>
+
     <div class="card">
       <h3>🛠️ อัปเดตฐานข้อมูล</h3>
       <p class="hint">กดครั้งเดียวเพื่อเปิดใช้ฟังก์ชันส่งข้อความหาลูกค้าทาง LINE ถ้ากดซ้ำก็ไม่เป็นไร ระบบจะแจ้งว่าอัปเดตแล้ว</p>
