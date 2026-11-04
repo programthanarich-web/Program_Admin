@@ -218,6 +218,7 @@ function normalize(s) {
     banners: s.banners || [],
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
+    SELF_STEPS_BY: s.SELF_STEPS_BY || {},
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
     menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
@@ -589,8 +590,16 @@ function pkgCardHTML(p, i) {
     </details>`;
 }
 
+// เครือข่ายที่กำลังแก้ไขแพ็กเกจ/ขั้นตอน (แพ็กเกจเก่าที่ไม่มีค่า carrier ถือว่าเป็น True)
+let pkgTab = "truemove H";
+const pkgCarrierOf = p => p.carrier || "truemove H";
+function setPkgTab(c) { pkgTab = c; render(); }
+function stepsOfCarrier(c) {
+  return c === "truemove H" ? settings.SELF_STEPS : ((settings.SELF_STEPS_BY || {})[c] || []);
+}
+
 function viewPackages() {
-  const all = settings.PACKAGES.map((p, i) => ({ p, i }));
+  const all = settings.PACKAGES.map((p, i) => ({ p, i })).filter(x => pkgCarrierOf(x.p) === pkgTab);
   const first = all.filter(x => !x.p.month2);
   const second = all.filter(x => x.p.month2);
   const list = (rows) => rows.length
@@ -598,7 +607,15 @@ function viewPackages() {
     : `<p class="hint">ยังไม่มีแพ็กเกจในกลุ่มนี้</p>`;
   return `
     <div class="card">
-      <div class="head"><h3>แพ็กเกจเดือนแรก <small style="color:var(--muted);font-weight:500">(${first.length} แพ็กเกจ)</small></h3>
+      <h3>เลือกเครือข่ายที่จะแก้ไข</h3>
+      <p class="hint">แพ็กเกจและขั้นตอนสมัครแยกตามเครือข่าย เพราะรหัสสมัครและวิธีสมัครของแต่ละเครือข่ายไม่เหมือนกัน</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${CARRIERS.map(c => `<button class="${pkgTab === c ? "primary" : "ghost"}" onclick="setPkgTab('${c}')">${c === "truemove H" ? "True" : c}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head"><h3>แพ็กเกจเดือนแรก (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${first.length} แพ็กเกจ)</small></h3>
         <button class="ghost" onclick="addPkg(false)">+ เพิ่มแพ็กเกจ</button></div>
       <p class="hint">แพ็กเกจที่ลูกค้าเห็นในเมนูสมัครแพ็กเกจเน็ต ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ) แต่ละแพ็กเกจแยกเป็นกล่องของตัวเอง กดที่หัวกล่องเพื่อเปิด/ปิดการแก้ไข</p>
       ${list(first)}
@@ -614,9 +631,9 @@ function viewPackages() {
     </div>
 
     <div class="card">
-      <h3>ขั้นตอนสมัครเน็ต (เมนูเติมเงินเอง)</h3>
-      <p class="hint">พิมพ์บรรทัดละ 1 ขั้นตอน</p>
-      <textarea rows="5" oninput="setSteps(this.value)">${esc(settings.SELF_STEPS.join("\n"))}</textarea>
+      <h3>ขั้นตอนสมัครเน็ต — ${pkgTab === "truemove H" ? "True" : pkgTab} (เมนูเติมเงินเอง)</h3>
+      <p class="hint">พิมพ์บรรทัดละ 1 ขั้นตอน ขั้นตอนนี้แสดงเฉพาะลูกค้าที่เลือกเครือข่ายนี้</p>
+      <textarea rows="5" oninput="setSteps(this.value)">${esc(stepsOfCarrier(pkgTab).join("\n"))}</textarea>
     </div>`;
 }
 
@@ -632,7 +649,7 @@ function addPkg(month2 = false) {
   settings.PACKAGES.push({
     id, name: "", speed: "", desc: "",
     price: 0, code: "", badge: "", color: month2 ? "#7c3aed" : "#0b5ed7", features: [],
-    month2: !!month2
+    month2: !!month2, carrier: pkgTab
   });
   lastAddedPkg = id;
   markDirty();
@@ -665,7 +682,9 @@ function delPkg(i) {
 }
 
 function setSteps(text) {
-  settings.SELF_STEPS = text.split("\n").map(x => x.trim()).filter(Boolean);
+  const lines = text.split("\n").map(x => x.trim()).filter(Boolean);
+  if (pkgTab === "truemove H") settings.SELF_STEPS = lines;
+  else settings.SELF_STEPS_BY = { ...(settings.SELF_STEPS_BY || {}), [pkgTab]: lines };
   markDirty();
 }
 
@@ -812,6 +831,7 @@ function orderListHTML(list) {
           <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
           <div class="meta">SIM ${esc(o.phone)}${o.serial ? ` · ซีเรียล ${esc(o.serial)}` : ""} · ${fmt(o.amount)}</div>
           <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
+          ${o.shipping && o.shipping.carrier && !o.shipping.confirmImg ? `<div class="meta">📶 เครือข่าย: ${esc(o.shipping.carrier)}</div>` : ""}
           ${o.shipping && o.shipping.confirmImg ? `
           <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
             <b>📶 ต่อแพ็กเกจเดือนที่ 2</b> · ซิม ${esc(o.shipping.carrier || "-")} · เบอร์ ${esc(o.shipping.phone || o.phone || "-")}<br>
