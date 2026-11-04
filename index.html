@@ -529,43 +529,75 @@ function delLucky(i) {
   render();
 }
 
+function pkgSection(title) {
+  return `<div style="font-size:12px;font-weight:800;color:#64748b;letter-spacing:.3px;margin:14px 0 6px;text-transform:uppercase">${title}</div>`;
+}
+
+function pkgCardHTML(p, i) {
+  const color = p.color || "#0b5ed7";
+  const isNew = p.id === lastAddedPkg;
+  return `
+    <details class="pkg-card" ${isNew ? "open" : ""} style="border:1px solid var(--line);border-left:6px solid ${esc(color)};border-radius:14px;margin-bottom:14px;background:#fff">
+      <summary style="cursor:pointer;list-style:none;padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:${esc(color)};color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center">${i + 1}</span>
+        <span style="flex:1;min-width:0">
+          <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name || "แพ็กเกจใหม่ (ยังไม่ได้ตั้งชื่อ)")}</b>
+          <small style="color:var(--muted)">${esc(p.price || 0)} บาท/เดือน${p.discType === "none" ? " · ไม่ลดร้าน" : ""}${p.shopOnly ? " · เฉพาะทางร้าน" : ""}</small>
+        </span>
+        <span style="color:var(--muted);font-size:12px">แก้ไข ▾</span>
+      </summary>
+
+      <div style="padding:4px 16px 16px;border-top:1px solid var(--line)">
+        ${pkgSection("ข้อความที่แสดงบนการ์ด")}
+        <div class="grid2">
+          <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
+          <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
+        </div>
+        <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
+        <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
+        <div class="grid2">
+          <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
+          <label>สีการ์ด<input type="color" value="${esc(color)}" oninput="upd('PACKAGES',${i},'color',this.value)"></label>
+        </div>
+
+        ${pkgSection("ราคาและรหัส")}
+        <div class="grid2">
+          <label>ราคาต่อเดือน (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
+          <label>ราคาเดือนแรก (บาท) <small>เว้นว่าง = เท่ากับราคาต่อเดือน</small><input type="number" min="0" value="${esc(p.firstPrice ?? "")}" placeholder="เช่น 250" oninput="upd('PACKAGES',${i},'firstPrice',Number(this.value)||0)"></label>
+        </div>
+        <label>รหัสสมัคร<input value="${esc(p.code)}" placeholder="เช่น *900*1111#" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
+
+        ${pkgSection("ส่วนลดร้าน")}
+        <div class="grid2">
+          <label>รูปแบบส่วนลด
+            <select onchange="setDiscType(${i}, this.value)">
+              <option value="" ${!p.discType ? "selected" : ""}>ใช้ค่ากลาง</option>
+              <option value="none" ${p.discType === "none" ? "selected" : ""}>ไม่ลด</option>
+              <option value="baht" ${p.discType === "baht" ? "selected" : ""}>ลดเป็นบาท</option>
+              <option value="percent" ${p.discType === "percent" ? "selected" : ""}>ลดเป็นเปอร์เซ็นต์ (%)</option>
+            </select>
+          </label>
+          <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
+
+        <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);text-align:right">
+          <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${i + 1}</button>
+        </div>
+      </div>
+    </details>`;
+}
+
 function viewPackages() {
   return `
     <div class="card">
-      <div class="head"><h3>แพ็กเกจเน็ต</h3>
+      <div class="head"><h3>แพ็กเกจเน็ต <small style="color:var(--muted);font-weight:500">(${settings.PACKAGES.length} แพ็กเกจ)</small></h3>
         <button class="ghost" onclick="addPkg()">+ เพิ่มแพ็กเกจ</button></div>
-      <p class="hint">ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ)</p>
-      ${settings.PACKAGES.length ? settings.PACKAGES.map((p, i) => `
-        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">
-          <div class="grid2">
-            <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
-            <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
-          </div>
-          <div class="grid2">
-            <label>ราคาต่อเดือน (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
-            <label>ราคาเดือนแรก (บาท) <small>เว้นว่าง = เท่ากับราคาต่อเดือน</small><input type="number" min="0" value="${esc(p.firstPrice ?? "")}" placeholder="เช่น 250" oninput="upd('PACKAGES',${i},'firstPrice',Number(this.value)||0)"></label>
-            <label>รหัสสมัคร<input value="${esc(p.code)}" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
-          </div>
-          <div class="grid2">
-            <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
-            <label>สีการ์ด<input type="color" value="${esc(p.color || "#0b5ed7")}" oninput="upd('PACKAGES',${i},'color',this.value)"></label>
-          </div>
-          <div class="grid2">
-            <label>ส่วนลดร้านของแพ็กเกจนี้
-              <select onchange="setDiscType(${i}, this.value)">
-                <option value="" ${!p.discType ? "selected" : ""}>ใช้ค่ากลาง</option>
-                <option value="none" ${p.discType === "none" ? "selected" : ""}>ไม่ลด</option>
-                <option value="baht" ${p.discType === "baht" ? "selected" : ""}>ลดเป็นบาท</option>
-                <option value="percent" ${p.discType === "percent" ? "selected" : ""}>ลดเป็นเปอร์เซ็นต์ (%)</option>
-              </select>
-            </label>
-            <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
-          </div>
-          <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
-          <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
-          <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
-          <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจนี้</button></div>
-        </div>`).join("") : `<p class="hint">ยังไม่มีแพ็กเกจ</p>`}
+      <p class="hint">แต่ละแพ็กเกจแยกเป็นกล่องของตัวเอง กดที่หัวกล่องเพื่อเปิด/ปิดการแก้ไข ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ)</p>
+      ${settings.PACKAGES.length
+        ? settings.PACKAGES.map((p, i) => pkgCardHTML(p, i)).join("")
+        : `<p class="hint">ยังไม่มีแพ็กเกจ กดปุ่ม "+ เพิ่มแพ็กเกจ" เพื่อเริ่มต้น</p>`}
+      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg()">+ เพิ่มแพ็กเกจใหม่</button>
     </div>
 
     <div class="card">
@@ -575,16 +607,20 @@ function viewPackages() {
     </div>`;
 }
 
+let lastAddedPkg = null;
+
 function upd(key, i, field, val) {
   settings[key][i][field] = val;
   markDirty();
 }
 
 function addPkg() {
+  const id = "P" + Date.now().toString(36);
   settings.PACKAGES.push({
-    id: "P" + Date.now().toString(36), name: "", speed: "", desc: "",
+    id, name: "", speed: "", desc: "",
     price: 0, code: "", badge: "", color: "#0b5ed7", features: []
   });
+  lastAddedPkg = id;
   markDirty();
   render();
 }
