@@ -583,7 +583,7 @@ function pkgCardHTML(p, i) {
           <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
         </div>
         <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
-        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.month2 ? "checked" : ""} onchange="setMonth2(${i},this.checked)"> ใช้เป็นแพ็กเกจเดือนที่ 2 (แสดงในเมนูต่อแพ็กเกจเดือนที่ 2 แทนเมนูเดือนแรก)</label>
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopVisible ? "checked" : ""} onchange="setShopVisible(${i},this.checked)"> สมัครเน็ตกับทางร้าน (ติ๊ก = แสดงในเมนูสมัครเน็ตกับทางร้านบนเว็บ ไม่ติ๊ก = ไม่แสดง)</label>
 
         <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);text-align:right">
           <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${i + 1}</button>
@@ -659,6 +659,12 @@ function addPkg(month2 = false) {
     month2: !!month2, carrier: pkgTab
   });
   lastAddedPkg = id;
+  markDirty();
+  render();
+}
+
+function setShopVisible(i, on) {
+  settings.PACKAGES[i].shopVisible = !!on;
   markDirty();
   render();
 }
