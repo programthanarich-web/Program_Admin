@@ -219,6 +219,7 @@ function normalize(s) {
     luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
     SELF_STEPS: s.SELF_STEPS || [],
     SELF_STEPS_BY: s.SELF_STEPS_BY || {},
+    month2Carriers: s.month2Carriers || {},
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
     menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
@@ -1059,6 +1060,16 @@ function viewSettings() {
     </div>
 
     <div class="card">
+      <h3>📶 เปิด/ปิดการต่อแพ็กเกจเดือนที่ 2 ตามเครือข่าย</h3>
+      <p class="hint">ปิดเครือข่ายไหน ลูกค้าจะเห็นเครือข่ายนั้นแต่กดเลือกไม่ได้</p>
+      ${CARRIERS.map(c => `
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0">
+          <input type="checkbox" style="width:auto" ${(settings.month2Carriers || {})[c] !== false ? "checked" : ""} onchange="setMonth2Carrier('${c}', this.checked)">
+          ${c === "truemove H" ? "True" : c} ${(settings.month2Carriers || {})[c] !== false ? "" : "<small style='color:#e11d48'>(ปิดอยู่)</small>"}
+        </label>`).join("")}
+    </div>
+
+    <div class="card">
       <h3>🖼️ รูปตัวอย่างต่อแพ็กเกจเดือนที่ 2</h3>
       <p class="hint">รูปนี้แสดงในหน้า "ต่อแพ็กเกจเดือนที่ 2" ของลูกค้า แยกจากรูปตัวอย่างลงทะเบียนซิมของแต่ละเครือข่าย<br>ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
       <div class="photo">
@@ -1325,6 +1336,12 @@ async function uploadMonth2Sample(file) {
   } catch (e) {
     toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
   }
+}
+
+function setMonth2Carrier(c, on) {
+  settings.month2Carriers = { ...(settings.month2Carriers || {}), [c]: !!on };
+  markDirty(); saveAll();
+  render();
 }
 
 function clearMonth2Sample() {
