@@ -624,8 +624,13 @@ function viewPackages() {
     </div>
 
     <div class="card">
-      <div class="head"><h3>แพ็กเกจเดือนที่ 2 <small style="color:var(--muted);font-weight:500">(${second.length} แพ็กเกจ)</small></h3>
+      <div class="head"><h3>แพ็กเกจเดือนที่ 2 (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${second.length} แพ็กเกจ)</small></h3>
         <button class="ghost" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2</button></div>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:700">
+        <input type="checkbox" style="width:auto" ${(settings.month2Carriers || {})[pkgTab] !== false ? "checked" : ""} onchange="setMonth2Carrier('${pkgTab}', this.checked)">
+        เปิดให้ลูกค้าต่อแพ็กเกจเดือนที่ 2 ของเครือข่ายนี้
+      </label>
+      <p class="hint">ถ้าปิด ลูกค้าจะเห็นเครือข่ายนี้ในหน้าต่อแพ็กเกจเดือนที่ 2 แต่กดเลือกไม่ได้</p>
       <p class="hint">แพ็กเกจที่ลูกค้าเลือกหลังกดปุ่ม "ต่อแพ็กเกจเดือนที่ 2" (ลูกค้ากรอกเบอร์ อัปโหลดรูปยืนยัน แล้วเลือกแพ็กเกจ) ชำระเงินและแนบสลิปเหมือนเดิม สถานะจะขึ้นเหมือนการสมัครเดือนแรก</p>
       ${list(second)}
       <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2 ใหม่</button>
@@ -1057,16 +1062,6 @@ function viewSettings() {
           ${reg.sample ? `<div style="margin-top:6px"><button class="danger" onclick="clearCarrierSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
         </div>`;
       }).join("")}
-    </div>
-
-    <div class="card">
-      <h3>📶 เปิด/ปิดการต่อแพ็กเกจเดือนที่ 2 ตามเครือข่าย</h3>
-      <p class="hint">ปิดเครือข่ายไหน ลูกค้าจะเห็นเครือข่ายนั้นแต่กดเลือกไม่ได้</p>
-      ${CARRIERS.map(c => `
-        <label style="display:flex;gap:8px;align-items:center;margin:8px 0">
-          <input type="checkbox" style="width:auto" ${(settings.month2Carriers || {})[c] !== false ? "checked" : ""} onchange="setMonth2Carrier('${c}', this.checked)">
-          ${c === "truemove H" ? "True" : c} ${(settings.month2Carriers || {})[c] !== false ? "" : "<small style='color:#e11d48'>(ปิดอยู่)</small>"}
-        </label>`).join("")}
     </div>
 
     <div class="card">
