@@ -1039,6 +1039,19 @@ function viewSettings() {
     </div>
 
     <div class="card">
+      <h3>🖼️ รูปตัวอย่างต่อแพ็กเกจเดือนที่ 2</h3>
+      <p class="hint">รูปนี้แสดงในหน้า "ต่อแพ็กเกจเดือนที่ 2" ของลูกค้า แยกจากรูปตัวอย่างลงทะเบียนซิมของแต่ละเครือข่าย<br>ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
+      <div class="photo">
+        <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${settings.month2Sample ? `<img src="${esc(settings.month2Sample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
+        <label style="cursor:pointer;color:var(--blue);font-weight:700">
+          📁 เลือกรูปตัวอย่างต่อแพ็กเกจเดือนที่ 2
+          <input type="file" accept="image/*" class="hidden" onchange="uploadMonth2Sample(this.files[0])">
+        </label>
+        ${settings.month2Sample ? `<div style="margin-top:6px"><button class="danger" onclick="clearMonth2Sample()">ลบรูปตัวอย่าง</button></div>` : ""}
+      </div>
+    </div>
+
+    <div class="card">
       <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
       ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
@@ -1278,6 +1291,24 @@ async function uploadMenuIcon(key, file) {
 
 function clearMenuIcon(key) {
   if (settings.menuIcons) delete settings.menuIcons[key];
+  markDirty(); saveAll();
+  render();
+}
+
+async function uploadMonth2Sample(file) {
+  if (!file) return;
+  try {
+    settings.month2Sample = await uploadFile(file);
+    markDirty(); saveAll();
+    render();
+    toast("อัปโหลดรูปตัวอย่างเดือนที่ 2 แล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
+  }
+}
+
+function clearMonth2Sample() {
+  settings.month2Sample = "";
   markDirty(); saveAll();
   render();
 }
