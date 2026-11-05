@@ -223,6 +223,7 @@ function normalize(s) {
     month2Samples: s.month2Samples || {},
     simAgeCarriers: s.simAgeCarriers || {},
     simAgeSamples: s.simAgeSamples || {},
+    portOtpSample: s.portOtpSample || "",
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
     menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
@@ -853,7 +854,7 @@ function filterOrders(q) {
 function orderListHTML(list) {
   if (!list.length) return `<div class="empty">📭 ยังไม่มีรายการ</div>`;
   const label = { new: "รอตรวจ", confirmed: "ยืนยันแล้ว", done: "สมัครแล้ว", rejected: "ปฏิเสธ" };
-  return list.map(o => `
+  return list.map(o => (o.shipping && o.shipping.port) ? portOrderHTML(o) : `
     <div class="order">
       <div class="top2">
         <div>
@@ -1124,6 +1125,19 @@ function viewSettings() {
           ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearSimAgeSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
         </div>`;
       }).join("")}
+    </div>
+
+    <div class="card">
+      <h3>🔢 รูปตัวอย่าง OTP (เมนูโปรเน็ตเบอร์เดิม)</h3>
+      <p class="hint">รูปนี้แสดงให้ลูกค้าเห็นตอนรอกรอกเลข OTP ที่ได้รับจากเบอร์ของตัวเอง</p>
+      <div class="photo">
+        <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${settings.portOtpSample ? `<img src="${esc(settings.portOtpSample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง OTP"}</div>
+        <label style="cursor:pointer;color:var(--blue);font-weight:700">
+          📁 เลือกรูปตัวอย่าง OTP
+          <input type="file" accept="image/*" class="hidden" onchange="uploadPortOtpSample(this.files[0])">
+        </label>
+        ${settings.portOtpSample ? `<div style="margin-top:6px"><button class="danger" onclick="clearPortOtpSample()">ลบรูปตัวอย่าง</button></div>` : ""}
+      </div>
     </div>
 
     <div class="card">
@@ -1416,6 +1430,73 @@ function clearSimAgeSample(c) {
   settings.simAgeSamples = { ...(settings.simAgeSamples || {}), [c]: "" };
   markDirty(); saveAll();
   render();
+}
+
+async function uploadPortOtpSample(file) {
+  if (!file) return;
+  try {
+    settings.portOtpSample = await uploadFile(file);
+    markDirty(); saveAll();
+    render();
+    toast("อัปโหลดรูปตัวอย่าง OTP แล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
+  }
+}
+
+function clearPortOtpSample() {
+  settings.portOtpSample = "";
+  markDirty(); saveAll();
+  render();
+}
+
+// คำสั่งซื้อโปรเบอร์เดิม: แสดงเบอร์ OTP และให้ร้านเลือกแพ็กเกจที่เบอร์นี้สมัครได้
+function portOrderHTML(o) {
+  const sh = o.shipping || {};
+  const portLabel = { port_wait: "รอ OTP", port_otp: "ลูกค้าส่ง OTP แล้ว", port_ready: "ส่งแพ็กเกจแล้ว", port_cancelled: "ลูกค้ายกเลิก" };
+  const pkgs = (settings.PACKAGES || []).filter(p => p.simAge && (p.carrier || "truemove H") === (sh.carrier || "truemove H"));
+  const pick = sh.portPackageId || "";
+  return `
+    <div class="order">
+      <div class="top2">
+        <div>
+          <b>#${esc(o.orderNo || o.id)}</b> · 🔄 คำสั่งซื้อโปรเบอร์เดิม
+          <div class="meta">SIM ${esc(sh.phone || o.phone)} · เครือข่าย ${esc(sh.carrier || "-")} · ${dayOf(o).toLocaleString("th-TH")}</div>
+          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
+            <b>OTP ที่ลูกค้าส่งให้ร้าน:</b> ${sh.otp ? `<span style="font-size:18px;font-weight:800;letter-spacing:2px">${esc(sh.otp)}</span>` : "ยังไม่ได้ส่ง"}<br>
+            ${sh.confirmImg ? `<a href="${esc(sh.confirmImg)}" target="_blank" rel="noopener" style="color:#0b5ed7;font-weight:700">🖼️ เปิดรูปแสดงอายุซิม</a>` : ""}
+          </div>
+          <div style="margin-top:8px">
+            <label class="meta">เลือกแพ็กเกจที่เบอร์นี้สมัครได้</label>
+            <select id="portPkg-${esc(o.id)}" style="width:100%">
+              <option value="">-- เลือกแพ็กเกจ --</option>
+              ${pkgs.map(p => `<option value="${esc(p.id)}" ${p.id === pick ? "selected" : ""}>${esc(p.name)}${p.price ? " · " + fmt(p.price) + " บาท" : ""}</option>`).join("")}
+            </select>
+            ${pkgs.length ? "" : `<div class="meta">ยังไม่มีแพ็กเกจโปรเบอร์เดิมของเครือข่ายนี้ ให้เพิ่มที่แท็บแพ็กเกจก่อน</div>`}
+          </div>
+        </div>
+        <span class="pill ${esc(o.status)}">${esc(portLabel[o.status] || o.status || "-")}</span>
+      </div>
+      <div class="btns">
+        <button class="primary" onclick="assignPort('${esc(o.id)}')">ส่งแพ็กเกจให้ลูกค้า</button>
+        <button class="danger" onclick="setOrder('${esc(o.id)}','rejected')">ปิดรายการ</button>
+      </div>
+    </div>`;
+}
+
+async function assignPort(id) {
+  const sel = document.getElementById("portPkg-" + id);
+  const packageId = sel ? sel.value : "";
+  if (!packageId) { toast("กรุณาเลือกแพ็กเกจก่อน", false); return; }
+  try {
+    await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { packageId } });
+    const o = orders.find(x => x.id === id);
+    if (o) { o.status = "port_ready"; o.shipping = { ...(o.shipping || {}), portPackageId: packageId }; }
+    render();
+    toast("ส่งแพ็กเกจให้ลูกค้าแล้ว");
+  } catch (e) {
+    toast("ส่งไม่สำเร็จ: " + e.message, false);
+  }
 }
 
 function clearCarrierSample(name) {
