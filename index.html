@@ -103,6 +103,27 @@
     .grid4 button{grid-column:span 2}
     .sample-row{grid-template-columns:1fr}
   }
+  /* ----- คูปองสำหรับพิมพ์ A4 (4 คูปองต่อ 1 แผ่น) ----- */
+  #printArea{display:none}
+  .cp{display:flex;align-items:stretch;width:190mm;height:64mm;margin:0 0 4mm;border:1px dashed #666;border-radius:4mm;overflow:hidden;background:#fff;color:#111;box-sizing:border-box}
+  .cp-amt{width:48mm;background:#0b5cad;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4mm;text-align:center}
+  .cp-val{font-size:34pt;font-weight:800;line-height:1}
+  .cp-val small{font-size:12pt}
+  .cp-label{font-size:9pt;margin-top:2mm}
+  .cp-logo{max-height:10mm;max-width:30mm;margin-bottom:2mm;background:#fff;border-radius:2mm;padding:1mm}
+  .cp-code{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4mm}
+  .cp-cap{font-size:9pt;color:#555}
+  .cp-num{font-family:monospace;font-size:24pt;font-weight:700;letter-spacing:1.5mm;margin-top:1mm}
+  .cp-terms{width:58mm;font-size:8.5pt;padding:4mm;display:flex;flex-direction:column;justify-content:center;gap:1.5mm;border-left:1px dashed #999}
+  @media print{
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{display:block;position:absolute;left:0;top:0;width:190mm}
+    .cp{break-inside:avoid}
+    .cp:nth-child(4n):not(:last-child){break-after:page}
+    @page{size:A4;margin:10mm}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
 </head>
 <body>
@@ -185,6 +206,7 @@ const TABS = [
   ["luckyrules", "ตารางวิเคราะห์เบอร์"],
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
+  ["coupons", "คูปองส่วนลด"],
   ["settings", "การตั้งค่า"],
   ["danger", "ลบประวัติ"]
 ];
@@ -322,6 +344,7 @@ function renderTabs() {
 function setTab(t) {
   tab = t;
   if (t === "orders") { loadOrders(); return; }
+  if (t === "coupons") { loadCoupons(); return; }
   render();
 }
 
@@ -329,7 +352,7 @@ function render() {
   renderTabs();
   const views = {
     packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
-    orders: viewOrders, settings: viewSettings, danger: viewDanger
+    orders: viewOrders, settings: viewSettings, danger: viewDanger, coupons: viewCoupons
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
 }
@@ -1723,6 +1746,186 @@ async function uploadPhoto(key, file) {
 /* ==========================================================
    ลบประวัติคำขอ
    ========================================================== */
+/* ==========================================================
+   คูปองส่วนลด (ลูกค้าที่สมัครเน็ตกับทางร้าน)
+   ========================================================== */
+let couponList = [];
+let couponCodes = "";   // รหัสชุดที่เพิ่งสร้าง ใช้แสดงให้คัดลอก
+const COUPON_STATUS_LABEL = { unused: "ยังไม่ใช้", used: "ใช้แล้ว", void: "ยกเลิก", expired: "หมดอายุ" };
+const fmtCouponCode = c => c.length > 5 ? c.slice(0, 5) + "-" + c.slice(5) : c;
+
+function couponStatusOf(c) {
+  if (c.status === "unused" && new Date(c.expiresAt) < new Date()) return "expired";
+  return c.status;
+}
+
+async function loadCoupons() {
+  try {
+    couponList = await api("/admin/coupons");
+  } catch (e) {
+    couponList = [];
+    toast("โหลดคูปองไม่สำเร็จ", false);
+  }
+  render();
+}
+
+async function createCouponBatch() {
+  const count = Math.floor(Number($("cpCount").value));
+  const days = Math.floor(Number($("cpDays").value));
+  const batch = $("cpBatch").value.trim();
+  if (!(count >= 1 && count <= 500)) { toast("จำนวนคูปองต้องอยู่ระหว่าง 1 - 500", false); return; }
+  if (!(days >= 1 && days <= 730)) { toast("อายุคูปองต้องอยู่ระหว่าง 1 - 730 วัน", false); return; }
+  try {
+    const r = await api("/admin/coupons", { method: "POST", json: { count, days, batch } });
+    couponCodes = r.codes.map(fmtCouponCode).join("\n");
+    toast(`สร้างคูปอง ${r.codes.length} รหัสแล้ว`);
+    await loadCoupons();
+  } catch (e) {
+    toast("สร้างคูปองไม่สำเร็จ: " + e.message, false);
+  }
+}
+
+async function copyCouponCodes() {
+  try {
+    await navigator.clipboard.writeText(couponCodes);
+    toast("คัดลอกรหัสแล้ว");
+  } catch (e) {
+    const box = $("cpOut");
+    if (box) { box.select(); document.execCommand("copy"); }
+    toast("คัดลอกรหัสแล้ว");
+  }
+}
+
+async function voidCoupon(code) {
+  if (!confirm("ยกเลิกคูปอง " + fmtCouponCode(code) + " ?")) return;
+  try {
+    await api("/admin/coupons/void", { method: "POST", json: { code } });
+    toast("ยกเลิกคูปองแล้ว");
+    await loadCoupons();
+  } catch (e) {
+    toast("ยกเลิกไม่สำเร็จ: " + e.message, false);
+  }
+}
+
+// ตารางชุดคูปอง พร้อมปุ่มพิมพ์เฉพาะรหัสที่ยังไม่ใช้
+let couponBatchNames = [];
+function couponBatchesHtml() {
+  const map = {};
+  couponList.forEach(c => {
+    const b = c.batch || "-";
+    map[b] = map[b] || { total: 0, unused: 0, used: 0 };
+    map[b].total++;
+    const st = couponStatusOf(c);
+    if (st === "unused") map[b].unused++;
+    if (st === "used") map[b].used++;
+  });
+  couponBatchNames = Object.keys(map);
+  if (!couponBatchNames.length) return "";
+  const rows = couponBatchNames.map((b, i) => `<tr>
+      <td style="padding:8px">${esc(b)}</td>
+      <td style="padding:8px">ทั้งหมด ${map[b].total}</td>
+      <td style="padding:8px">ยังไม่ใช้ ${map[b].unused}</td>
+      <td style="padding:8px">ใช้แล้ว ${map[b].used}</td>
+      <td style="padding:8px"><button onclick="printCouponBatch(${i})" ${map[b].unused ? "" : "disabled"}>🖨️ พิมพ์ที่ยังไม่ใช้</button></td>
+    </tr>`).join("");
+  return `
+    <div class="card">
+      <div class="head"><h3>ชุดคูปอง & การพิมพ์</h3><small style="color:var(--muted)">พิมพ์ได้ 4 คูปองต่อ 1 แผ่น A4</small></div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <tbody>${rows}</tbody>
+      </table>
+      </div>
+    </div>`;
+}
+
+// หน้าคูปองหนึ่งใบสำหรับพิมพ์ (ซ้ายมูลค่า กลางรหัส ขวาเงื่อนไข)
+function couponCardHtml(c) {
+  const exp = c.expiresAt
+    ? new Date(c.expiresAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
+    : "-";
+  const logo = settings && settings.logoImage ? `<img class="cp-logo" src="${esc(settings.logoImage)}" alt="">` : "";
+  return `<div class="cp">
+    <div class="cp-amt">${logo}<div class="cp-val">${esc(c.amount)}<small> บาท</small></div><div class="cp-label">ส่วนลดสมัครเน็ตกับทางร้าน</div></div>
+    <div class="cp-code"><div class="cp-cap">รหัสคูปอง</div><div class="cp-num">${esc(fmtCouponCode(c.code))}</div></div>
+    <div class="cp-terms">
+      <div>• ใส่รหัสในขั้นตอนชำระเงิน เมื่อสมัครเน็ตกับทางร้าน</div>
+      <div>• ใช้ได้ 1 ครั้ง / 1 เบอร์โทร</div>
+      <div>• ไม่ใช้ซ้อนกับส่วนลดร้าน</div>
+      <div>• หมดอายุ ${esc(exp)}</div>
+    </div>
+  </div>`;
+}
+
+// พิมพ์คูปองที่ยังไม่ใช้และยังไม่หมดอายุของชุดนั้น (4 ใบต่อ 1 แผ่น)
+function printCouponBatch(i) {
+  const name = couponBatchNames[i];
+  const list = couponList.filter(c => (c.batch || "-") === name && couponStatusOf(c) === "unused");
+  if (!list.length) { toast("ไม่มีคูปองที่ยังไม่ใช้ในชุดนี้", false); return; }
+  let area = $("printArea");
+  if (!area) {
+    area = document.createElement("div");
+    area.id = "printArea";
+    document.body.appendChild(area);
+  }
+  area.innerHTML = list.map(couponCardHtml).join("");
+  window.print();
+}
+
+function viewCoupons() {
+  const n = s => couponList.filter(c => couponStatusOf(c) === s).length;
+  const rows = couponList.map(c => {
+    const st = couponStatusOf(c);
+    const canVoid = c.status === "unused" && st !== "expired";
+    return `<tr>
+      <td><code>${esc(fmtCouponCode(c.code))}</code></td>
+      <td>${esc(c.batch || "-")}</td>
+      <td>${esc(COUPON_STATUS_LABEL[st] || st)}</td>
+      <td>${esc((c.expiresAt || "").slice(0, 10))}</td>
+      <td>${esc(c.phone || "-")}</td>
+      <td>${esc((c.usedAt || "-").slice(0, 16).replace("T", " "))}</td>
+      <td>${canVoid ? `<button class="ghost" onclick="voidCoupon('${esc(c.code)}')">ยกเลิก</button>` : ""}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div class="card">
+      <div class="head"><h3>🎟️ สร้างคูปองส่วนลด ${fmt(50)}</h3></div>
+      <p class="hint">สร้างเป็นชุด แล้วพิมพ์หรือส่งรหัสให้ลูกค้าที่ซื้อซิมในช้อปปี้ ใช้ได้ 1 ครั้ง และ 1 คูปองต่อ 1 เบอร์ ใช้ได้เฉพาะแพ็กเกจที่ติ๊ก "สมัครเน็ตกับทางร้าน" และไม่มีส่วนลดร้านอยู่แล้ว (ไม่ซ้อนกัน)</p>
+      <div class="grid3">
+        <label>จำนวนคูปอง (1-500)<input id="cpCount" type="number" min="1" max="500" value="10"></label>
+        <label>อายุคูปอง (วัน)<input id="cpDays" type="number" min="1" max="730" value="90"></label>
+        <label>ชื่อชุด (ไม่บังคับ)<input id="cpBatch" placeholder="เช่น ชุดช้อปปี้ พ.ย. 69"></label>
+      </div>
+      <div class="actions" style="justify-content:flex-start;margin-top:10px">
+        <button onclick="createCouponBatch()">➕ สร้างคูปองชุดใหม่</button>
+        <button class="ghost" onclick="loadCoupons()">🔄 รีเฟรช</button>
+      </div>
+    </div>
+    ${couponCodes ? `
+    <div class="card">
+      <div class="head"><h3>รหัสชุดที่เพิ่งสร้าง</h3></div>
+      <textarea id="cpOut" rows="8" readonly style="width:100%;font-family:monospace">${esc(couponCodes)}</textarea>
+      <div class="actions" style="justify-content:flex-start;margin-top:8px">
+        <button onclick="copyCouponCodes()">📋 คัดลอกรหัสทั้งหมด</button>
+      </div>
+    </div>` : ""}
+    ${couponBatchesHtml()}
+    <div class="card">
+      <div class="head"><h3>รายการคูปอง (${couponList.length})</h3>
+        <small style="color:var(--muted)">ยังไม่ใช้ ${n("unused")} · ใช้แล้ว ${n("used")} · หมดอายุ ${n("expired")} · ยกเลิก ${n("void")}</small>
+      </div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--line)">
+          <th style="padding:8px">รหัส</th><th style="padding:8px">ชุด</th><th style="padding:8px">สถานะ</th>
+          <th style="padding:8px">หมดอายุ</th><th style="padding:8px">เบอร์ที่ใช้</th><th style="padding:8px">เวลาที่ใช้</th><th style="padding:8px"></th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" style="padding:12px;color:var(--muted)">ยังไม่มีคูปอง</td></tr>`}</tbody>
+      </table>
+      </div>
+    </div>`;
+}
+
 function viewDanger() {
   return `
     <div class="danger-zone">
