@@ -833,11 +833,6 @@ function viewOrders() {
     </div>
 
     <div class="card">
-      <h3>🏪 สถิติแยกสาขา</h3>
-      ${branches}
-    </div>
-
-    <div class="card">
       <div class="head"><h3>รายการคำสั่งซื้อ (${orders.length})</h3></div>
       <input placeholder="ค้นหาเลขคำสั่งซื้อ เบอร์ หรือซีเรียลซิม" oninput="filterOrders(this.value)" style="margin-bottom:12px">
       <div id="orderGroups">${categorySections(orders)}</div>
@@ -859,7 +854,37 @@ function orderCategory(o) {
   return "new";
 }
 
+// เมนูย่อยของรายการคำสั่งซื้อ: 1) เบอร์ใหม่ 2) ต่อแพ็กเกจเดือนที่ 2 3) สมัครแพ็กเกจเบอร์เดิม
+let orderTab = "new";
+const ORDER_GROUPS = [
+  ["new", "1. สมัครเน็ตเบอร์ใหม่", "ลงทะเบียนซิมและสมัครเน็ตเบอร์ใหม่"],
+  ["month2", "2. ต่อแพ็กเกจเดือนที่ 2", "ลูกค้าต่อแพ็กเกจเดือนที่ 2 (มีรูปยืนยันเบอร์)"],
+  ["port", "3. สมัครแพ็กเกจเบอร์เดิม", "เมนูโปรเน็ตเบอร์เดิม (OTP และการเลือกแพ็กเกจ)"]
+];
+
+function setOrderTab(k) {
+  orderTab = k;
+  const q = (document.querySelector('input[oninput^="filterOrders"]') || {}).value || "";
+  filterOrders(q);
+}
+
 function categorySections(list) {
+  const tabs = ORDER_GROUPS.map(([key, title]) => {
+    const n = list.filter(o => orderCategory(o) === key).length;
+    return `<button class="${orderTab === key ? "primary" : "ghost"}" onclick="setOrderTab('${key}')">${title} (${n})</button>`;
+  }).join("");
+  const [key, title, hint] = ORDER_GROUPS.find(g => g[0] === orderTab) || ORDER_GROUPS[0];
+  const rows = list.filter(o => orderCategory(o) === key);
+  return `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${tabs}</div>
+    <div class="order-group">
+      <div class="head"><h3>${title} <small style="color:var(--muted);font-weight:500">(${rows.length})</small></h3></div>
+      <p class="hint">${hint}</p>
+      <div id="orderList_${key}">${orderListHTML(rows)}</div>
+    </div>`;
+}
+
+function categorySections_old(list) {
   const groups = [
     ["new", "🆕 คำสั่งซื้อเบอร์ใหม่", "ลงทะเบียนซิมและสมัครเน็ตเบอร์ใหม่"],
     ["month2", "🔁 คำสั่งซื้อต่อแพ็กเกจเดือนที่ 2", "ลูกค้าต่อแพ็กเกจเดือนที่ 2 (มีรูปยืนยันเบอร์)"],
