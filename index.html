@@ -643,6 +643,11 @@ function viewPackages() {
     <div class="card">
       <div class="head"><h3>แพ็กเกจโปรเบอร์เดิม (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${third.length} แพ็กเกจ)</small></h3>
         <button class="ghost" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจ</button></div>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:700">
+        <input type="checkbox" style="width:auto" ${(settings.simAgeCarriers || {})[pkgTab] !== false ? "checked" : ""} onchange="setSimAgeCarrier('${pkgTab}', this.checked)">
+        เปิดให้ลูกค้าเลือกเครือข่ายนี้ในเมนูโปรเบอร์เดิม
+      </label>
+      <p class="hint">ถ้าปิด ลูกค้าจะเห็นเครือข่ายนี้ในหน้าเลือกเครือข่าย แต่กดเลือกไม่ได้</p>
       <p class="hint">แพ็กเกจของเมนู "โปรเน็ตเบอร์เดิม" (ลูกค้าเลือกเครือข่าย ใส่เบอร์ อัปโหลดรูปแสดงอายุซิม แล้วเลือกแพ็กเกจ) แยกจากแพ็กเกจเดือนแรกและเดือนที่ 2 ชำระเงินและแนบสลิปเหมือนเดิม</p>
       ${list(third)}
       <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจโปรเบอร์เดิมใหม่</button>
@@ -1103,7 +1108,7 @@ function viewSettings() {
 
     <div class="card">
       <h3>🔄 เมนูโปรเน็ตเบอร์เดิม (ตรวจอายุซิม)</h3>
-      <p class="hint">ลูกค้าเลือกเครือข่ายก่อน ถ้าไม่ติ๊กเครือข่ายไหน ลูกค้าจะกดเลือกเครือข่ายนั้นไม่ได้</p>
+      <p class="hint">เปิด/ปิดเครือข่ายและแพ็กเกจของเมนูนี้ ตั้งที่แท็บแพ็กเกจ → "แพ็กเกจโปรเบอร์เดิม"</p>
       <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
       ${CARRIERS.map(c => {
         const url = (settings.simAgeSamples || {})[c] || "";
@@ -1111,10 +1116,6 @@ function viewSettings() {
         return `
         <div class="photo" style="margin-bottom:12px">
           <div class="t">${name}</div>
-          <label style="display:block;margin:6px 0">
-            <input type="checkbox" style="width:auto" ${(settings.simAgeCarriers || {})[c] !== false ? "checked" : ""} onchange="setSimAgeCarrier('${c}', this.checked)">
-            เปิดให้ลูกค้าเลือกเครือข่ายนี้ในเมนูโปรเน็ตเบอร์เดิม
-          </label>
           <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${url ? `<img src="${esc(url)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
           <label style="cursor:pointer;color:var(--blue);font-weight:700">
             📁 เลือกรูปตัวอย่างแสดงอายุซิมของ ${name}
