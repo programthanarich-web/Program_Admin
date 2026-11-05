@@ -3,169 +3,666 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#06C755">
-<title>หลังบ้าน | ProgramThanarich</title>
+<title>สมัครแพ็กเกจเน็ต | ProgramThanarich</title>
 <style>
-  :root{--blue:#0b5ed7;--blue-d:#084bb0;--bg:#f3f6fb;--card:#fff;--text:#0f1b33;--muted:#6b7a90;--line:#e3e9f3;--ok:#12a150;--err:#d93434;--amber:#b26a00;--yellow:#ffc233}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
-  button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;padding:8px 12px;font-size:13px;color:var(--text);font-weight:600}
-  button:hover{filter:brightness(.97)}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
-  button.primary:hover{background:var(--blue-d)}
-  button.danger{color:var(--err);border-color:#f3c4c4;background:#fff5f5}
-  button.ok{color:var(--ok);border-color:#bfe7cf;background:#f1fbf5}
-  button.ghost{background:#f4f7fc}
-  input,textarea,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:var(--text)}
-  input:focus,textarea:focus,select:focus{outline:2px solid #8cb8ff;border-color:transparent}
-  input[type=file]{padding:6px;font-size:13px}
-  label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--text)}
-  .hidden{display:none !important}
-  .brand{font-weight:800;color:var(--blue);font-size:16px}
-  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(16,40,80,.06);margin-bottom:14px}
-  .card h3{font-size:16px;margin-bottom:4px}
-  .hint{color:var(--muted);font-size:12.5px;margin-bottom:12px}
-  .err{color:var(--err);font-size:13px;margin:8px 0;display:none}
-  .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
-  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-  .grid4{display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
-  .grid4 button{height:38px}
-
-  /* login */
-  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .login-card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
-  .login-card button{padding:11px}
-
-  /* top bar */
-  .top{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
-  .dirty{font-size:12px;color:var(--amber);margin-right:6px}
-  .tabs{background:#fff;display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--line);overflow-x:auto}
-  .tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:12px 10px;color:var(--muted);white-space:nowrap}
-  .tabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
-  .tabs .count{background:#e2e8f0;border-radius:99px;padding:0 7px;font-size:11px;margin-left:4px}
-  .tabs .count.hot{background:var(--err);color:#fff}
-  main{max-width:1000px;margin:0 auto;padding:20px}
-
-  /* stats */
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
-  .stat{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(16,40,80,.06)}
-  .stat .k{color:var(--muted);font-size:12px}
-  .stat .v{font-size:22px;font-weight:800;margin-top:2px}
-  .stat .v small{font-size:12px;color:var(--muted);font-weight:600}
-  .bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:18px}
-  .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:11px;color:var(--muted)}
-  .bars .b i{display:block;width:100%;background:var(--blue);border-radius:6px 6px 0 0;min-height:3px;position:relative}
-  .bars .b i b{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:11px;color:var(--text)}
-  .branch{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
-  .branch:last-child{border-bottom:0}
-
-  /* orders */
-  .order{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
-  .order .top2{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
-  .order .meta{color:var(--muted);font-size:12.5px}
-  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:#e8f9ef;color:#0a7a3a}
-  .pill.new{background:#fff4dd;color:var(--amber)}
-  .pill.rejected{background:#fde8ea;color:var(--err)}
-  .order .btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-  .empty{text-align:center;padding:24px;color:var(--muted)}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-  th{color:var(--muted);font-weight:700;background:#f8fafd}
-  .table-wrap{overflow-x:auto}
-
-  /* packages & samples */
-  .sample-row{display:grid;grid-template-columns:160px 1fr;gap:14px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
-  .thumb{aspect-ratio:16/10;background:#eef3fa;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden;text-align:center;padding:6px}
-  .thumb img{width:100%;height:100%;object-fit:cover}
-  .fields{display:flex;flex-direction:column;gap:10px}
-  .btns-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-  .qr-preview{width:160px;height:160px;border-radius:10px;background:#eef3fa;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--muted);font-size:12px;margin-top:8px}
-  .qr-preview img{width:100%;height:100%;object-fit:contain}
-  .photo{border:1px dashed #b9c4d2;border-radius:12px;padding:12px;text-align:center}
-  .photo .t{font-weight:700;font-size:13px;margin-bottom:8px}
-  .photo .ph{aspect-ratio:16/10;background:#f5f7fa;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin-bottom:8px;overflow:hidden}
-  .photo .ph img{width:100%;height:100%;object-fit:cover}
-  .danger-zone{border:1px solid #f2c3c9;background:#fff5f6;border-radius:14px;padding:18px}
-  .danger-zone h3{color:var(--err)}
-
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f1b33;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;font-size:13px;z-index:50;white-space:nowrap}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.ok{background:var(--ok)}
-  .toast.bad{background:var(--err)}
-
-  @media (max-width:720px){
-    .stats{grid-template-columns:1fr 1fr}
-    .grid2,.grid3{grid-template-columns:1fr}
-    .grid4{grid-template-columns:1fr 1fr}
-    .grid4 button{grid-column:span 2}
-    .sample-row{grid-template-columns:1fr}
+  :root{
+    --blue:#0b5ed7; --blue-d:#084bb0; --blue-l:#2f8cff;
+    --yellow:#ffc233; --bg:#f3f6fb; --card:#fff;
+    --text:#0f1b33; --muted:#6b7a90; --line:#e3e9f3;
+    --ok:#12a150; --err:#d93434; --radius:16px;
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg)}
+  body{font-family:"Sarabun","Noto Sans Thai",system-ui,-apple-system,sans-serif;color:var(--text);line-height:1.5;min-height:100vh;max-width:430px;margin:0 auto;padding-bottom:24px}
+  button{font-family:inherit}
+
+  /* ---------- Top bar ---------- */
+  .topbar{background:#fff;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:6px 16px;position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line)}
+  .top-left{justify-self:start}
+  .top-right{justify-self:end}
+  .top-center{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;min-height:80px}
+  .top-left{display:flex;align-items:center;gap:2px}
+  .top-center .logo.has-img{width:200px;height:80px;background:none;border-radius:0}
+  .top-center .logo.has-img img{width:100%;height:100%;max-width:none;object-fit:contain;border-radius:0;display:block}
+  .menu-btn{width:40px;height:40px;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0}
+  .menu-btn span{display:block;width:22px;height:2.5px;background:var(--text);border-radius:2px}
+  .contact-btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;white-space:nowrap}
+  #sideMenu{position:fixed;inset:0;z-index:60;max-width:430px;margin:0 auto}
+  #sideMenu.hidden{display:none !important}
+  .sm-backdrop{position:absolute;inset:0;background:rgba(15,27,51,.45)}
+  .sm-panel{position:absolute;top:0;left:0;bottom:0;width:min(300px,82%);background:#fff;padding:18px 12px;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  .sm-title{font-weight:800;color:var(--blue);font-size:16px;margin:4px 8px 12px}
+  .sm-item{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;padding:12px 8px;border-radius:12px;font-family:inherit;font-size:15px;color:var(--text);cursor:pointer;text-align:left;text-decoration:none}
+  .sm-item:hover{background:#f1f5fb}
+  .sm-item.disabled{opacity:.5;cursor:not-allowed}
+  .sm-ic{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .sm-ic img{width:100%;height:100%;object-fit:contain;display:block}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;position:relative}
+  .logo::before{content:"";width:12px;height:16px;background:var(--yellow);border-radius:3px}
+  .logo.has-img{background:none}
+  .logo.has-img::before{display:none}
+  .logo img{width:100%;height:100%;object-fit:contain;border-radius:9px}
+  .brand-name{font-weight:800;color:var(--blue);font-size:17px;line-height:1.1}
+  .brand-sub{font-size:11px;color:var(--muted)}
+  .icon-btns{display:flex;gap:8px}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px}
+  .back-btn{display:none;background:none;border:0;color:var(--blue);font-size:15px;font-weight:600;cursor:pointer;padding:6px 4px}
+  .back-btn.show{display:inline-block}
+
+  /* ---------- Hero ---------- */
+  .hero{background:linear-gradient(115deg,#0a3f9e 0%,#0b5ed7 50%,#1d7cf2 100%);color:#fff;padding:22px 18px 18px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;right:-90px;top:-70px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.25),rgba(255,255,255,0) 70%);pointer-events:none}
+  .hero::after{content:"";position:absolute;left:-40px;bottom:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,194,51,.25),rgba(255,194,51,0) 70%);pointer-events:none}
+  .hero-text{position:relative;z-index:1}
+  .hero h1{font-size:24px;font-weight:800;line-height:1.3}
+  .hero h1 .hl{color:var(--yellow);display:block;font-size:22px}
+  .hero-brand{display:block;font-size:15px;font-weight:600;margin-top:4px}
+  .hero p.desc{font-size:12.5px;opacity:.95;margin:10px 0 0}
+  .hero-art{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;position:relative;z-index:1}
+  .phone-art{width:112px;height:168px;flex-shrink:0;background:linear-gradient(160deg,#2a6cf0,#0a2a7a);border-radius:18px;border:3px solid #0b1f56;box-shadow:0 14px 26px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;transform:rotate(-6deg)}
+  .phone-art span{color:#fff;font-size:34px;font-weight:900;font-style:italic;text-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .carriers{display:flex;flex-direction:column;gap:7px;width:150px}
+  .carrier{background:#fff;color:var(--blue-d);font-size:15px;font-weight:800;padding:8px 10px;border-radius:12px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+  .hero-tag{font-size:15px;font-weight:700;text-align:center;margin-top:8px;line-height:1.2;color:#fff}
+  .perks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;position:relative;z-index:1}
+  .perk{font-size:11px;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;line-height:1.35}
+  .perk .pi{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:4px}
+  .perk b{font-size:12px}
+  .hero-photo{padding:0;background:none}
+  .hero-photo::before,.hero-photo::after{display:none}
+  .hero-img{display:block;width:100%;height:auto}
+
+  /* ---------- Cards ---------- */
+  main{padding:14px 14px 0}
+  .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 2px 10px rgba(16,40,80,.06);margin-bottom:14px}
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .card-head .ic{width:34px;height:34px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .card-head .ic::before{content:"";width:10px;height:14px;background:var(--yellow);border-radius:2px}
+  .card h2{font-size:17px;font-weight:800}
+  .card .sub{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+
+  .field-label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+  .input{position:relative}
+  .input input{width:100%;padding:13px 14px 13px 40px;border:1px solid var(--line);border-radius:12px;font-size:16px;font-family:inherit;background:#fbfdff;color:var(--text)}
+  .input input::placeholder{color:#a4afbf}
+  .input input:focus{outline:2px solid var(--blue-l);border-color:transparent}
+  .input .i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:15px}
+
+  .how{background:#f0f6ff;border-radius:12px;padding:12px 14px;margin:14px 0;font-size:12.5px}
+  .how b{display:block;margin-bottom:4px;font-size:13px}
+  .how ol{padding-left:18px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--blue-d),var(--blue));color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(11,94,215,.25)}
+  .btn:hover{filter:brightness(1.05)}
+  .btn:disabled{background:#9fb4cf;box-shadow:none;cursor:not-allowed}
+  .btn.ghost{background:#eef3fa;color:var(--text);box-shadow:none}
+  .btn.ghost:hover{background:#e3ebf7}
+  .btn.small{padding:10px;font-size:14px;margin-top:0}
+
+  .err{color:var(--err);font-size:13px;margin-top:10px;display:none}
+
+  /* ---------- Menu tiles ---------- */
+  .menu-list{display:flex;flex-direction:column;gap:10px}
+  .menu-item{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;cursor:pointer;background:#fff;transition:.15s;text-align:left;width:100%}
+  .menu-item:hover{border-color:var(--blue-l);background:#f7fbff}
+  .menu-item .mi{width:44px;height:44px;border-radius:12px;background:#eaf2ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden}
+  .menu-item .mi img{width:100%;height:100%;object-fit:contain;display:block}
+  .menu-item .mt{flex:1}
+  .menu-item .mt b{display:block;font-size:15px}
+  .menu-item .mt span{font-size:12px;color:var(--muted)}
+  .menu-item .chev{color:var(--muted);font-size:18px}
+  .menu-item.disabled{opacity:.55;cursor:not-allowed}
+  .menu-item.disabled:hover{border-color:var(--line);background:#fff}
+  .tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fff4d6;color:#8a5b00;margin-left:6px;vertical-align:middle}
+  .tag.green{background:#dcf6e6;color:var(--ok)}
+
+  /* ---------- Feature grid ---------- */
+  .features{display:grid;grid-template-columns:1fr 1fr;gap:16px 10px;padding:6px 6px 2px}
+  .feat{text-align:center}
+  .feat .fi{width:52px;height:52px;margin:0 auto 8px;border-radius:50%;background:#eaf2ff;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .feat b{display:block;font-size:14px}
+  .feat span{font-size:11.5px;color:var(--muted)}
+  button.feat{background:none;border:0;font-family:inherit;color:inherit;cursor:pointer;width:100%;padding:0}
+  button.feat.disabled{opacity:.55;cursor:not-allowed}
+
+  /* ---------- เบอร์มงคล ---------- */
+  .lucky-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .lucky{border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;background:#fff}
+  .lucky .ln{font-size:17px;font-weight:800;letter-spacing:1px;color:var(--blue-d)}
+  .lucky .lp{font-size:13px;font-weight:700;color:var(--ok);margin-top:4px}
+  .lucky .lnote{font-size:11px;color:var(--muted);margin-top:2px}
+  .lucky{cursor:pointer}
+  .lk-btn{display:inline-block;margin-top:8px;background:var(--blue);color:#fff;border-radius:99px;font-size:12px;font-weight:700;padding:5px 12px}
+  .lk-top{text-align:center}
+  .lk-num{font-size:36px;font-weight:800;letter-spacing:2px;color:var(--blue-d)}
+  .lk-price{font-size:20px;font-weight:800;color:var(--ok);margin:6px 0}
+  .lk-row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .lk-row b{text-align:right}
+  .lk-block{margin-top:14px}
+  .lk-block h4{font-size:14px;color:#0b3d91;margin-bottom:4px}
+  .lk-block p{font-size:13.5px;color:var(--text);margin:2px 0}
+  .lk-pair{font-size:13.5px;margin:5px 0}
+  .lk-pair b{color:var(--blue-d);margin-right:8px}
+  .lk-warn{margin-top:14px;background:#fff4d6;color:#8a5b00;border-radius:10px;padding:8px 10px;font-size:13px}
+
+  /* ---------- รายการเบอร์มงคล (ดีไซน์การ์ด) ---------- */
+  .lk-section{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 2px 10px rgba(16,40,80,.06);margin-bottom:14px}
+  .lk-title{color:var(--text);font-weight:800;font-size:17px}
+  .lk-sub{color:var(--muted);font-size:12.5px;margin:2px 0 12px}
+  .lk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .lk-card{background:#fffdf7;border-radius:14px;padding:8px 8px 0;cursor:pointer;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;flex-direction:column}
+  .lk-top-row{display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:40px}
+  .lk-badge{background:linear-gradient(135deg,#ffd76a,#e8a317);color:#5a3a00;font-size:12px;font-weight:800;padding:4px 9px;border-radius:99px;white-space:nowrap}
+  .lk-carrier{font-size:24px;font-weight:800;color:#e0202a;line-height:1}
+  .lk-pill{background:#f5d77a;color:#5a3a00;font-size:14px;font-weight:700;padding:5px 12px;border-radius:99px;white-space:nowrap}
+  .lk-phone{text-align:center;font-size:17px;font-weight:800;color:#111;letter-spacing:.5px;margin:6px 0 8px}
+  .lk-icons{display:flex;justify-content:space-around;gap:4px}
+  .lk-ic{display:flex;flex-direction:column;align-items:center;font-size:10px;color:#333}
+  .lk-box{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;border:1px solid #d4a43a}
+  .lk-price{margin-top:10px;background:linear-gradient(90deg,#06203f,#0d3d7a,#06203f);color:#f5c94a;text-align:center;font-weight:800;font-size:18px;padding:9px;border-radius:10px}
+  .lk-foot{background:#0d4a94;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px;margin:10px -8px 0}
+  .lk-logo{height:30px;width:auto;max-width:110px;object-fit:contain}
+  .so-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+  .so-box{background:#fff;border-radius:16px;padding:22px 18px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .so-box h3{margin:0 0 8px;font-size:18px}
+  .so-box p{font-size:14px;color:var(--muted);line-height:1.6;margin:0 0 16px}
+  .so-steps{text-align:left;background:#f5f7fb;border-radius:12px;padding:12px 14px;margin:0 0 16px;font-size:13px;line-height:1.6;color:#333}
+  .so-steps b{display:block;margin-bottom:6px;font-size:14px}
+  .so-steps ol{margin:0;padding-left:20px}
+  .so-steps li{margin-bottom:4px}
+  .so-box .so-note{font-size:12px;margin:12px 0 0}
+  .lk-text p{font-size:13.5px;line-height:1.7;margin:6px 0;color:var(--text)}
+
+  /* ---------- Banner ---------- */
+  .banner{background:linear-gradient(90deg,var(--blue-d),var(--blue-l));color:#fff;border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .banner b{font-size:16px;display:block}
+  .banner span{font-size:12px;opacity:.9}
+  .banner .pill{background:var(--yellow);color:#4a3200;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;white-space:nowrap}
+
+  /* ---------- Packages ---------- */
+  .pkg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;cursor:pointer;background:#fff;width:100%;text-align:left}
+  .pkg:hover{border-color:var(--blue-l)}
+  .pkg b{font-size:15px;display:block}
+  .pkg .price{text-align:right;font-weight:800;color:var(--blue);font-size:18px}
+  .pkg .price s{display:block;font-size:12px;color:var(--muted);font-weight:500}
+  .pkg .off{display:inline-block;margin-top:4px;background:#dcf6e6;color:var(--ok);font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px}
+
+  /* ---------- การ์ดแพ็กเกจ ---------- */
+  .plan{position:relative;border:2px solid var(--c);border-radius:16px;padding:18px 16px 16px;margin:14px 0 6px;background:#fff}
+  .plan-badge{position:absolute;top:-12px;left:14px;background:#e53935;color:#fff;font-size:12px;font-weight:700;padding:3px 12px;border-radius:99px}
+  .plan-speed{font-size:26px;font-weight:800;color:var(--c);line-height:1.2}
+  .plan-desc{font-size:14px;color:var(--c);font-weight:600;margin:2px 0 8px}
+  .plan-price{font-size:26px;font-weight:800;color:var(--c)}
+  .plan-price small{font-size:13px;font-weight:600}
+  .plan-price s{font-size:14px;color:var(--muted);font-weight:500;margin-right:6px}
+  .plan-off{display:inline-block;background:#dcf6e6;color:var(--ok);font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+  .plan-feat{list-style:none;margin:10px 0 14px;padding:0}
+  .plan-feat li{font-size:14px;color:var(--text);padding:4px 0 4px 24px;position:relative}
+  .plan-feat li::before{content:"✓";position:absolute;left:0;top:4px;color:var(--c);font-weight:800}
+  .plan-btn{width:100%;border:0;border-radius:12px;background:var(--c);color:#fff;font-weight:700;font-size:15px;padding:12px;cursor:pointer}
+
+  /* ---------- หัวข้อแพ็กเกจ ---------- */
+  .pk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .pk-title{display:flex;align-items:center;gap:10px}
+  .pk-gift{font-size:26px;line-height:1}
+  .pk-title h2{font-size:18px;color:#0b3d91;font-weight:800;line-height:1.2}
+  .pk-sub{font-size:13px;color:var(--muted)}
+  .pk-more{font-size:13px;color:var(--blue);font-weight:600;white-space:nowrap;margin-top:4px}
+
+  .info{background:#f7f9fc;border-radius:12px;padding:12px 14px;font-size:14px;margin:10px 0}
+  .info div{display:flex;justify-content:space-between;padding:4px 0}
+  .info .total{border-top:1px dashed var(--line);margin-top:6px;padding-top:8px;font-weight:800}
+  .info .total span:last-child{color:var(--blue);font-size:17px}
+
+  .qr{margin:12px auto;width:100%;max-width:280px}
+  .qr img{width:100%;height:auto;display:block}
+  .qr-empty{width:180px;height:180px;margin:0 auto;background:#eef3fa;border:1px dashed #b9c8de;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center}
+  .qr-dl{display:block;width:100%;max-width:280px;margin:10px auto 0;background:#0d4a94;color:#fff;border:0;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer}
+  .file-input{width:100%;margin-top:6px;font-size:14px;font-family:inherit}
+
+  .code-box{background:#eaf2ff;border:2px dashed var(--blue);border-radius:14px;padding:14px;text-align:center;margin:12px 0}
+  .code-box small{color:var(--muted);font-size:12px}
+  .code-box .code{font-size:24px;font-weight:800;letter-spacing:2px;color:var(--blue-d)}
+  .steps{padding-left:20px;margin:8px 0 14px;font-size:14px}
+  .steps li{margin:6px 0}
+
+  .result{text-align:center;padding:24px 10px}
+  .result .icon{font-size:54px;margin-bottom:8px}
+  .result p{color:var(--muted);font-size:14px;margin:8px 0 18px}
+
+  .footer{text-align:center;font-size:12px;color:var(--muted);margin-top:18px}
+  .sample{margin:4px 0 14px;border-radius:12px;overflow:hidden;background:#f3f6fb;border:1px solid var(--line)}
+  .sample-slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0}
+  .sample-slides figure{flex:0 0 100%;scroll-snap-align:start;margin:0}
+  .sample-slides img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover}
+  .sample-empty{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:12px}
+  .sample-square{max-width:200px;margin:4px auto 14px;background:none;border:0;border-radius:0;overflow:visible}
+  .sr-only{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden}
+  .slip-drop{display:flex;align-items:center;gap:12px;margin:6px 0 4px;padding:14px;border:2px dashed #93c5fd;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#f8fbff);cursor:pointer;transition:transform .15s,border-color .2s,background .2s;position:relative}
+  .slip-drop:active{transform:scale(.98)}
+  .slip-drop.has-file{border:2px solid #22c55e;background:#f0fdf4}
+  .slip-icon{flex:0 0 48px;width:48px;height:48px;border-radius:14px;background:#fff;box-shadow:0 4px 12px rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .slip-text{flex:1;min-width:0;display:flex;flex-direction:column}
+  .slip-text b{font-size:15px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .slip-text small{font-size:12px;color:#64748b;margin-top:2px}
+  .slip-pick{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 10px rgba(37,99,235,.25)}
+  .slip-drop.has-file .slip-pick{background:#16a34a;box-shadow:0 4px 10px rgba(22,163,74,.25)}
+  .ship-sec{margin-top:16px;padding-top:14px;border-top:1px dashed #e2e8f0}
+  .ship-h{font-size:15px;font-weight:800;color:#0f172a;margin-bottom:2px}
+  .ship-sender{font-size:13px;color:var(--muted);margin-top:4px}
+  .ship-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  .ship-grid .input{margin-bottom:0}
+  .order-no{font-size:14px;color:var(--muted);margin:4px 0 14px}
+  .order-no b{color:#0f172a;letter-spacing:.3px}
+  .ostep-list{display:flex;flex-direction:column;gap:10px;text-align:left;margin:6px 0 16px;padding:14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0}
+  .ostep{display:flex;align-items:center;gap:12px;font-size:14px;color:#94a3b8}
+  .ostep-dot{flex:0 0 28px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#e2e8f0;color:#64748b}
+  .ostep.ok{color:#0f172a}
+  .ostep.ok .ostep-dot{background:#22c55e;color:#fff}
+  .ostep.now{color:#0f172a;font-weight:700}
+  .ostep.now .ostep-dot{background:#2563eb;color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.18)}
+  .next-step{font-size:14px;line-height:1.6;color:#0f172a;margin:0 0 8px}
+  .next-hint{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+  .sample-square .sample-slides img{aspect-ratio:1/1;object-fit:contain;background:#fff}
+  .sample-square .sample-empty{aspect-ratio:1/1}
+  .sample figcaption{font-size:12px;color:var(--muted);padding:8px 10px;text-align:center}
+  .hidden{display:none !important}
+  /* หน้าลงทะเบียนซิม (โทนมืดตามดีไซน์ต้นแบบ) */
+  .reg-dark{background:#0f172a;color:#e2e8f0;border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.08);margin-top:8px}
+  .reg-title{font-size:16px;font-weight:800;margin-bottom:6px}
+  .reg-sub{font-size:13px;color:#94a3b8;margin-bottom:12px}
+  .reg-label{display:block;font-size:13px;font-weight:700;color:#94a3b8;margin:12px 0 6px}
+  .reg-inp{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:#fff;font-size:15px;outline:none;font-family:inherit}
+  .reg-inp.mono{font-family:monospace}
+  .reg-btn{width:100%;margin-top:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:10px;padding:12px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .reg-btn.green{background:linear-gradient(135deg,#059669,#10b981)}
+  .reg-btn.ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;font-weight:600}
+  .reg-btn:disabled{opacity:.6}
+  .reg-found{background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.3);border-radius:12px;padding:14px;margin-top:10px}
+  .reg-found-h{color:#6ee7b7;font-weight:700;margin-bottom:8px}
+  .reg-kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#94a3b8}
+  .reg-kv b{color:#e2e8f0;font-family:monospace}
+  .reg-logo{display:flex;justify-content:center;margin-bottom:10px}
+  .sim-logo{width:56px;height:56px;object-fit:contain;border-radius:10px}
+  .sim-logo-empty{font-size:28px;line-height:56px}
+  .reg-logo .sim-logo{width:120px;height:auto;max-height:60px}
+  .reg-logo.big .sim-logo{width:200px;max-width:70%;height:auto;max-height:96px}
+  .reg-sample{background:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;margin:12px -4px}
+  .reg-sample img{width:100%;height:auto;display:block}
+  .reg-sample-empty{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:13px;padding:12px;text-align:center}
+  .reg-link{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+  .banner-slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:0 0 14px;scrollbar-width:none}
+  .banner-slides::-webkit-scrollbar{display:none}
+  .banner-slide{flex:0 0 100%;scroll-snap-align:center;border-radius:14px;overflow:hidden}
+  .banner-slide img{width:100%;height:auto;display:block}
+  .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;padding:10px 4px 4px}
+  .qi{background:none;border:0;font-family:inherit;color:#1f2937;cursor:pointer;text-align:center;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .qi b{font-size:12.5px;font-weight:600;line-height:1.3;color:#1f2937}
+  .qi-icon{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:34px;line-height:1}
+  .qi-icon img{width:100%;height:100%;object-fit:contain;display:block}
+  .qi.disabled{opacity:.5;cursor:not-allowed}
+  .reg-plain{margin-top:8px}
+  .reg-plain .reg-sample{background:#fff;border:1px solid #e3e9f3;border-radius:12px;margin:0}
+  .reg-plain .reg-sample-empty{color:#6b7a90}
+  .reg-plain .reg-btn{margin-top:14px}
+  .reg-terms{margin:18px 4px 0;color:#334155;font-size:13px;line-height:1.7}
+  .reg-terms-title{margin:0 0 10px;font-weight:800;font-size:15px;color:#0f172a;text-align:center}
+  .reg-terms ol{list-style:none;margin:0;padding:0;counter-reset:terms}
+  .reg-terms li{counter-increment:terms;position:relative;padding:0 0 12px 36px;margin:0 0 12px;border-bottom:1px dashed #e2e8f0}
+  .reg-terms li:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+  .reg-terms li::before{content:counter(terms);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:#e0ecff;color:#1d4ed8;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .reg-accept{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:12px;background:#f1f5f9;font-weight:700;color:#0f172a;cursor:pointer}
+  .reg-accept input{width:20px;height:20px;flex:0 0 20px;margin:0}
+  .reg-terms-note{margin:10px 2px 0;font-size:12px;color:#64748b;text-align:center}
+  .reg-link.is-disabled{opacity:.4;pointer-events:none;filter:grayscale(.4)}
+  .features .fi .sim-logo{width:36px;height:36px}
+  .carrier-title{display:block;font-size:20px;font-weight:700;color:#111;margin:4px 0 16px}
+  .carrier-title .req{color:#e11d48}
+  .carrier-list{display:flex;flex-direction:column;gap:14px}
+  .carrier-btn{width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid #d9dde3;border-radius:18px;cursor:pointer;padding:12px 24px;transition:border-color .15s,box-shadow .15s}
+  .carrier-btn:hover,.carrier-btn:focus-visible{border-color:#0b5ed7;box-shadow:0 2px 10px rgba(11,94,215,0.15);outline:none}
+  .carrier-btn img{max-width:85%;max-height:100px;object-fit:contain}
+  .carrier-btn.is-off{opacity:.45;cursor:not-allowed;background:#f3f4f6}
+  .carrier-btn.is-off:hover{border-color:#d9dde3;box-shadow:none}
+  .carrier-btn .off-note{display:block;margin-top:6px;font-size:12px;color:#e11d48;font-weight:600}
+  .m2{padding:18px 16px}
+  .m2-step{font-size:13px;color:#6b7280;margin:16px 0 4px}
+  .m2-title{display:block;font-size:17px;font-weight:700;color:#111;margin:0 0 10px}
+  .m2-title .req,.m2-step .req{color:#e11d48}
+  .m2-carriers{display:flex;flex-direction:column;gap:12px}
+  .m2-carrier{width:100%;height:84px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid #d9dde3;border-radius:16px;cursor:pointer;padding:10px}
+  .m2-carrier.on{border-color:#0b5ed7;box-shadow:0 2px 10px rgba(11,94,215,.18)}
+  .m2-carrier img{max-width:70%;max-height:60px;object-fit:contain}
+  .m2-carrier span{font-weight:700}
+  .m2-input{width:100%;box-sizing:border-box;height:52px;border:1.5px solid #d9dde3;border-radius:14px;padding:0 16px;font-size:16px;background:#fff}
+  .m2-upload{display:flex;align-items:center;justify-content:center;height:56px;border:1.5px solid #d9dde3;border-radius:999px;background:#fff;cursor:pointer;font-size:15px;font-weight:600}
+  .m2-sample{background:#f5f6f8;border-radius:16px;padding:14px;margin:14px 0}
+  .m2-sample-h{font-weight:700;margin-bottom:10px;font-size:14px}
+  .m2-sample img{width:100%;height:auto;display:block;border-radius:10px}
+  .m2-sample-empty{font-size:13px;color:#6b7280;text-align:center;padding:24px 0}
+  .m2-agree{display:flex;align-items:center;gap:10px;font-size:15px;margin:14px 0;cursor:pointer}
+  .m2-agree input{width:20px;height:20px}
+  .m2-btn{width:100%}
+  .m2-btn.is-disabled{opacity:.45}
+  .reg-err{display:none;color:#f87171;background:rgba(239,68,68,0.08);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px}
 </style>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
-<!-- ============ เข้าสู่ระบบ ============ -->
-<div id="login" class="login hidden">
-  <form class="card login-card" onsubmit="login(event)">
-    <div class="brand">ProgramThanarich · หลังบ้าน</div>
-    <label>รหัสผู้ดูแล
-      <input id="token" type="password" autocomplete="current-password" required>
-    </label>
-    <div class="err" id="loginErr">เข้าสู่ระบบไม่สำเร็จ ตรวจสอบรหัสผู้ดูแลหรือการเชื่อมต่อ</div>
-    <button class="primary" type="submit">เข้าสู่ระบบ</button>
-  </form>
-</div>
+<!-- ============ Top bar ============ -->
+<header class="topbar">
+  <div class="top-left">
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="เมนูทางลัด"><span></span><span></span><span></span></button>
+    <button class="back-btn" id="backBtn" onclick="goBack()">‹ กลับ</button>
+  </div>
+  <div class="top-center" id="brand" onclick="resetTo('home')">
+    <div class="logo" id="logoBox"></div>
+    <span class="brand-name" id="brandName">ProgramThanarich</span>
+  </div>
+  <div class="top-right" id="topRight"></div>
+</header>
+<div id="sideMenu" class="hidden"></div>
 
-<!-- ============ แดชบอร์ด ============ -->
-<div id="dash" class="hidden">
-  <header class="top">
-    <div class="brand">ProgramThanarich · หลังบ้าน</div>
-    <div class="actions">
-      <span class="dirty" id="dirtyTag"></span>
-      <button class="primary" id="saveBtn" onclick="saveAll()">บันทึกการตั้งค่า</button>
-      <button class="ghost" onclick="logout()">ออกจากระบบ</button>
+<!-- ============ Hero (แสดงเฉพาะหน้าแรก) ============ -->
+<section class="hero" id="hero">
+  <div class="hero-text">
+    <h1>สมัครแพ็กเกจเน็ต
+      <span class="hl">ง่ายๆ ผ่านเบอร์มือถือ</span>
+      <span class="hero-brand">กับ ProgramThanarich</span>
+    </h1>
+    <p class="desc">เน็ตแรง ครบทุกการใช้งาน ทั้งเล่นเว็บ ดูหนัง ฟังเพลง ไม่สะดุด</p>
+  </div>
+  <div class="hero-art">
+    <div class="phone-art"><span>5G</span></div>
+    <div>
+      <div class="carriers">
+        <span class="carrier">truemove H</span>
+        <span class="carrier">AIS</span>
+        <span class="carrier">dtac</span>
+      </div>
+      <div class="hero-tag">เน็ตแรง<br>ทั่วไทย</div>
     </div>
-  </header>
+  </div>
+  <div class="perks">
+    <div class="perk"><span class="pi">⚡</span><b>สมัครง่าย</b>ไม่ต้องเดินทาง</div>
+    <div class="perk"><span class="pi">🛡️</span><b>ปลอดภัย</b>ข้อมูลส่วนตัวไม่รั่วไหล</div>
+    <div class="perk"><span class="pi">🎧</span><b>มีทีมซัพพอร์ต</b>ดูแลตลอดการใช้งาน</div>
+  </div>
+</section>
 
-  <nav class="tabs" id="tabs"></nav>
-  <main id="content"></main>
-</div>
+<main id="app"></main>
 
-<div id="toast" class="toast"></div>
+<div class="footer">© ProgramThanarich · เน็ตแรง ทุกที่ ทุกเวลา</div>
 
 <script>
 /* ==========================================================
-   ตั้งค่า: URL ของ Cloudflare Worker (หลังบ้าน API)
+   ตั้งค่าหลังบ้าน (แก้ไขได้ที่นี่ / เชื่อม API ภายหลัง)
    ========================================================== */
 // URL ของ Worker (หลังบ้านกลาง) — แทน programthanarich ด้วยชื่อบัญชี Cloudflare ของคุณ
 const API_BASE = "https://program-api.programthanarich.workers.dev";
 
-/*  API ที่ Worker ต้องมี (ทุกเส้นต้องมี Authorization: Bearer <รหัสผู้ดูแล>)
-    GET    /admin/settings          → ค่าการตั้งค่าทั้งหมด (รูปแบบด้านล่าง)
-    PUT    /admin/settings          → บันทึกค่าการตั้งค่าทั้งหมด (JSON)
-    POST   /admin/upload            → อัปโหลดรูป (multipart field "file") คืน { "url": "..." }
-    GET    /admin/orders            → รายการสั่งซื้อ [{ id, orderNo, createdAt, phone, serial, package, amount, status, branch }]
-    POST   /admin/orders/:id        → เปลี่ยนสถานะ { "status": "confirmed" | "done" | "rejected" }
-    DELETE /admin/history           → ลบประวัติทั้งหมด body { "password": "..." }
-    GET    /settings                → (สาธารณะ) ให้หน้าบ้านดึงค่าไปใช้
+const CONFIG = {
+  // LINE Notify ปิดให้บริการแล้ว (31 มี.ค. 2568) ควรใช้ LINE Messaging API ฝั่งเซิร์ฟเวอร์แทน
+  LINE_ENDPOINT: API_BASE + "/line",
+  BACKEND_ENDPOINT: API_BASE + "/orders",        // ส่งข้อมูลการชำระเงินเข้าระบบหลังบ้าน
+  SLIP_VERIFY_ENDPOINT: API_BASE + "/verify-slip",    // ตรวจสอบสลิปปลอมอัตโนมัติ
+  SETTINGS_ENDPOINT: API_BASE + "/settings",       // ดึงการตั้งค่าจากหลังบ้าน (รูปตัวอย่าง, ราคา, ส่วนลด ฯลฯ) เป็น JSON
+  DISCOUNT_SHOP: 100,
+  DISCOUNT_SHOP_TYPE: "baht",          // ส่วนลดสมัครกับทางร้าน (บาท)
+  QR_IMAGE_URL: ""             // URL รูป QR พร้อมเพย์ของร้าน
+};
 
-    รูปแบบ settings:
-    {
-      DISCOUNT_SHOP, QR_IMAGE_URL,
-      PACKAGES: [{ id, name, price, code }],
-      SELF_STEPS: [ "ขั้นตอน..." ],
-      SIM_SAMPLE_IMAGES: [{ url, caption }],
-      channels: [{ name, url }],
-      trackingHelp, simHelp,
-      photos: { orderShot, simEnvelope, registerOk, simNumberEx, trackingEx, receivedPhoneEx },
-      rejectMessages: [ "..." ],
-      messages: { confirm, done }
+// โหลดการตั้งค่าจากหลังบ้าน ทับค่าใน CONFIG เพื่อแก้รูปได้โดยไม่ต้องแก้โค้ด
+async function loadRemoteSettings() {
+  if (!CONFIG.SETTINGS_ENDPOINT) return;
+  try {
+    // no-store: ให้ได้การตั้งค่าล่าสุดจากหลังบ้านเสมอ ไม่ใช้ค่าที่จำไว้ในเบราว์เซอร์
+    const res = await fetch(CONFIG.SETTINGS_ENDPOINT, { cache: "no-store" });
+    const { PACKAGES: rp, SELF_STEPS: rs, ...rest } = await res.json();
+    Object.assign(CONFIG, rest);
+    if (USE_REMOTE_PACKAGES && Array.isArray(rp) && rp.length) PACKAGES = rp;
+    if (Array.isArray(rs)) SELF_STEPS = rs;
+    applyHero();
+    applyLogo();
+  } catch (e) { /* ใช้ค่าเริ่มต้นในโค้ดแทน */ }
+}
+
+// true = ดึงแพ็กเกจจากหลังบ้าน (ถ้าหลังบ้านว่าง จะใช้ค่าในโค้ดนี้แทน)
+const USE_REMOTE_PACKAGES = true;
+
+// แพ็กเกจเน็ต — แก้ราคา/รหัสได้ที่นี่ (code = รหัสสมัครที่ใช้จริง ต้องแก้ให้ตรงกับของร้าน)
+let PACKAGES = [
+  { id: "P1", name: "30 Mbps เน็ตไม่อั้น ไม่ลดความเร็ว", speed: "30 Mbps", desc: "เน็ตไม่อั้น ไม่ลดความเร็ว", price: 235, code: "NET30M", color: "#0b5ed7", badge: "แนะนำสุดคุ้ม", features: ["เน็ตไม่อั้น", "ความเร็ว 30 Mbps", "ไม่มีสัญญา"] },
+  { id: "P2", name: "20 Mbps เน็ตไม่อั้น ไม่ลดความเร็ว", speed: "20 Mbps", desc: "เน็ตไม่อั้น ไม่ลดความเร็ว", price: 230, code: "NET20M", color: "#12a150", features: ["เน็ตไม่อั้น", "ความเร็ว 20 Mbps", "ไม่มีสัญญา"] },
+  { id: "P3", name: "10 Mbps เน็ตไม่อั้น ไม่ลดความเร็ว", speed: "10 Mbps", desc: "เน็ตไม่อั้น ไม่ลดความเร็ว", price: 300, code: "NET10M", color: "#6d3be0", features: ["เน็ตไม่อั้น", "ความเร็ว 10 Mbps", "ไม่มีสัญญา"] },
+  { id: "P4", name: "4 Mbps เน็ตไม่อั้น", speed: "4 Mbps", desc: "เน็ตไม่อั้น", price: 107, code: "NET4M", color: "#f57c00", features: ["เน็ตไม่อั้น", "ความเร็ว 4 Mbps", "ไม่มีสัญญา"] },
+  { id: "P5", name: "20 Mbps โทรฟรีทุกเครือข่าย", speed: "20 Mbps", desc: "โทรฟรีทุกเครือข่าย", price: 350, code: "NET20CALL", color: "#e0306b", features: ["เน็ตไม่อั้น", "ความเร็ว 20 Mbps", "โทรฟรีทุกเครือข่าย"] }
+];
+
+// ขั้นตอนสมัครเน็ต (ตัวอย่าง — แก้ให้ตรงกับของจริง)
+let SELF_STEPS = [
+  "เติมเงินเข้าซิมตามยอดของแพ็กเกจที่เลือก",
+  "กดโทร *900*รหัสสมัคร# แล้วกดโทรออก",
+  "รอรับ SMS ยืนยันการสมัครภายใน 1-2 นาที",
+  "เริ่มใช้งานอินเทอร์เน็ตได้ทันที"
+];
+
+/* ==========================================================
+   สถานะ & การนำทาง
+   ========================================================== */
+let history_ = ["home"];
+let state = { serial: "", phone: "", pkg: null, mode: null };
+
+const app = document.getElementById("app");
+const backBtn = document.getElementById("backBtn");
+const hero = document.getElementById("hero");
+const HERO_DEFAULT = hero.innerHTML;
+
+// โลโก้ร้านที่มุมบนซ้าย (ถ้าหลังบ้านตั้งรูปไว้ จะแสดงรูปแทนไอคอนเดิม)
+function applyLogo() {
+  const box = document.getElementById("logoBox");
+  const name = document.getElementById("brandName");
+  if (box) {
+    if (CONFIG.logoImage) {
+      box.classList.add("has-img");
+      box.innerHTML = `<img src="${CONFIG.logoImage}" alt="ProgramThanarich">`;
+      if (name) name.style.display = "none";
+    } else {
+      box.classList.remove("has-img");
+      box.innerHTML = "";
+      if (name) name.style.display = "";
     }
-*/
+  }
+  // ปุ่มขวาบน: ติดต่อร้านผ่าน LINE (แสดงเมื่อหลังบ้านตั้งลิงก์ไว้)
+  const right = document.getElementById("topRight");
+  if (right) {
+    right.innerHTML = CONFIG.lineContactUrl
+      ? `<a class="contact-btn" href="${CONFIG.lineContactUrl}" target="_blank" rel="noopener">ติดต่อร้าน</a>`
+      : "";
+  }
+  renderSideMenu();
+}
 
+// เมนูทางลัดที่เปิดจากปุ่มขีด 3 ขีด
+function toggleMenu(force) {
+  const m = document.getElementById("sideMenu");
+  if (!m) return;
+  const show = typeof force === "boolean" ? force : m.classList.contains("hidden");
+  m.classList.toggle("hidden", !show);
+}
+function closeMenu() { toggleMenu(false); }
+
+function renderSideMenu() {
+  const m = document.getElementById("sideMenu");
+  if (!m) return;
+  const item = (action, icon, label, disabled) => disabled
+    ? `<button class="sm-item disabled" disabled><span class="sm-ic">${icon}</span><span>${label}</span></button>`
+    : `<button class="sm-item" onclick="${action}"><span class="sm-ic">${icon}</span><span>${label}</span></button>`;
+  const items = [
+    item("closeMenu();startRegister()", menuIconHtml("register", "🗂️"), quickLabel("register", "ลงทะเบียนซิม")),
+    item("closeMenu();go('net-carrier')", menuIconHtml("net", "📶"), quickLabel("net", "สมัครแพ็กเกจเน็ต")),
+    item("closeMenu();go('month2-carrier')", menuIconHtml("port", "🔄"), quickLabel("port", "ต่อแพ็กเกจเดือน 2")),
+    item("", menuIconHtml("esim", "📱"), quickLabel("esim", "รับ E-Sim") + " (เร็ว ๆ นี้)", true)
+  ];
+  if (CONFIG.lineContactUrl) {
+    items.push(`<a class="sm-item" href="${CONFIG.lineContactUrl}" target="_blank" rel="noopener"><span class="sm-ic">💬</span><span>ติดต่อร้านผ่าน LINE</span></a>`);
+  }
+  m.innerHTML = `
+    <div class="sm-backdrop" onclick="closeMenu()"></div>
+    <nav class="sm-panel">
+      <div class="sm-title">ทางลัด</div>
+      ${items.join("")}
+    </nav>`;
+}
+
+// การ์ดเบอร์มงคล (แสดงเฉพาะเมื่อหลังบ้านมีเบอร์ตั้งไว้)
+function luckyCard() {
+  const list = Array.isArray(CONFIG.luckyNumbers) ? CONFIG.luckyNumbers.filter(x => x && x.number) : [];
+  if (!list.length) return "";
+  return `
+      <div class="lk-section">
+        <div class="lk-title">🍀 เบอร์มงคล</div>
+        <div class="lk-sub">เลือกเบอร์ที่ถูกใจ กดดูความหมายได้เลย</div>
+        <div class="lk-grid">
+          ${CONFIG.luckyNumbers.map((x, i) => (x && x.number) ? `
+            <div class="lk-card" onclick="openLucky(${i})">
+              <div class="lk-top-row">
+                ${x.featured ? `<span class="lk-badge">แนะนำ</span>` : `<span></span>`}
+                ${carrierHtml(x.carrier)}
+                <span class="lk-pill">เติมเงิน</span>
+              </div>
+              <div class="lk-phone">${fmtNumber(x.number)}</div>
+              <div class="lk-icons">
+                ${tagsOf(x).map(t => `<div class="lk-ic"><span class="lk-box" style="background:${tagStyle(t)[1]}">${tagStyle(t)[0]}</span><small>${t}</small></div>`).join("")}
+              </div>
+              <div class="lk-price">${priceLabel(x)}</div>
+              <div class="lk-foot">ดูความหมาย →</div>
+            </div>` : "").join("")}
+        </div>
+      </div>`;
+}
+
+// ---------- วิเคราะห์เบอร์มงคล (ความเชื่อเลขศาสตร์ไทย ค่าตั้งต้น แก้ไขได้ในโค้ด) ----------
+const LUCKY_DIGIT = {
+  0: { name: "ศูนย์", mean: "ความว่าง การเริ่มต้นใหม่ ไร้ขีดจำกัด" },
+  1: { name: "หนึ่ง", mean: "ความเป็นผู้นำ ความก้าวหน้า การเริ่มต้น" },
+  2: { name: "สอง", mean: "ความรัก ความสัมพันธ์ ความร่วมมือ" },
+  3: { name: "สาม", mean: "ความเจริญรุ่งเรือง การเติบโต การค้าขาย" },
+  4: { name: "สี่", mean: "ความมั่นคง ความหนักแน่น" },
+  5: { name: "ห้า", mean: "การเปลี่ยนแปลง ความคล่องตัว การสื่อสาร" },
+  6: { name: "หก", mean: "ความรัก ครอบครัว ความรับผิดชอบ ความลงตัว" },
+  7: { name: "เจ็ด", mean: "ปัญญา การเรียนรู้ จิตใจที่สงบ" },
+  8: { name: "แปด", mean: "ความร่ำรวย ความสำเร็จทางการเงิน ความก้าวหน้า" },
+  9: { name: "เก้า", mean: "ความยิ่งใหญ่ อำนาจ การได้รับการยอมรับ" }
+};
+
+const LUCKY_PAIRS = {
+  "19": "ก้าวหน้าในการงาน ได้รับการยอมรับ เป็นผู้นำ",
+  "28": "การเงินมั่นคง ร่ำรวย มีโชคลาภ",
+  "37": "ความรักและครอบครัวอบอุ่น ความสัมพันธ์ดี",
+  "46": "ความมั่นคงในชีวิต มีที่พึ่ง ราบรื่น",
+  "55": "การค้า การเจรจา ความเจริญทางธุรกิจ",
+  "64": "ความรักและความเข้าใจ ความสามัคคี",
+  "73": "ปัญญา การศึกษา ความคิดสร้างสรรค์",
+  "82": "ความมั่งคั่ง โชคลาภทางการเงิน ความสำเร็จ",
+  "91": "อำนาจ บารมี ความเป็นผู้นำ",
+  "99": "ความยิ่งใหญ่ ความสำเร็จสูงสุด"
+};
+
+// ผลรวมตัวเลข (ลดเหลือหลักเดียว) → คนที่เหมาะ อาชีพ และเรื่องที่ส่งเสริม
+const LUCKY_FIT = {
+  1: { who: "ผู้ประกอบการ ผู้บริหาร คนที่ชอบเป็นผู้นำ", job: "ผู้จัดการ เจ้าของร้าน หัวหน้าทีม", boost: "การงาน ความก้าวหน้า ความเป็นผู้นำ" },
+  2: { who: "คนที่ทำงานร่วมกับผู้อื่น ชอบความสัมพันธ์และความร่วมมือ", job: "ฝ่ายบริการ ฝ่ายขาย ที่ปรึกษา", boost: "ความรัก ความสัมพันธ์ การเจรจา" },
+  3: { who: "คนค้าขาย คนมีความคิดสร้างสรรค์ ชอบการแสดงออก", job: "ค้าขาย การตลาด ศิลปิน นักเขียน", boost: "การเงิน การค้า ความสำเร็จ" },
+  4: { who: "คนที่ต้องการความมั่นคง ทำงานเป็นระบบ", job: "วิศวกร ช่าง ข้าราชการ ผู้จัดการระบบ", boost: "ความมั่นคง การงานที่แน่นอน" },
+  5: { who: "คนที่ชอบการเดินทาง ความคล่องตัว และการสื่อสาร", job: "นักการตลาด พนักงานขาย สื่อมวลชน", boost: "การสื่อสาร การค้า การเดินทาง" },
+  6: { who: "คนที่ให้ความสำคัญกับครอบครัวและความรับผิดชอบ", job: "ครู พยาบาล ธุรกิจครอบครัว", boost: "ครอบครัว ความรัก ความสมดุล" },
+  7: { who: "คนที่ใช้ความคิดและการเรียนรู้", job: "นักวิชาการ โปรแกรมเมอร์ นักวิจัย นักเขียน", boost: "การศึกษา ปัญญา ความสงบ" },
+  8: { who: "คนที่มุ่งเป้าหมายทางการเงิน", job: "ธุรกิจการเงิน ค้าขาย เจ้าของกิจการ", boost: "การเงิน โชคลาภ ความร่ำรวย" },
+  9: { who: "คนที่ต้องการการยอมรับและความยิ่งใหญ่", job: "ผู้บริหารระดับสูง นักกฎหมาย ผู้นำองค์กร", boost: "อำนาจ บารมี ความสำเร็จสูงสุด" }
+};
+
+// ใช้ตารางจากหลังบ้านถ้ามี ไม่มีก็ใช้ค่าตั้งต้นในโค้ด
+function ruleTables() {
+  const r = CONFIG.luckyRules;
+  if (!r || !Array.isArray(r.digits)) return { digit: LUCKY_DIGIT, pair: LUCKY_PAIRS, fit: LUCKY_FIT };
+  const digit = {};
+  r.digits.forEach(x => { digit[x.d] = { name: x.name, mean: x.mean }; });
+  const pair = {};
+  (r.pairs || []).forEach(x => { if (x.pair) pair[x.pair] = x.mean; });
+  const fit = {};
+  (r.fit || []).forEach(x => { fit[x.n] = { who: x.who, job: x.job, boost: x.boost }; });
+  return { digit, pair, fit };
+}
+
+function analyzeLucky(number) {
+  const T = ruleTables();
+  const digits = String(number).replace(/\D/g, "");
+  if (!digits) return null;
+
+  const sum = [...digits].reduce((a, d) => a + Number(d), 0);
+  let root = sum;
+  while (root > 9) root = String(root).split("").reduce((a, d) => a + Number(d), 0);
+  const key = root || 9;
+
+  // เลขคู่มงคลที่พบ (ดูทีละ 2 หลักที่ต่อกัน)
+  const pairs = [];
+  for (let i = 0; i < digits.length - 1; i++) {
+    const pr = digits.slice(i, i + 2);
+    if (T.pair[pr] && !pairs.some(p => p.pair === pr)) pairs.push({ pair: pr, mean: T.pair[pr] });
+  }
+
+  // เลขเด่นที่สุด
+  const counts = {};
+  [...digits].forEach(d => { counts[d] = (counts[d] || 0) + 1; });
+  const topDigit = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
+
+  return {
+    sum,
+    root: key,
+    fit: T.fit[key] || { who: "-", job: "-", boost: "-" },
+    pairs,
+    top: {
+      d: topDigit,
+      count: counts[topDigit],
+      name: T.digit[topDigit] ? T.digit[topDigit].name : "",
+      mean: T.digit[topDigit] ? T.digit[topDigit].mean : ""
+    },
+    warn: digits.includes("4") ? "มีเลข 4 ซึ่งบางตำราถือว่าไม่เป็นมงคล" : ""
+  };
+}
+
+// ตัวช่วยแสดงผลการ์ดเบอร์มงคล
+function fmtNumber(n) {
+  const d = String(n).replace(/\D/g, "");
+  return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : String(n);
+}
+
+function tagsOf(x) {
+  return String(x.tags || "").split(",").map(s => s.trim()).filter(Boolean).slice(0, 4);
+}
+
+const TAG_STYLE = {
+  "สุขภาพ": ["💚", "#5a9a2b"],
+  "เงิน/งาน": ["🪙", "#2f4a5e"],
+  "ความรัก": ["💗", "#c2708a"],
+  "เซ็นส์": ["💡", "#7a4fe0"],
+  "สติปัญญา": ["👁️", "#c9a227"],
+  "โชคลาภ": ["🍀", "#a0722b"]
+};
+
+function tagStyle(t) {
+  return TAG_STYLE[t] || ["⭐", "#8a8a8a"];
+}
+
+function priceLabel(x) {
+  return Number(x.price) > 0 ? Number(x.price).toLocaleString("th-TH") + " ฿" : "สอบถามราคา";
+}
+
+// โลโก้เครือข่าย (ถ้าหลังบ้านตั้งโลโก้ไว้จะแสดงรูป ถ้าไม่มีจะแสดงชื่อเครือข่าย)
+// ข้อความหน้าเมนูสมัคร (แก้ได้ที่หลังบ้าน > การตั้งค่า) ถ้าเว้นว่างจะใช้ข้อความเดิม
 const MENU_TEXT_DEFAULT = {
   menuTitle: "สมัครแพ็กเกจเน็ต",
   selfTitle: "เติมเงินสมัครเน็ตเอง",
@@ -173,1598 +670,1694 @@ const MENU_TEXT_DEFAULT = {
   shopTitle: "สมัครเน็ตกับทางร้าน",
   shopDesc: "ชำระผ่านสลิป ตรวจสอบอัตโนมัติ"
 };
-
-let token = sessionStorage.getItem("adm_token") || "";
-let settings = null;
-let orders = [];
-let tab = "packages";
-
-const TABS = [
-  ["packages", "แพ็กเกจ & ขั้นตอน"],
-  ["lucky", "เบอร์มงคล"],
-  ["luckyrules", "ตารางวิเคราะห์เบอร์"],
-  ["shop", "ส่วนลด & QR"],
-  ["orders", "รายการสั่งซื้อ"],
-  ["settings", "การตั้งค่า"],
-  ["danger", "ลบประวัติ"]
-];
-
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const fmt = n => "฿" + (Number(n) || 0).toLocaleString("th-TH");
-const pkgName = o => (o.package && o.package.name) || o.package || "";
-const dayOf = o => new Date(o.createdAt || o.time);
-
-function toast(msg, ok = true) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.className = "toast show " + (ok ? "ok" : "bad");
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.className = "toast", 2400);
+function menuText(k) {
+  return (CONFIG.menuTexts && CONFIG.menuTexts[k]) || MENU_TEXT_DEFAULT[k];
 }
 
-function normalize(s) {
-  return {
-    DISCOUNT_SHOP: 0,
-    QR_IMAGE_URL: "",
-    ...s,
-    PACKAGES: s.PACKAGES || [],
-    luckyNumbers: s.luckyNumbers || [],
-    carrierLogos: s.carrierLogos || {},
-    carrierRegister: s.carrierRegister || {},
-    menuIcons: s.menuIcons || {},
-    quickMenu: s.quickMenu || {},
-    heroImage: "",
-    banners: s.banners || [],
-    luckyRules: s.luckyRules || structuredClone(DEFAULT_LUCKY_RULES),
-    SELF_STEPS: s.SELF_STEPS || [],
-    SELF_STEPS_BY: s.SELF_STEPS_BY || {},
-    month2Carriers: s.month2Carriers || {},
-    month2Samples: s.month2Samples || {},
-    simAgeCarriers: s.simAgeCarriers || {},
-    simAgeSamples: s.simAgeSamples || {},
-    portOtpSample: s.portOtpSample || "",
-    SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
-    channels: s.channels || [],
-    menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
-    trackingHelp: s.trackingHelp || "",
-    simHelp: s.simHelp || "",
-    photos: s.photos || {},
-    rejectMessages: s.rejectMessages || [],
-    messages: { confirm: "", done: "", ...(s.messages || {}) }
-  };
+function carrierHtml(name) {
+  const url = (CONFIG.carrierLogos || {})[name];
+  if (url) return `<img class="lk-logo" src="${url}" alt="${name}">`;
+  return `<span class="lk-carrier">${name || ""}</span>`;
 }
 
-async function api(path, opts = {}) {
-  const headers = { Authorization: "Bearer " + token };
-  let body = opts.body;
-  if (opts.json !== undefined) {
-    headers["Content-Type"] = "application/json";
-    body = JSON.stringify(opts.json);
-  }
-  const res = await fetch(API_BASE + path, { method: opts.method || "GET", headers, body });
-  if (res.status === 401) { logout(); throw new Error("unauthorized"); }
-  if (!res.ok) throw new Error("HTTP " + res.status);
+function openLucky(i) {
+  state.lucky = CONFIG.luckyNumbers[i];
+  go("lucky-detail");
+}
+
+// ข้อความส่วนลดร้านแบบรวม (ใช้ในเมนูหน้าแรก)
+function globalDiscountLabel() {
+  return CONFIG.DISCOUNT_SHOP_TYPE === "percent" ? `${CONFIG.DISCOUNT_SHOP}%` : `${CONFIG.DISCOUNT_SHOP} บาท`;
+}
+
+// ราคาที่ชำระครั้งแรก (เดือนแรก) ถ้าไม่ได้ตั้งไว้ จะเท่ากับราคาต่อเดือน
+function firstPriceOf(p) {
+  return Number(p.firstPrice) > 0 ? Number(p.firstPrice) : p.price;
+}
+
+// ส่วนลดร้านของแต่ละแพ็กเกจ
+// discType: "" = ใช้ค่ากลาง, "none" = ไม่ลด, "baht" = ลดเป็นบาท, "percent" = ลดเป็นเปอร์เซ็นต์
+function shopDiscountInfo(p) {
+  const useDefault = !p.discType;
+  const type = useDefault ? (CONFIG.DISCOUNT_SHOP_TYPE || "baht") : p.discType;
+  if (type === "none") return { amount: 0, label: "" };
+  const value = Number(useDefault ? CONFIG.DISCOUNT_SHOP : p.discValue) || 0;
+  const base = firstPriceOf(p);
+  const raw = type === "percent" ? Math.round(base * value / 100) : value;
+  const amount = Math.min(Math.max(raw, 0), base);
+  const label = type === "percent" ? `${value}%` : `${value} บาท`;
+  return { amount, label };
+}
+
+// การ์ดแพ็กเกจ (ใช้ทั้งเมนูเดือนแรกและเมนูเดือนที่ 2)
+function planCardsHtml(list) {
+  const isShop = state.mode === "shop";
+  return list.map(p => {
+    const info = shopDiscountInfo(p);
+    const base = firstPriceOf(p);
+    const net = base - info.amount;
+    const hasFirst = base !== p.price;
+    const unit = hasFirst ? "บาท เดือนแรก" : "บาท/เดือน";
+    const monthlyNote = hasFirst ? `<div class="plan-desc">ต่อเดือน ${p.price} บาท</div>` : "";
+    const priceHtml = isShop
+      ? `<div class="plan-price"><s>${base}</s>${net} <small>${unit}</small>${info.amount ? `<span class="plan-off">ส่วนลดร้าน ${info.label}</span>` : ""}</div>${monthlyNote}`
+      : `<div class="plan-price">${base} <small>${unit}</small></div>${monthlyNote}`;
+    return `
+    <div class="plan" style="--c:${p.color || "#0b5ed7"}">
+      ${p.badge ? `<span class="plan-badge">${p.badge}</span>` : ""}
+      <div class="plan-speed">${p.speed || p.name}</div>
+      <div class="plan-desc">${p.desc || ""}</div>
+      ${priceHtml}
+      <ul class="plan-feat">
+        ${(p.features || []).map(f => `<li>${f}</li>`).join("")}
+      </ul>
+      <button class="plan-btn" onclick="selectPackage('${p.id}')">สมัครแพ็กเกจเน็ต →</button>
+    </div>`;
+  }).join("");
+}
+
+// ถ้าหลังบ้านตั้ง "รูปหัวเว็บ" ไว้ จะแสดงรูปนั้นแทนหัวข้อแบบข้อความ
+// หัวเว็บใช้ข้อความเดิมเสมอ (รูปหัวเว็บเดิมถูกยกเลิกแล้ว ใช้แบนเนอร์หน้าแรกแทน)
+// ยกเลิกหัวข้อสีน้ำเงินเดิม ใช้แบนเนอร์หน้าแรกแทน
+function applyHero() {
+  hero.classList.remove("hero-photo");
+  hero.classList.add("hidden");
+  hero.innerHTML = "";
+}
+
+// จำสถานะการสมัครไว้ในแท็บเดียวกัน เผื่อหน้าเว็บถูกโหลดใหม่ตอนกลับจากแอปธนาคาร
+const SAVE_KEY = "program_flow_v1";
+function saveState() {
+  try {
+    sessionStorage.setItem(SAVE_KEY, JSON.stringify({
+      history: history_,
+      mode: state.mode,
+      phone: state.phone,
+      pkgId: state.pkg ? state.pkg.id : null,
+      pkgData: state.pkg && String(state.pkg.id).startsWith("lucky:") ? state.pkg : null,
+      shipping: state.shipping || null,
+      regCarrier: state.regCarrier || null,
+      netCarrier: state.netCarrier || null
+    }));
+  } catch (e) { /* เบราว์เซอร์บางตัวใช้ไม่ได้ ข้ามไป */ }
+}
+function clearSavedState() {
+  try { sessionStorage.removeItem(SAVE_KEY); } catch (e) { }
+}
+function restoreState() {
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(SAVE_KEY) || "null"); } catch (e) { saved = null; }
+  if (!saved || !Array.isArray(saved.history)) return;
+  state.mode = saved.mode || null;
+  state.phone = saved.phone || "";
+  state.pkg = saved.pkgData || (saved.pkgId ? (PACKAGES.find(p => p.id === saved.pkgId) || null) : null);
+  state.shipping = saved.shipping || null;
+  let hist = saved.history.filter(s => screens[s]);
+  if (!hist.length) hist = ["home"];
+  const last = hist[hist.length - 1];
+  if (last === "payment" && !state.pkg) hist = ["home"];
+  if (last === "sim-form" && !state.mode) hist = ["home"];
+  state.regCarrier = saved.regCarrier || null;
+  state.netCarrier = saved.netCarrier || null;
+  if (last === "sim-register" && !state.regCarrier) hist = ["home", "sim-carrier"];
+  history_ = hist;
+}
+
+function go(screen) { history_.push(screen); saveState(); render(); window.scrollTo(0, 0); }
+function goBack()   { if (history_.length > 1) history_.pop(); saveState(); render(); window.scrollTo(0, 0); }
+function resetTo(screen) { history_ = ["home"]; if (screen !== "home") history_.push(screen); saveState(); render(); window.scrollTo(0, 0); }
+
+/* ==========================================================
+   ฟังก์ชันส่งข้อมูล (ต่อ backend จริงภายหลัง)
+   ========================================================== */
+async function postJSON(url, data) {
+  if (!url) return { ok: true }; // ยังไม่ต่อ backend: จำลองสำเร็จ
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
   return res.json();
 }
+const sendToLine = payload => postJSON(CONFIG.LINE_ENDPOINT, { message: payload });
 
-/* ==========================================================
-   เข้าสู่ระบบ
-   ========================================================== */
-async function login(e) {
-  e.preventDefault();
-  const input = $("token").value.trim();
-  if (!input) return;
-  token = input;
+// เลือกเครือข่ายก่อนสมัครแพ็กเกจเน็ต แล้วไปหน้าเลือกเติมเงินเอง / กับทางร้าน
+function pickNetCarrier(key) {
+  state.netCarrier = key;
+  go("net-menu");
+}
+
+/* ----- ต่อแพ็กเกจเดือนที่ 2 ----- */
+function m2Init() {
+  if (!state.m2) state.m2 = { carrier: "", phone: "", confirmUrl: "", uploading: false, agree: false, err: "" };
+  return state.m2;
+}
+
+function m2Ready() {
+  const m = m2Init();
+  return !!(m.carrier && /^0\d{8,9}$/.test(m.phone) && m.confirmUrl && m.agree);
+}
+
+function m2Refresh() {
+  const b = document.getElementById("m2Btn");
+  if (b) b.classList.toggle("is-disabled", !m2Ready());
+}
+
+// เก็บค่าที่ลูกค้ากรอก (เบอร์, ติ๊กยืนยัน) โดยไม่ต้องวาดหน้าใหม่
+function m2Set(key, value) {
+  m2Init()[key] = value;
+  if (key === "phone") m2Init().err = "";
+  m2Refresh();
+}
+
+// เลือกเครือข่ายแล้วไปหน้ากรอกข้อมูลเดือนที่ 2
+function m2PickCarrier(key) {
+  const m = m2Init();
+  if (m.carrier !== key) { m.confirmUrl = ""; m.agree = false; }
+  m.carrier = key;
+  m.err = "";
+  go("month2");
+}
+
+async function m2Upload(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const m = m2Init();
+  m.uploading = true;
+  m.err = "";
+  render();
   try {
-    settings = normalize(await api("/admin/settings"));
-    sessionStorage.setItem("adm_token", token);
-    showDash();
-    loadOrders(true);
-  } catch (err) {
-    token = "";
-    $("loginErr").style.display = "block";
+    const img = await normalizeSlipImage(f);
+    const fd = new FormData();
+    fd.append("file", img, "confirm.jpg");
+    const res = await fetch(API_BASE + "/upload-confirm", { method: "POST", body: fd });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.url) throw new Error(d.error || "upload failed");
+    m.confirmUrl = d.url;
+  } catch (e) {
+    m.confirmUrl = "";
+    m.err = "อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
   }
-}
-
-function logout() {
-  token = "";
-  settings = null;
-  sessionStorage.removeItem("adm_token");
-  $("dash").classList.add("hidden");
-  $("login").classList.remove("hidden");
-  $("token").value = "";
-  $("loginErr").style.display = "none";
-}
-
-function showDash() {
-  $("login").classList.add("hidden");
-  $("dash").classList.remove("hidden");
+  m.uploading = false;
   render();
 }
 
-function markDirty() {
-  $("dirtyTag").textContent = "มีการเปลี่ยนแปลงที่ยังไม่บันทึก";
-}
-
-async function runMigrate() {
-  try {
-    const r = await api("/admin/migrate", { method: "POST", json: {} });
-    toast(r.message || "อัปเดตฐานข้อมูลแล้ว");
-  } catch (e) {
-    toast("อัปเดตไม่สำเร็จ: " + e.message, false);
-  }
-}
-
-// เปิด/ปิดการตรวจสลิป แล้วบันทึกทันที (ใช้กับทุกเครื่องที่เปิดหลังบ้าน)
-async function setSlipCheck(on) {
-  if (!on && !confirm("ปิดการตรวจสลิป? ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง ควรเปิดกลับหลังทดสอบเสร็จ")) {
-    $("content").innerHTML = viewSettings();
+function m2Next() {
+  const m = m2Init();
+  let msg = "";
+  if (!m.carrier) msg = "กรุณาเลือกเครือข่ายมือถือ";
+  else if (!/^0\d{8,9}$/.test(m.phone)) msg = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)";
+  else if (!m.confirmUrl) msg = "กรุณาอัปโหลดรูปข้อความยืนยันเบอร์";
+  else if (!m.agree) msg = "กรุณาติ๊กยืนยันความถูกต้องก่อน";
+  if (msg) {
+    m.err = msg;
+    render();
     return;
   }
-  settings.SLIP_CHECK = on;
-  markDirty();
-  await saveAll();
-  $("content").innerHTML = viewSettings();
+  m.err = "";
+  // ใช้เส้นทางการซื้อกับทางร้าน (มีส่วนลดร้านตามการตั้งค่า) และเก็บรูปยืนยันไว้กับคำสั่งซื้อ
+  state.mode = "shop";
+  state.serial = "";
+  state.phone = m.phone;
+  state.shipping = { carrier: m.carrier, phone: m.phone, confirmImg: m.confirmUrl };
+  go("month2-packages");
 }
 
-/* ==========================================================
-   แท็บ & การแสดงผล
-   ========================================================== */
-function renderTabs() {
-  const pending = orders.filter(o => o.status === "new").length;
-  $("tabs").innerHTML = TABS.map(([key, label]) => `
-    <button class="${key === tab ? "on" : ""}" onclick="setTab('${key}')">
-      ${label}${key === "orders" && pending ? ` <span class="count hot">${pending}</span>` : ""}
-    </button>`).join("");
+/* ----- เมนูโปรเน็ตเบอร์เดิม (ตรวจอายุซิม) ----- */
+function saInit() {
+  if (!state.sa) state.sa = { carrier: "", phone: "", confirmUrl: "", uploading: false, agree: false, err: "" };
+  return state.sa;
 }
 
-function setTab(t) {
-  tab = t;
-  if (t === "orders") { loadOrders(); return; }
+function saReady() {
+  const m = saInit();
+  return !!(m.carrier && /^0\d{8,9}$/.test(m.phone) && m.confirmUrl && m.sim1y && m.agree);
+}
+
+function saRefresh() {
+  const b = document.getElementById("saBtn");
+  if (b) b.classList.toggle("is-disabled", !saReady());
+}
+
+function saSet(key, value) {
+  saInit()[key] = value;
+  if (key === "phone") saInit().err = "";
+  saRefresh();
+}
+
+function saPickCarrier(key) {
+  const m = saInit();
+  if (m.carrier !== key) { m.confirmUrl = ""; m.agree = false; }
+  m.carrier = key;
+  m.err = "";
+  go("sim-age");
+}
+
+async function saUpload(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const m = saInit();
+  m.uploading = true;
+  m.err = "";
   render();
-}
-
-function render() {
-  renderTabs();
-  const views = {
-    packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
-    orders: viewOrders, settings: viewSettings, danger: viewDanger
-  };
-  $("content").innerHTML = (views[tab] || viewPackages)();
-}
-
-/* ==========================================================
-   แพ็กเกจ & ขั้นตอน
-   ========================================================== */
-// ค่าตั้งต้นของตารางวิเคราะห์เบอร์ (แก้ไขได้ในหน้านี้)
-const DEFAULT_LUCKY_RULES = {
-  digits: [
-    { d: "0", name: "ศูนย์", mean: "ความว่าง การเริ่มต้นใหม่ ไร้ขีดจำกัด" },
-    { d: "1", name: "หนึ่ง", mean: "ความเป็นผู้นำ ความก้าวหน้า การเริ่มต้น" },
-    { d: "2", name: "สอง", mean: "ความรัก ความสัมพันธ์ ความร่วมมือ" },
-    { d: "3", name: "สาม", mean: "ความเจริญรุ่งเรือง การเติบโต การค้าขาย" },
-    { d: "4", name: "สี่", mean: "ความมั่นคง ความหนักแน่น" },
-    { d: "5", name: "ห้า", mean: "การเปลี่ยนแปลง ความคล่องตัว การสื่อสาร" },
-    { d: "6", name: "หก", mean: "ความรัก ครอบครัว ความรับผิดชอบ ความลงตัว" },
-    { d: "7", name: "เจ็ด", mean: "ปัญญา การเรียนรู้ จิตใจที่สงบ" },
-    { d: "8", name: "แปด", mean: "ความร่ำรวย ความสำเร็จทางการเงิน ความก้าวหน้า" },
-    { d: "9", name: "เก้า", mean: "ความยิ่งใหญ่ อำนาจ การได้รับการยอมรับ" }
-  ],
-  pairs: [
-    { pair: "19", mean: "ก้าวหน้าในการงาน ได้รับการยอมรับ เป็นผู้นำ" },
-    { pair: "28", mean: "การเงินมั่นคง ร่ำรวย มีโชคลาภ" },
-    { pair: "37", mean: "ความรักและครอบครัวอบอุ่น ความสัมพันธ์ดี" },
-    { pair: "46", mean: "ความมั่นคงในชีวิต มีที่พึ่ง ราบรื่น" },
-    { pair: "55", mean: "การค้า การเจรจา ความเจริญทางธุรกิจ" },
-    { pair: "64", mean: "ความรักและความเข้าใจ ความสามัคคี" },
-    { pair: "73", mean: "ปัญญา การศึกษา ความคิดสร้างสรรค์" },
-    { pair: "82", mean: "ความมั่งคั่ง โชคลาภทางการเงิน ความสำเร็จ" },
-    { pair: "91", mean: "อำนาจ บารมี ความเป็นผู้นำ" },
-    { pair: "99", mean: "ความยิ่งใหญ่ ความสำเร็จสูงสุด" }
-  ],
-  fit: [
-    { n: "1", who: "ผู้ประกอบการ ผู้บริหาร คนที่ชอบเป็นผู้นำ", job: "ผู้จัดการ เจ้าของร้าน หัวหน้าทีม", boost: "การงาน ความก้าวหน้า ความเป็นผู้นำ" },
-    { n: "2", who: "คนที่ทำงานร่วมกับผู้อื่น ชอบความสัมพันธ์และความร่วมมือ", job: "ฝ่ายบริการ ฝ่ายขาย ที่ปรึกษา", boost: "ความรัก ความสัมพันธ์ การเจรจา" },
-    { n: "3", who: "คนค้าขาย คนมีความคิดสร้างสรรค์ ชอบการแสดงออก", job: "ค้าขาย การตลาด ศิลปิน นักเขียน", boost: "การเงิน การค้า ความสำเร็จ" },
-    { n: "4", who: "คนที่ต้องการความมั่นคง ทำงานเป็นระบบ", job: "วิศวกร ช่าง ข้าราชการ ผู้จัดการระบบ", boost: "ความมั่นคง การงานที่แน่นอน" },
-    { n: "5", who: "คนที่ชอบการเดินทาง ความคล่องตัว และการสื่อสาร", job: "นักการตลาด พนักงานขาย สื่อมวลชน", boost: "การสื่อสาร การค้า การเดินทาง" },
-    { n: "6", who: "คนที่ให้ความสำคัญกับครอบครัวและความรับผิดชอบ", job: "ครู พยาบาล ธุรกิจครอบครัว", boost: "ครอบครัว ความรัก ความสมดุล" },
-    { n: "7", who: "คนที่ใช้ความคิดและการเรียนรู้", job: "นักวิชาการ โปรแกรมเมอร์ นักวิจัย นักเขียน", boost: "การศึกษา ปัญญา ความสงบ" },
-    { n: "8", who: "คนที่มุ่งเป้าหมายทางการเงิน", job: "ธุรกิจการเงิน ค้าขาย เจ้าของกิจการ", boost: "การเงิน โชคลาภ ความร่ำรวย" },
-    { n: "9", who: "คนที่ต้องการการยอมรับและความยิ่งใหญ่", job: "ผู้บริหารระดับสูง นักกฎหมาย ผู้นำองค์กร", boost: "อำนาจ บารมี ความสำเร็จสูงสุด" }
-  ]
-};
-
-function viewLuckyRules() {
-  const R = settings.luckyRules || structuredClone(DEFAULT_LUCKY_RULES);
-  return `
-    <div class="card">
-      <h3>🔢 ความหมายของเลขแต่ละตัว</h3>
-      <p class="hint">ใช้หา "เลขเด่นที่สุด" ในเบอร์</p>
-      ${R.digits.map((x, i) => `
-        <div class="grid2" style="margin-bottom:8px">
-          <label>เลข ${esc(x.d)}<input value="${esc(x.name)}" oninput="updRule('digits',${i},'name',this.value)"></label>
-          <label>ความหมาย<input value="${esc(x.mean)}" oninput="updRule('digits',${i},'mean',this.value)"></label>
-        </div>`).join("")}
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>💞 เลขคู่มงคล</h3>
-        <button class="ghost" onclick="addPair()">+ เพิ่มเลขคู่</button></div>
-      <p class="hint">ระบบจะหาคู่เลข 2 หลักที่อยู่ติดกันในเบอร์ แล้วแสดงความหมายตรงนี้</p>
-      ${R.pairs.map((x, i) => `
-        <div class="grid2" style="grid-template-columns:90px 1fr auto;margin-bottom:8px">
-          <input value="${esc(x.pair)}" maxlength="2" placeholder="เช่น 19" oninput="updRule('pairs',${i},'pair',this.value)">
-          <input value="${esc(x.mean)}" placeholder="ความหมาย" oninput="updRule('pairs',${i},'mean',this.value)">
-          <button class="danger" onclick="delPair(${i})">ลบ</button>
-        </div>`).join("")}
-    </div>
-
-    <div class="card">
-      <h3>👤 คนที่เหมาะ ตามผลรวมตัวเลข</h3>
-      <p class="hint">ผลรวมตัวเลขในเบอร์จะถูกลดเหลือหลักเดียว (1–9) แล้วใช้ตารางนี้</p>
-      ${R.fit.map((x, i) => `
-        <div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px">
-          <b>ผลรวม ${esc(x.n)}</b>
-          <label>เหมาะกับ<input value="${esc(x.who)}" oninput="updRule('fit',${i},'who',this.value)"></label>
-          <label>อาชีพที่เหมาะ<input value="${esc(x.job)}" oninput="updRule('fit',${i},'job',this.value)"></label>
-          <label>ส่งเสริมเรื่อง<input value="${esc(x.boost)}" oninput="updRule('fit',${i},'boost',this.value)"></label>
-        </div>`).join("")}
-    </div>`;
-}
-
-function updRule(section, i, field, val) {
-  settings.luckyRules[section][i][field] = val;
-  markDirty();
-}
-
-// สร้างข้อความวิเคราะห์จากเบอร์ โดยใช้ตารางในหน้า "ตารางวิเคราะห์เบอร์"
-function analysisText(number) {
-  const R = settings.luckyRules || DEFAULT_LUCKY_RULES;
-  const digitMap = {};
-  R.digits.forEach(x => { digitMap[x.d] = x; });
-  const pairMap = {};
-  R.pairs.forEach(x => { if (x.pair) pairMap[x.pair] = x.mean; });
-  const fitMap = {};
-  R.fit.forEach(x => { fitMap[x.n] = x; });
-
-  const digits = String(number || "").replace(/\D/g, "");
-  if (!digits) return "";
-
-  const sum = [...digits].reduce((a, d) => a + Number(d), 0);
-  let root = sum;
-  while (root > 9) root = String(root).split("").reduce((a, d) => a + Number(d), 0);
-  const key = String(root || 9);
-
-  const counts = {};
-  [...digits].forEach(d => { counts[d] = (counts[d] || 0) + 1; });
-  const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
-
-  const pairs = [];
-  for (let i = 0; i < digits.length - 1; i++) {
-    const pr = digits.slice(i, i + 2);
-    if (pairMap[pr] && !pairs.includes(pr)) pairs.push(pr);
-  }
-
-  const fit = fitMap[key] || { who: "-", job: "-", boost: "-" };
-  const topInfo = digitMap[top] || { name: "", mean: "" };
-
-  const lines = [
-    `ผลรวมตัวเลข ${sum} → ${key}`,
-    `เลขเด่นที่สุด: ${top} (${topInfo.name}) ${counts[top]} ตัว — ${topInfo.mean}`,
-    `เหมาะกับ: ${fit.who}`,
-    `อาชีพที่เหมาะ: ${fit.job}`,
-    `ส่งเสริมเรื่อง: ${fit.boost}`,
-    pairs.length
-      ? `เลขคู่มงคลที่พบ: ${pairs.map(p => `${p} (${pairMap[p]})`).join(", ")}`
-      : "เลขคู่มงคลที่พบ: ไม่พบในเบอร์นี้"
-  ];
-  if (digits.includes("4")) lines.push("⚠️ มีเลข 4 ซึ่งบางตำราถือว่าไม่เป็นมงคล");
-  lines.push("หมายเหตุ: เป็นการวิเคราะห์ตามความเชื่อเลขศาสตร์ ไม่ใช่ข้อเท็จจริงทางวิทยาศาสตร์");
-  return lines.join("\n");
-}
-
-function setLuckyNumber(i, val) {
-  const x = settings.luckyNumbers[i];
-  x.number = val.trim();
-  x.analysis = analysisText(x.number);
-  markDirty();
-  render();
-}
-
-function rebuildAnalysis(i) {
-  const x = settings.luckyNumbers[i];
-  x.analysis = analysisText(x.number);
-  markDirty();
-  render();
-}
-
-function addPair() {
-  settings.luckyRules.pairs.push({ pair: "", mean: "" });
-  markDirty();
-  render();
-}
-
-function delPair(i) {
-  if (!confirm("ลบเลขคู่นี้?")) return;
-  settings.luckyRules.pairs.splice(i, 1);
-  markDirty(); saveAll();
-  render();
-}
-
-const CARRIERS = ["truemove H", "AIS", "dtac"];
-
-function viewLucky() {
-  const list = settings.luckyNumbers || [];
-  return `
-    <div class="card">
-      <div class="head"><h3>🍀 เบอร์มงคล</h3>
-        <button class="ghost" onclick="addLucky()">+ เพิ่มเบอร์</button></div>
-      <p class="hint">เบอร์เหล่านี้จะแสดงใต้เมนูหน้าแรกของหน้าบ้าน ถ้าใส่ราคาเป็น 0 หน้าบ้านจะแสดงว่า "สอบถามราคา"</p>
-      ${list.length ? list.map((x, i) => `
-        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
-          <div class="grid2">
-            <label>เบอร์ (พิมพ์เสร็จแล้วคลิกที่อื่น ระบบจะวิเคราะห์ให้อัตโนมัติ)<input value="${esc(x.number || "")}" placeholder="เช่น 089-999-9999" onchange="setLuckyNumber(${i}, this.value)"></label>
-            <label>ราคา (บาท)<input type="number" min="0" value="${esc(x.price ?? 0)}" oninput="upd('luckyNumbers',${i},'price',Number(this.value)||0)"></label>
-          </div>
-          <label>หมายเหตุ (ไม่บังคับ)<input value="${esc(x.note || "")}" placeholder="เช่น ผลรวม 9" oninput="upd('luckyNumbers',${i},'note',this.value)"></label>
-          <div class="grid2">
-            <label>เครือข่าย (โลโก้จะดึงจากการตั้งค่า)<select onchange="upd('luckyNumbers',${i},'carrier',this.value)"><option value="">— ไม่ระบุ —</option>${CARRIERS.map(c => `<option value="${c}" ${x.carrier === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
-            <label>หมวดที่ส่งเสริม (คั่นด้วยเครื่องหมายจุลภาค)<input value="${esc(x.tags || "")}" placeholder="เช่น สุขภาพ, เงิน/งาน, ความรัก, เซ็นส์" oninput="upd('luckyNumbers',${i},'tags',this.value)"></label>
-          </div>
-          <label><input type="checkbox" style="width:auto" ${x.featured ? "checked" : ""} onchange="upd('luckyNumbers',${i},'featured',this.checked)"> แสดงป้าย "แนะนำ" บนการ์ด</label>
-          <label>ข้อความวิเคราะห์ที่ลูกค้าจะเห็น (สร้างอัตโนมัติ แก้ไขได้)<textarea rows="8" oninput="upd('luckyNumbers',${i},'analysis',this.value)">${esc(x.analysis || "")}</textarea></label>
-          <div style="margin-bottom:8px"><button class="ghost" onclick="rebuildAnalysis(${i})">สร้างวิเคราะห์ใหม่จากเบอร์นี้</button></div>
-          <div style="margin-top:8px;text-align:right"><button class="danger" onclick="delLucky(${i})">ลบเบอร์นี้</button></div>
-        </div>`).join("") : `<p class="hint">ยังไม่มีเบอร์มงคล</p>`}
-    </div>`;
-}
-
-function addLucky() {
-  settings.luckyNumbers = settings.luckyNumbers || [];
-  settings.luckyNumbers.push({ number: "", price: 0, note: "" });
-  markDirty();
-  render();
-}
-
-function delLucky(i) {
-  if (!confirm("ลบเบอร์นี้?")) return;
-  settings.luckyNumbers.splice(i, 1);
-  markDirty(); saveAll();
-  render();
-}
-
-function pkgSection(title) {
-  return `<div style="font-size:12px;font-weight:800;color:#64748b;letter-spacing:.3px;margin:14px 0 6px;text-transform:uppercase">${title}</div>`;
-}
-
-function pkgCardHTML(p, i) {
-  const color = p.color || "#0b5ed7";
-  const isNew = p.id === lastAddedPkg;
-  return `
-    <details class="pkg-card" ${isNew ? "open" : ""} style="border:1px solid var(--line);border-left:6px solid ${esc(color)};border-radius:14px;margin-bottom:14px;background:#fff">
-      <summary style="cursor:pointer;list-style:none;padding:12px 14px;display:flex;align-items:center;gap:10px">
-        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:${esc(color)};color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center">${i + 1}</span>
-        <span style="flex:1;min-width:0">
-          <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name || "แพ็กเกจใหม่ (ยังไม่ได้ตั้งชื่อ)")}</b>
-          <small style="color:var(--muted)">${esc(p.price || 0)} บาท/เดือน${p.discType === "none" ? " · ไม่ลดร้าน" : ""}${p.shopOnly ? " · เฉพาะทางร้าน" : ""}</small>
-        </span>
-        <span style="color:var(--muted);font-size:12px">แก้ไข ▾</span>
-      </summary>
-
-      <div style="padding:4px 16px 16px;border-top:1px solid var(--line)">
-        ${pkgSection("ข้อความที่แสดงบนการ์ด")}
-        <div class="grid2">
-          <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
-          <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
-        </div>
-        <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
-        <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
-        <div class="grid2">
-          <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
-          <label>สีการ์ด<input type="color" value="${esc(color)}" oninput="upd('PACKAGES',${i},'color',this.value)"></label>
-        </div>
-
-        ${pkgSection("ราคาและรหัส")}
-        <div class="grid2">
-          <label>ราคาต่อเดือน (บาท)<input type="number" min="0" value="${esc(p.price)}" oninput="upd('PACKAGES',${i},'price',Number(this.value)||0)"></label>
-          <label>ราคาเดือนแรก (บาท) <small>เว้นว่าง = เท่ากับราคาต่อเดือน</small><input type="number" min="0" value="${esc(p.firstPrice ?? "")}" placeholder="เช่น 250" oninput="upd('PACKAGES',${i},'firstPrice',Number(this.value)||0)"></label>
-        </div>
-        <label>รหัสสมัคร<input value="${esc(p.code)}" placeholder="เช่น *900*1111#" oninput="upd('PACKAGES',${i},'code',this.value)"></label>
-
-        ${pkgSection("ส่วนลดร้าน")}
-        <div class="grid2">
-          <label>รูปแบบส่วนลด
-            <select onchange="setDiscType(${i}, this.value)">
-              <option value="" ${!p.discType ? "selected" : ""}>ใช้ค่ากลาง</option>
-              <option value="none" ${p.discType === "none" ? "selected" : ""}>ไม่ลด</option>
-              <option value="baht" ${p.discType === "baht" ? "selected" : ""}>ลดเป็นบาท</option>
-              <option value="percent" ${p.discType === "percent" ? "selected" : ""}>ลดเป็นเปอร์เซ็นต์ (%)</option>
-            </select>
-          </label>
-          <label>ค่าส่วนลดของแพ็กเกจนี้<input type="number" min="0" value="${esc(p.discValue ?? "")}" oninput="upd('PACKAGES',${i},'discValue',Number(this.value)||0)"></label>
-        </div>
-        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopOnly ? "checked" : ""} onchange="upd('PACKAGES',${i},'shopOnly',this.checked)"> สมัครเน็ตกับทางร้านเท่านั้น (ลูกค้าสมัครเองไม่ได้ เมื่อกดเลือกจะขึ้นป๊อปอัปให้ชำระผ่านร้าน)</label>
-        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopVisible ? "checked" : ""} onchange="setShopVisible(${i},this.checked)"> สมัครเน็ตกับทางร้าน (ติ๊ก = แสดงในเมนูสมัครเน็ตกับทางร้านบนเว็บ ไม่ติ๊ก = ไม่แสดง)</label>
-
-        <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);text-align:right">
-          <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${i + 1}</button>
-        </div>
-      </div>
-    </details>`;
-}
-
-// เครือข่ายที่กำลังแก้ไขแพ็กเกจ/ขั้นตอน (แพ็กเกจเก่าที่ไม่มีค่า carrier ถือว่าเป็น True)
-let pkgTab = "truemove H";
-const pkgCarrierOf = p => p.carrier || "truemove H";
-function setPkgTab(c) { pkgTab = c; render(); }
-function stepsOfCarrier(c) {
-  return c === "truemove H" ? settings.SELF_STEPS : ((settings.SELF_STEPS_BY || {})[c] || []);
-}
-
-function viewPackages() {
-  const all = settings.PACKAGES.map((p, i) => ({ p, i })).filter(x => pkgCarrierOf(x.p) === pkgTab);
-  const first = all.filter(x => !x.p.month2 && !x.p.simAge);
-  const second = all.filter(x => x.p.month2 && !x.p.simAge);
-  const third = all.filter(x => x.p.simAge);
-  const list = (rows) => rows.length
-    ? rows.map(x => pkgCardHTML(x.p, x.i)).join("")
-    : `<p class="hint">ยังไม่มีแพ็กเกจในกลุ่มนี้</p>`;
-  return `
-    <div class="card">
-      <h3>เลือกเครือข่ายที่จะแก้ไข</h3>
-      <p class="hint">แพ็กเกจและขั้นตอนสมัครแยกตามเครือข่าย เพราะรหัสสมัครและวิธีสมัครของแต่ละเครือข่ายไม่เหมือนกัน</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${CARRIERS.map(c => `<button class="${pkgTab === c ? "primary" : "ghost"}" onclick="setPkgTab('${c}')">${c === "truemove H" ? "True" : c}</button>`).join("")}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>แพ็กเกจเดือนแรก (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${first.length} แพ็กเกจ)</small></h3>
-        <button class="ghost" onclick="addPkg(false)">+ เพิ่มแพ็กเกจ</button></div>
-      <p class="hint">แพ็กเกจที่ลูกค้าเห็นในเมนูสมัครแพ็กเกจเน็ต ราคานี้ใช้ทั้งเมนูเติมเงินเองและเมนูกับทางร้าน (ทางร้านหักส่วนลดอัตโนมัติ) แต่ละแพ็กเกจแยกเป็นกล่องของตัวเอง กดที่หัวกล่องเพื่อเปิด/ปิดการแก้ไข</p>
-      ${list(first)}
-      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(false)">+ เพิ่มแพ็กเกจใหม่</button>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>แพ็กเกจเดือนที่ 2 (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${second.length} แพ็กเกจ)</small></h3>
-        <button class="ghost" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2</button></div>
-      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:700">
-        <input type="checkbox" style="width:auto" ${(settings.month2Carriers || {})[pkgTab] !== false ? "checked" : ""} onchange="setMonth2Carrier('${pkgTab}', this.checked)">
-        เปิดให้ลูกค้าต่อแพ็กเกจเดือนที่ 2 ของเครือข่ายนี้
-      </label>
-      <p class="hint">ถ้าปิด ลูกค้าจะเห็นเครือข่ายนี้ในหน้าต่อแพ็กเกจเดือนที่ 2 แต่กดเลือกไม่ได้</p>
-      <p class="hint">แพ็กเกจที่ลูกค้าเลือกหลังกดปุ่ม "ต่อแพ็กเกจเดือนที่ 2" (ลูกค้ากรอกเบอร์ อัปโหลดรูปยืนยัน แล้วเลือกแพ็กเกจ) ชำระเงินและแนบสลิปเหมือนเดิม สถานะจะขึ้นเหมือนการสมัครเดือนแรก</p>
-      ${list(second)}
-      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(true)">+ เพิ่มแพ็กเกจเดือนที่ 2 ใหม่</button>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>แพ็กเกจโปรเบอร์เดิม (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${third.length} แพ็กเกจ)</small></h3>
-        <button class="ghost" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจ</button></div>
-      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font-weight:700">
-        <input type="checkbox" style="width:auto" ${(settings.simAgeCarriers || {})[pkgTab] !== false ? "checked" : ""} onchange="setSimAgeCarrier('${pkgTab}', this.checked)">
-        เปิดให้ลูกค้าเลือกเครือข่ายนี้ในเมนูโปรเบอร์เดิม
-      </label>
-      <p class="hint">ถ้าปิด ลูกค้าจะเห็นเครือข่ายนี้ในหน้าเลือกเครือข่าย แต่กดเลือกไม่ได้</p>
-      <p class="hint">แพ็กเกจของเมนู "โปรเน็ตเบอร์เดิม" (ลูกค้าเลือกเครือข่าย ใส่เบอร์ อัปโหลดรูปแสดงอายุซิม แล้วเลือกแพ็กเกจ) แยกจากแพ็กเกจเดือนแรกและเดือนที่ 2 ชำระเงินและแนบสลิปเหมือนเดิม</p>
-      ${list(third)}
-      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจโปรเบอร์เดิมใหม่</button>
-    </div>
-
-    <div class="card">
-      <h3>ขั้นตอนสมัครเน็ต — ${pkgTab === "truemove H" ? "True" : pkgTab} (เมนูเติมเงินเอง)</h3>
-      <p class="hint">พิมพ์บรรทัดละ 1 ขั้นตอน ขั้นตอนนี้แสดงเฉพาะลูกค้าที่เลือกเครือข่ายนี้</p>
-      <textarea rows="5" oninput="setSteps(this.value)">${esc(stepsOfCarrier(pkgTab).join("\n"))}</textarea>
-    </div>`;
-}
-
-let lastAddedPkg = null;
-
-function upd(key, i, field, val) {
-  settings[key][i][field] = val;
-  markDirty();
-}
-
-function addPkg(month2 = false, simAge = false) {
-  const id = "P" + Date.now().toString(36);
-  settings.PACKAGES.push({
-    id, name: "", speed: "", desc: "",
-    price: 0, code: "", badge: "", color: simAge ? "#0ea5e9" : (month2 ? "#7c3aed" : "#0b5ed7"), features: [],
-    month2: !!month2 && !simAge, simAge: !!simAge, carrier: pkgTab
-  });
-  lastAddedPkg = id;
-  markDirty();
-  render();
-}
-
-function setShopVisible(i, on) {
-  settings.PACKAGES[i].shopVisible = !!on;
-  markDirty();
-  render();
-}
-
-function setMonth2(i, on) {
-  settings.PACKAGES[i].month2 = !!on;
-  settings.PACKAGES[i].color = settings.PACKAGES[i].color || (on ? "#7c3aed" : "#0b5ed7");
-  markDirty();
-  render();
-}
-
-function setDiscType(i, type) {
-  settings.PACKAGES[i].discType = type;
-  markDirty();
-  render();
-}
-
-function setFeatures(i, text) {
-  settings.PACKAGES[i].features = text.split("\n").map(s => s.trim()).filter(Boolean);
-  markDirty();
-}
-
-function delPkg(i) {
-  if (!confirm("ลบแพ็กเกจนี้?")) return;
-  settings.PACKAGES.splice(i, 1);
-  markDirty(); saveAll();
-  render();
-}
-
-function setSteps(text) {
-  const lines = text.split("\n").map(x => x.trim()).filter(Boolean);
-  if (pkgTab === "truemove H") settings.SELF_STEPS = lines;
-  else settings.SELF_STEPS_BY = { ...(settings.SELF_STEPS_BY || {}), [pkgTab]: lines };
-  markDirty();
-}
-
-
-/* ==========================================================
-   ส่วนลด & QR
-   ========================================================== */
-function viewShop() {
-  return `
-    <div class="grid2">
-      <div class="card">
-        <h3>ส่วนลดสมัครกับทางร้าน</h3>
-        <p class="hint">หักจากราคาแพ็กเกจในเมนูกับทางร้าน ถ้าแพ็กเกจไหนตั้งส่วนลดเองในแท็บแพ็กเกจ จะใช้ค่านั้นแทน</p>
-        <div class="grid2">
-          <label>ประเภทส่วนลด
-            <select onchange="settings.DISCOUNT_SHOP_TYPE=this.value;markDirty();render()">
-              <option value="baht" ${settings.DISCOUNT_SHOP_TYPE !== "percent" ? "selected" : ""}>บาท</option>
-              <option value="percent" ${settings.DISCOUNT_SHOP_TYPE === "percent" ? "selected" : ""}>เปอร์เซ็นต์ (%)</option>
-            </select>
-          </label>
-          <label>ค่าส่วนลด
-            <input type="number" min="0" value="${esc(settings.DISCOUNT_SHOP)}"
-                   oninput="settings.DISCOUNT_SHOP=Number(this.value)||0;markDirty()">
-          </label>
-        </div>
-      </div>
-      <div class="card">
-        <h3>QR พร้อมเพย์ของร้าน</h3>
-        <p class="hint">รูปที่ลูกค้าใช้สแกนชำระเงิน</p>
-        <label>ลิงก์รูป QR
-          <input value="${esc(settings.QR_IMAGE_URL)}" oninput="setQR(this.value)">
-        </label>
-        <label style="margin-top:10px">อัปโหลดรูป QR ใหม่
-          <input type="file" accept="image/*" onchange="uploadQR(this.files[0])">
-        </label>
-        <div class="qr-preview" id="qrPreview">${qrImg()}</div>
-      </div>
-    </div>`;
-}
-
-function qrImg() {
-  return settings.QR_IMAGE_URL ? `<img src="${esc(settings.QR_IMAGE_URL)}" alt="">` : "ยังไม่มี QR";
-}
-
-function setQR(url) {
-  settings.QR_IMAGE_URL = url;
-  markDirty();
-  $("qrPreview").innerHTML = qrImg();
-}
-
-async function uploadQR(file) {
-  if (!file) return;
   try {
-    settings.QR_IMAGE_URL = await uploadFile(file);
-    markDirty(); saveAll();
+    const img = await normalizeSlipImage(f);
+    const fd = new FormData();
+    fd.append("file", img, "sim-age.jpg");
+    const res = await fetch(API_BASE + "/upload-confirm", { method: "POST", body: fd });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.url) throw new Error(d.error || "upload failed");
+    m.confirmUrl = d.url;
+  } catch (e) {
+    m.confirmUrl = "";
+    m.err = "อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+  }
+  m.uploading = false;
+  render();
+}
+
+async function saNext() {
+  const m = saInit();
+  let msg = "";
+  if (!m.carrier) msg = "กรุณาเลือกเครือข่ายมือถือ";
+  else if (!/^0\d{8,9}$/.test(m.phone)) msg = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)";
+  else if (!m.confirmUrl) msg = "กรุณาอัปโหลดรูปแสดงอายุซิม";
+  else if (!m.sim1y) msg = "กรุณาติ๊กยืนยันว่าซิมใช้งานเกิน 1 ปีแล้ว";
+  else if (!m.agree) msg = "กรุณาติ๊กยืนยันความถูกต้องก่อน";
+  if (msg) {
+    m.err = msg;
     render();
-    toast("อัปโหลด QR แล้ว");
-  } catch (e) {
-    toast("อัปโหลด QR ไม่สำเร็จ", false);
+    return;
   }
+  m.err = "";
+  m.submitting = true;
+  try {
+    const res = await fetch(API_BASE + "/port/request", {
+      method: "POST",
+      body: JSON.stringify({ phone: m.phone, carrier: m.carrier, confirmImg: m.confirmUrl })
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.id) throw new Error(d.error || ("HTTP " + res.status));
+    m.orderId = d.id;
+    m.orderNo = d.orderNo || "";
+    m.status = "port_wait";
+    m.portPackageId = "";
+  } catch (e) {
+    m.submitting = false;
+    m.err = "ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง (" + (e && e.message ? e.message : "error") + ")";
+    render();
+    return;
+  }
+  m.submitting = false;
+  // เตรียมข้อมูลไว้ให้การชำระเงินใช้ต่อ (ผูกกับคำสั่งซื้อเบอร์เดิม)
+  state.mode = "shop";
+  state.serial = "";
+  state.phone = m.phone;
+  state.shipping = { carrier: m.carrier, phone: m.phone, confirmImg: m.confirmUrl, simAge: true, simOver1Year: true, portOrderId: m.orderId };
+  go("port-wait");
 }
 
-/* ==========================================================
-   รายการสั่งซื้อ (สถิติ + จัดการสถานะ)
-   ========================================================== */
-async function loadOrders(silent = false) {
-  if (!silent && tab === "orders") $("content").innerHTML = `<div class="card">กำลังโหลด...</div>`;
+// ----- ตรวจสถานะเบอร์เดิมจากร้าน (OTP และแพ็กเกจที่ร้านเลือก) -----
+let portTimer = null;
+
+// ----- ตัวนับถอยหลังของ OTP (ใช้ได้ 5 นาที) -----
+const OTP_VALID_MS = 5 * 60 * 1000;
+let portCountTimer = null;
+
+function portOtpRemaining() {
+  const m = saInit();
+  const start = m.otpAt ? Date.parse(m.otpAt) : Date.now();
+  return Math.max(0, start + OTP_VALID_MS - Date.now());
+}
+
+function portFmtTime(ms) {
+  const s = Math.ceil(ms / 1000);
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+
+function portTimerText() {
+  const left = portOtpRemaining();
+  return left > 0
+    ? "OTP ใช้ได้อีก " + portFmtTime(left)
+    : "OTP หมดอายุแล้ว กรุณารอทางร้านขอ OTP ใหม่";
+}
+
+function portCountdownTick() {
+  const el = document.getElementById("portTimer");
+  if (el) el.textContent = portTimerText();
+}
+
+function portEnsureCountdown() {
+  if (!portCountTimer) portCountTimer = setInterval(portCountdownTick, 1000);
+}
+
+function portEnsurePolling() {
+  const m = saInit();
+  if (!m.orderId || portTimer || m.status === "port_cancelled") return;
+  portTimer = setInterval(portTick, 8000);
+}
+
+function portStopPolling() {
+  if (portTimer) { clearInterval(portTimer); portTimer = null; }
+}
+
+async function portTick() {
+  const m = saInit();
+  if (!m.orderId) { portStopPolling(); return; }
   try {
-    orders = await api("/admin/orders");
+    const res = await fetch(API_BASE + "/port/status?id=" + encodeURIComponent(m.orderId), { cache: "no-store" });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d.status) return;
+    const changed = d.status !== m.status
+      || JSON.stringify(d.portPackageIds || []) !== JSON.stringify(m.portPackageIds || [])
+      || (d.otpAt && d.otpAt !== m.otpAt);
+    m.status = d.status;
+    m.portPackageIds = d.portPackageIds || [];
+    if (d.otpAt) m.otpAt = d.otpAt;
+    if (d.status === "port_cancelled") portStopPolling();
+    if (changed && history_[history_.length - 1] === "port-wait") render();
+  } catch (e) { /* ลองใหม่รอบถัดไป */ }
+}
+
+async function portSendOtp() {
+  const m = saInit();
+  if (portOtpRemaining() <= 0) {
+    m.err = "OTP หมดอายุแล้ว กรุณารอทางร้านขอ OTP ใหม่";
+    render();
+    return;
+  }
+  const otp = (document.getElementById("portOtp")?.value || "").trim();
+  if (!/^\d{4,8}$/.test(otp)) {
+    m.err = "กรุณากรอกเลข OTP ให้ถูกต้อง (ตัวเลข 4-8 หลัก)";
+    render();
+    return;
+  }
+  try {
+    const res = await fetch(API_BASE + "/port/otp", {
+      method: "POST",
+      body: JSON.stringify({ id: m.orderId, otp })
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || "ส่ง OTP ไม่สำเร็จ ลองใหม่อีกครั้ง");
+    m.status = "port_otp";
+    m.err = "";
   } catch (e) {
-    orders = [];
-    if (!silent) toast("โหลดรายการไม่สำเร็จ", false);
+    m.err = e.message || "ส่ง OTP ไม่สำเร็จ ลองใหม่อีกครั้ง";
   }
   render();
 }
 
-function viewOrders() {
-  const today = new Date().toDateString();
-  const now = new Date();
-  const monthList = orders.filter(o => dayOf(o).getMonth() === now.getMonth() && dayOf(o).getFullYear() === now.getFullYear());
-  const todayN = orders.filter(o => dayOf(o).toDateString() === today).length;
-  const pending = orders.filter(o => o.status === "new").length;
-  const revenue = monthList.reduce((s, o) => s + (Number(o.amount) || 0), 0);
-
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    days.push({
-      label: d.toLocaleDateString("th-TH", { weekday: "short" }),
-      n: orders.filter(o => dayOf(o).toDateString() === d.toDateString()).length
+async function portCancelRequest() {
+  if (!confirm("ยืนยันยกเลิกการสมัครโปรเบอร์เดิม?")) return;
+  const m = saInit();
+  try {
+    const res = await fetch(API_BASE + "/port/cancel", {
+      method: "POST",
+      body: JSON.stringify({ id: m.orderId })
     });
+    if (!res.ok) throw new Error("fail");
+    m.status = "port_cancelled";
+    portStopPolling();
+  } catch (e) {
+    m.err = "ยกเลิกไม่สำเร็จ ลองใหม่อีกครั้ง";
   }
-  const max = Math.max(1, ...days.map(d => d.n));
-
-  const branches = [["K", "กาฬสินธุ์"], ["L", "เลย"]].map(([code, name]) => {
-    const bo = orders.filter(o => o.branch === code);
-    const td = bo.filter(o => dayOf(o).toDateString() === today).length;
-    const mo = bo.filter(o => dayOf(o).getMonth() === now.getMonth());
-    const rev = mo.reduce((s, o) => s + (Number(o.amount) || 0), 0);
-    return `<div class="branch"><b>🏪 ${code} — ${name}</b><span>วันนี้ ${td} · เดือนนี้ ${mo.length} · ${fmt(rev)}</span></div>`;
-  }).join("");
-
-  return `
-    <div class="stats">
-      <div class="stat"><div class="k">📅 วันนี้</div><div class="v">${todayN} <small>คำสั่ง</small></div></div>
-      <div class="stat"><div class="k">📆 เดือนนี้</div><div class="v">${monthList.length} <small>คำสั่ง</small></div></div>
-      <div class="stat"><div class="k">🎯 รอตรวจ</div><div class="v">${pending} <small>รายการ</small></div></div>
-      <div class="stat"><div class="k">📈 ยอดเดือนนี้</div><div class="v">${fmt(revenue)}</div></div>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>📊 7 วันย้อนหลัง</h3><button class="ghost" onclick="loadOrders()">🔄 รีเฟรช</button></div>
-      <div class="bars">
-        ${days.map(d => `<div class="b"><i style="height:${(d.n / max) * 100}%"><b>${d.n}</b></i>${d.label}</div>`).join("")}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>รายการคำสั่งซื้อ (${orders.length})</h3></div>
-      <input placeholder="ค้นหาเลขคำสั่งซื้อ เบอร์ หรือซีเรียลซิม" oninput="filterOrders(this.value)" style="margin-bottom:12px">
-      <div id="orderGroups">${categorySections(orders)}</div>
-    </div>`;
+  render();
 }
 
-function filterOrders(q) {
-  q = q.trim().toLowerCase();
-  const list = !q ? orders : orders.filter(o =>
-    [o.orderNo, o.phone, o.serial].some(v => String(v || "").toLowerCase().includes(q)));
-  $("orderGroups").innerHTML = categorySections(list);
-}
-
-// แยกหมวดคำสั่งซื้อ: เบอร์ใหม / ต่อแพ็กเกจเดือนที่ 2 / สมัครแพ็กเกจเบอร์เดิม
-function orderCategory(o) {
-  const sh = o.shipping || {};
-  if (sh.port || sh.simAge) return "port";
-  if (sh.confirmImg) return "month2";
-  return "new";
-}
-
-// เมนูย่อยของรายการคำสั่งซื้อ: 1) เบอร์ใหม่ 2) ต่อแพ็กเกจเดือนที่ 2 3) สมัครแพ็กเกจเบอร์เดิม
-let orderTab = "new";
-const ORDER_GROUPS = [
-  ["new", "สมัครเน็ตเบอร์ใหม่", "ลงทะเบียนซิมและสมัครเน็ตเบอร์ใหม่"],
-  ["month2", "ต่อแพ็กเกจเดือนที่ 2", "ลูกค้าต่อแพ็กเกจเดือนที่ 2 (มีรูปยืนยันเบอร์)"],
-  ["port", " สมัครแพ็กเกจเบอร์เดิม", "เมนูโปรเน็ตเบอร์เดิม (OTP และการเลือกแพ็กเกจ)"]
+/* ----- ลงทะเบียนซิม ----- */
+const SIM_CARRIERS = [
+  { key: "truemove H", label: "ลงทะเบียนซิมทรู", desc: "ซิมทรูมูฟ เอช" },
+  { key: "dtac", label: "ลงทะเบียนซิมดีแทค", desc: "ซิม dtac" },
+  { key: "AIS", label: "ลงทะเบียนซิมเอไอเอส", desc: "ซิม AIS" }
 ];
 
-function setOrderTab(k) {
-  orderTab = k;
-  const q = (document.querySelector('input[oninput^="filterOrders"]') || {}).value || "";
-  filterOrders(q);
+function carrierLabel(key) {
+  const c = SIM_CARRIERS.find(x => x.key === key);
+  return c ? c.label : "ลงทะเบียนซิม";
 }
 
-function categorySections(list) {
-  const tabs = ORDER_GROUPS.map(([key, title]) => {
-    const n = list.filter(o => orderCategory(o) === key).length;
-    return `<button class="${orderTab === key ? "primary" : "ghost"}" onclick="setOrderTab('${key}')">${title} (${n})</button>`;
-  }).join("");
-  const [key, title, hint] = ORDER_GROUPS.find(g => g[0] === orderTab) || ORDER_GROUPS[0];
-  const rows = list.filter(o => orderCategory(o) === key);
-  return `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${tabs}</div>
-    <div class="order-group">
-      <div class="head"><h3>${title} <small style="color:var(--muted);font-weight:500">(${rows.length})</small></h3></div>
-      <p class="hint">${hint}</p>
-      <div id="orderList_${key}">${orderListHTML(rows)}</div>
-    </div>`;
+// แบนเนอร์หน้าแรก: ตั้งค่าได้จากหลังบ้าน (สูงสุด 5 รูป) ว่างไว้ = ไม่แสดง
+function bannerHtml() {
+  const list = (CONFIG.banners || []).filter(b => b && b.url).slice(0, 5);
+  if (!list.length) return "";
+  return `<div class="banner-slides">${list.map(b => {
+    const img = `<img src="${b.url}" alt="แบนเนอร์">`;
+    return `<div class="banner-slide">${b.link ? `<a href="${b.link}" target="_blank" rel="noopener">${img}</a>` : img}</div>`;
+  }).join("")}</div>`;
 }
 
-function categorySections_old(list) {
-  const groups = [
-    ["new", "🆕 คำสั่งซื้อเบอร์ใหม่", "ลงทะเบียนซิมและสมัครเน็ตเบอร์ใหม่"],
-    ["month2", "🔁 คำสั่งซื้อต่อแพ็กเกจเดือนที่ 2", "ลูกค้าต่อแพ็กเกจเดือนที่ 2 (มีรูปยืนยันเบอร์)"],
-    ["port", "📞 คำสั่งซื้อสมัครแพ็กเกจเบอร์เดิม", "เมนูโปรเน็ตเบอร์เดิม (OTP และการเลือกแพ็กเกจ)"]
-  ];
-  return groups.map(([key, title, hint]) => {
-    const rows = list.filter(o => orderCategory(o) === key);
-    return `
-      <div class="order-group" style="margin-top:16px">
-        <div class="head"><h3>${title} <small style="color:var(--muted);font-weight:500">(${rows.length})</small></h3></div>
-        <p class="hint">${hint}</p>
-        <div id="orderList_${key}">${orderListHTML(rows)}</div>
-      </div>`;
-  }).join("");
+// ชื่อเมนูลัดหน้าแรก: ใช้ชื่อจากหลังบ้านถ้ามี ไม่มีก็ใช้ชื่อเดิม
+function quickLabel(key, fallback) {
+  const q = (CONFIG.quickMenu || {})[key];
+  return (q && q.label) || fallback;
 }
 
-function orderListHTML(list) {
-  if (!list.length) return `<div class="empty">📭 ยังไม่มีรายการ</div>`;
-  const label = { new: "รอตรวจ", confirmed: "ยืนยันแล้ว", done: "สมัครแล้ว", rejected: "ปฏิเสธ" };
-  return list.map(o => (o.shipping && o.shipping.port) ? portOrderHTML(o) : `
-    <div class="order">
-      <div class="top2">
-        <div>
-          <b>#${esc(o.orderNo || o.id)}</b> · ${esc(pkgName(o))}
-          <div class="meta">SIM ${esc(o.phone)}${o.serial ? ` · ซีเรียล ${esc(o.serial)}` : ""} · ${fmt(o.amount)}</div>
-          <div class="meta">${dayOf(o).toLocaleString("th-TH")}</div>
-          ${o.shipping && o.shipping.carrier && !o.shipping.confirmImg ? `<div class="meta">📶 เครือข่าย: ${esc(o.shipping.carrier)}</div>` : ""}
-          ${o.shipping && o.shipping.confirmImg ? `
-          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
-            <b>📶 ต่อแพ็กเกจเดือนที่ 2</b> · ซิม ${esc(o.shipping.carrier || "-")} · เบอร์ ${esc(o.shipping.phone || o.phone || "-")}<br>
-            <a href="${esc(o.shipping.confirmImg)}" target="_blank" rel="noopener" style="color:#0b5ed7;font-weight:700">🖼️ เปิดรูปยืนยันเบอร์</a>
-          </div>` : ""}
-          ${o.shipping && o.shipping.name ? `
-          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
-            <b>📦 ส่งถึง:</b> ${esc(o.shipping.name)} · ${esc(o.shipping.phone)}<br>
-            ${esc([o.shipping.addr1, o.shipping.road, o.shipping.sub && "ต." + o.shipping.sub, o.shipping.dist && "อ." + o.shipping.dist, o.shipping.prov, o.shipping.zip].filter(Boolean).join(" "))}
-            ${o.shipping.note ? `<br><span style="color:#64748b">หมายเหตุ: ${esc(o.shipping.note)}</span>` : ""}
-          </div>` : ""}
-        </div>
-        <span class="pill ${esc(o.status)}">${esc(label[o.status] || o.status || "-")}</span>
-      </div>
-      <div class="btns">
-        <button class="primary" onclick="setOrder('${esc(o.id)}','confirmed')">ยืนยันแพ็กเกจ</button>
-        <button class="ok" onclick="setOrder('${esc(o.id)}','done')">สมัครแล้ว</button>
-        <button class="danger" onclick="setOrder('${esc(o.id)}','rejected')">ปฏิเสธ</button>
-      </div>
-      <div class="btns" style="margin-top:6px">
-        ${o.lineUserId
-          ? `<button class="ghost" onclick="sendSteps('${esc(o.id)}')">📋 ส่งขั้นตอนหลังชำระเงิน</button>
-             <button class="ghost" onclick="messageCustomer('${esc(o.id)}')">💬 พิมพ์ข้อความเอง</button>`
-          : `<span class="meta">ลูกค้าไม่ได้เปิดจากแอป LINE จึงส่งข้อความไม่ได้ ติดต่อทางเบอร์โทรแทน</span>`}
-      </div>
-    </div>`).join("");
+// ไอคอนเมนูสมัครเน็ต: ใช้รูปจากหลังบ้านถ้ามี ไม่มีก็ใช้อีโมจิเดิม
+function menuIconHtml(key, fallback) {
+  const url = (CONFIG.menuIcons || {})[key];
+  return url ? `<img src="${url}" alt="">` : fallback;
 }
 
-// ข้อความขั้นตอนหลังชำระเงิน (แก้ได้ในหน้าตั้งค่า > ข้อความแจ้งลูกค้า)
-const STEPS_TEMPLATE = [
-  "✅ ได้รับข้อมูลเรียบร้อยแล้ว",
-  "หมายเลขคำสั่งซื้อ: {orderNo}",
-  "แพ็กเกจ: {pkgName}",
-  "เบอร์โทรศัพท์: {simPhone}",
-  "",
-  "⏳ รอดำเนินการ สักครู่นะครับ",
-  "",
-  "‼️ เปลี่ยนเป็นใช้เมนูภาษาไทย",
-  "- TRUE 🔴 กด 9304 โทรออก กด 1",
-  "- DTAC 🔵 กด 1007 โทรออก กด 1",
-  "",
-  "‼️ นำซิม ✅ ใส่ไว้ในโทรศัพท์",
-  "⏳ รอทำตามขั้นตอนที่แอดมินแจ้ง",
-  "‼️ เมื่อได้รับสถานะ 🟢 สีเขียว อ่าน ✅ รายละเอียดโปรให้ครบก่อนใช้งาน",
-  "",
-  "‼️ ดำเนินการให้ตามคิวที่ส่งเข้ามา ‼️",
-  "เวลาทำการ 09.00 น. ถึง 21.00 น.",
-  "✅ ทุกคนจะได้รับโปรหากทำตามขั้นตอน",
-  "ตอบกลับตามข้อความที่ส่งให้เท่านั้น",
-  "❌ ส่งในแชท = ไม่ได้ทำรายการ ❌",
-  "📌 ขอความร่วมมือด้วยครับ"
-].join("\n");
-
-function fillTemplate(tpl, o) {
-  return String(tpl || "")
-    .replaceAll("{orderNo}", o.orderNo || o.id || "")
-    .replaceAll("{pkgName}", pkgName(o))
-    .replaceAll("{simPhone}", o.phone || "");
+function carrierLogoBox(key) {
+  const url = (CONFIG.carrierLogos || {})[key];
+  return url
+    ? `<img class="sim-logo" src="${url}" alt="${key}">`
+    : `<span class="sim-logo-empty">📶</span>`;
 }
 
-async function sendSteps(id) {
-  const o = orders.find(x => x.id === id);
-  if (!o) return;
-  const text = fillTemplate(settings.messages?.steps ?? STEPS_TEMPLATE, o);
-  if (!confirm("ส่งขั้นตอนหลังชำระเงินให้ลูกค้าคนนี้ทาง LINE?")) return;
+function startRegister() {
+  state.regCarrier = null;
+  state.regStep = 1;
+  state.regSerial = "";
+  go("sim-carrier");
+}
+
+function pickCarrier(key) {
+  state.regCarrier = key;
+  state.regStep = "guide";
+  state.regSerial = "";
+  go("sim-register");
+}
+
+function showRegErr(msg) {
+  const err = document.getElementById("regErr");
+  if (!err) return;
+  err.textContent = msg;
+  err.style.display = "block";
+}
+
+// เปิดปุ่มลงทะเบียนเมื่อลูกค้ายอมรับเงื่อนไขเท่านั้น
+function regAcceptChange(on) {
+  const go = document.getElementById("regGo");
+  if (go) go.classList.toggle("is-disabled", !on);
+}
+
+function regNext() {
+  const serial = (document.getElementById("regSerial").value || "").replace(/\s/g, "");
+  if (!/^\d{10,25}$/.test(serial)) { showRegErr("หมายเลข Serial ไม่ถูกต้อง (ตัวเลข 10-25 หลัก)"); return; }
+  state.regSerial = serial;
+  state.regStep = 2;
+  render();
+}
+
+function regBackStep() {
+  state.regStep = 1;
+  render();
+}
+
+function regGoForm() {
+  state.regStep = 1;
+  state.regSerial = "";
+  render();
+}
+
+async function regSubmit() {
+  const phone = (document.getElementById("regPhone").value || "").replace(/[-\s]/g, "").trim();
+  if (phone && !/^0\d{8,9}$/.test(phone)) { showRegErr("เบอร์มือถือไม่ถูกต้อง"); return; }
+  const btn = document.getElementById("regSubmit");
+  btn.disabled = true;
+  btn.textContent = "กำลังบันทึก...";
   try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/message", { method: "POST", json: { text } });
-    toast("ส่งขั้นตอนให้ลูกค้าแล้ว");
+    const r = await postJSON(CONFIG.BACKEND_ENDPOINT, {
+      serial: state.regSerial, phone,
+      package: carrierLabel(state.regCarrier), amount: 0, time: new Date().toISOString()
+    });
+    if (!r || !r.ok) throw new Error("save failed");
+    state.regStep = 1;
+    state.regSerial = "";
+    history_ = ["home"];
+    clearSavedState();
+    render(screens.result(true, "บันทึกการลงทะเบียนซิมเรียบร้อยแล้ว ร้านจะตรวจสอบและติดต่อกลับ"));
   } catch (e) {
-    toast("ส่งไม่สำเร็จ: " + e.message, false);
+    btn.disabled = false;
+    btn.textContent = "✅ บันทึกการลงทะเบียน";
+    showRegErr("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
   }
 }
 
-async function messageCustomer(id) {
-  const text = prompt("พิมพ์ข้อความที่จะส่งให้ลูกค้า (เช่น แจ้งปัญหาแพ็กเกจ หรือขอข้อมูลเพิ่ม)");
-  if (!text || !text.trim()) return;
+// แปลงรูปสลิปเป็น JPEG ขนาดไม่เกิน 1600 px ก่อนส่ง (รองรับรูปจากมือถือทุกรุ่น และแก้การหมุนรูปตาม EXIF)
+// ถ้าแปลงไม่ได้ ใช้ไฟล์เดิม
+async function normalizeSlipImage(file) {
   try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/message", { method: "POST", json: { text } });
-    toast("ส่งข้อความให้ลูกค้าแล้ว");
+    const bmp = await createImageBitmap(file);
+    const max = 1600;
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(bmp, 0, 0, w, h);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.92));
+    return blob ? new File([blob], "slip.jpg", { type: "image/jpeg" }) : file;
   } catch (e) {
-    toast("ส่งไม่สำเร็จ: " + e.message, false);
+    return file;
   }
 }
 
-async function setOrder(id, status) {
+async function verifySlip(file) {
+  if (!CONFIG.SLIP_VERIFY_ENDPOINT) return { ok: true };
+  const img = await normalizeSlipImage(file);
+  const fd = new FormData();
+  fd.append("slip", img, img.name || "slip.jpg");
+  fd.append("packageId", state.pkg ? state.pkg.id : "");
+  // ไม่ให้รอนานเกินไป: เกิน 30 วินาทีให้แจ้งลูกค้าลองใหม่
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
   try {
-    await api("/admin/orders/" + encodeURIComponent(id), { method: "POST", json: { status } });
-    const o = orders.find(x => x.id === id);
-    if (o) o.status = status;
-    render();
-    toast("อัปเดตสถานะแล้ว");
+    const r = await fetch(CONFIG.SLIP_VERIFY_ENDPOINT, { method: "POST", body: fd, signal: ctrl.signal });
+    return await r.json();
   } catch (e) {
-    toast("อัปเดตสถานะไม่สำเร็จ", false);
+    return { ok: false, reason: "ตรวจสอบสลิปใช้เวลานานเกินไป กรุณากดยืนยันการชำระเงินใหม่อีกครั้ง" };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 /* ==========================================================
-   การตั้งค่า (ช่องทาง คู่มือ รูปคู่มือ ข้อความ)
+   หน้าจอ
    ========================================================== */
-function viewSettings() {
-  const ph = settings.photos;
-  const slots = [
-    ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"],
-    ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม"]
-  ];
-  const slipOn = settings.SLIP_CHECK !== false;
-  return `
-    <div class="card">
-      <h3>👤 แอดมินทาง LINE</h3>
-      <p class="hint">ใส่ LINE userId ของแอดมิน (คั่นด้วยคอมมาถ้ามีหลายคน) แอดมินที่อยู่ในรายการนี้เท่านั้นที่พิมพ์ <b>ยอด</b> / <b>รายการ</b> ในแชท LINE OA และกดอัปเดตสถานะได้<br>
-      ยังไม่รู้ userId? ให้ทักบัญชีทางการหนึ่งครั้ง ระบบจะตอบ userId กลับมา (ระบบจะหยุดตอบเมื่อมีการตั้งค่าแล้ว)</p>
-      <label>LINE userId ของแอดมิน<input value="${esc(settings.adminLineIds || "")}" placeholder="U1234abcd..." oninput="settings.adminLineIds=this.value;markDirty()"></label>
-    </div>
+// กันอักขระพิเศษทำหน้าเว็บพัง เมื่อใส่ค่าที่ลูกค้ากรอกลงในช่องกรอก
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
-    <div class="card">
-      <h3>🛠️ อัปเดตฐานข้อมูล</h3>
-      <p class="hint">กดครั้งเดียวเพื่อเปิดใช้ฟังก์ชันส่งข้อความหาลูกค้าทาง LINE ถ้ากดซ้ำก็ไม่เป็นไร ระบบจะแจ้งว่าอัปเดตแล้ว</p>
-      <button class="ghost" onclick="runMigrate()">อัปเดตฐานข้อมูล</button>
-    </div>
+const screens = {
+  home() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        ${bannerHtml()}
 
-    <div class="card">
-      <h3>🧪 โหมดตรวจสอบสลิป</h3>
-      <p class="hint"><b>เปิด</b> = ลูกค้าต้องแนบสลิปที่ระบบตรวจผ่านก่อนจึงส่งคำสั่งซื้อได้ (ใช้งานจริง)<br><b>ปิด</b> = ไม่ตรวจสลิป ลูกค้าส่งคำสั่งซื้อได้โดยไม่ต้องจ่ายจริง ใช้เฉพาะตอนทดสอบระบบ และต้องเปิดกลับทุกครั้งหลังทดสอบเสร็จ</p>
-      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${slipOn ? "checked" : ""} onchange="setSlipCheck(this.checked)"> ตรวจสอบสลิปอัตโนมัติ</label>
-      ${slipOn ? "" : `<p class="hint" style="color:#b91c1c;font-weight:700">⚠️ ตอนนี้ปิดการตรวจสลิปอยู่ ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง</p>`}
-    </div>
+        <div class="quick-grid">
+          <button class="qi" onclick="startRegister()">
+            <div class="qi-icon">${menuIconHtml("register", "🗂️")}</div><b>${quickLabel("register", "ลงทะเบียนซิม")}</b>
+          </button>
+          <button class="qi" onclick="go('net-carrier')">
+            <div class="qi-icon">${menuIconHtml("net", "📶")}</div><b>${quickLabel("net", "สมัครแพ็กเกจเน็ต")}</b>
+          </button>
+          <button class="qi" onclick="go('month2-carrier')">
+            <div class="qi-icon">${menuIconHtml("port", "🔄")}</div><b>${quickLabel("port", "ต่อแพ็กเกจเดือน 2")}</b>
+          </button>
+          <button class="qi" onclick="go('sim-age-carrier')">
+            <div class="qi-icon">${menuIconHtml("esim", "📱")}</div><b>${quickLabel("esim", "รับ E-Sim")}</b>
+          </button>
+        </div>
+      </div>
 
-    <div class="card">
-      <h3>📡 โลโก้เครือข่าย</h3>
-      <p class="hint">ใช้แสดงบนการ์ดเบอร์มงคล ตามเครือข่ายที่เลือกในแต่ละเบอร์<br>ขนาดที่แนะนำ: <b>400 × 160 px</b> (แนวนอน) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB</p>
-      ${CARRIERS.map(c => {
-        const url = (settings.carrierLogos || {})[c];
-        return `
-        <div class="photo" style="margin-bottom:10px">
-          <div class="t">${c}</div>
-          <div class="ph" style="aspect-ratio:5/2;max-width:200px;margin:0 auto 8px">${url ? `<img src="${esc(url)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกโลโก้ ${c}
-            <input type="file" accept="image/*" class="hidden" onchange="uploadCarrierLogo('${c}', this.files[0])">
-          </label>
-          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearCarrierLogo('${c}')">ลบโลโก้</button></div>` : ""}
-        </div>`;
-      }).join("")}
-    </div>
+      ${luckyCard()}
 
-    <div class="card">
-      <h3>🎞️ แบนเนอร์หน้าแรก</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1200 px</b> (แนวตั้ง) · JPG หรือ PNG ไม่เกิน 5 MB · สูงสุด 5 รูป · ลิงก์ไม่บังคับ</p>
-      <button class="ghost" onclick="addBanner()">+ เพิ่มแบนเนอร์</button>
-      ${(settings.banners || []).map((b, i, arr) => `
-        <div class="sample-row">
-          <div class="thumb">${b.url ? `<img src="${esc(b.url)}" alt="">` : "ยังไม่มีรูป"}</div>
-          <div class="fields">
-            <label>ลิงก์เมื่อกดแบนเนอร์ (ไม่บังคับ)<input value="${esc(b.link || "")}" oninput="setBanner(${i},'link',this.value)"></label>
-            <div class="btns-row">
-              <label style="flex-direction:row;align-items:center;gap:6px">
-                อัปโหลดรูป <input type="file" accept="image/*" style="width:auto" onchange="uploadBanner(${i},this.files[0])">
-              </label>
-              <button onclick="moveBanner(${i},-1)" ${i === 0 ? "disabled" : ""}>▲ ขึ้น</button>
-              <button onclick="moveBanner(${i},1)" ${i === arr.length - 1 ? "disabled" : ""}>▼ ลง</button>
-              <button class="danger" onclick="delBanner(${i})">ลบ</button>
+      <div class="card">
+        <div class="features">
+          <div class="feat"><div class="fi">📞</div><b>สมัครง่าย</b><span>แค่มือถือเครื่องเดียว</span></div>
+          <div class="feat"><div class="fi">🛡️</div><b>ปลอดภัย</b><span>ข้อมูลส่วนตัวเป็นความลับ</span></div>
+          <div class="feat"><div class="fi">⚡</div><b>รวดเร็ว</b><span>รับ SMS ยืนยันทันที</span></div>
+          <div class="feat"><div class="fi">🎧</div><b>ดูแลลอด</b><span>ทีมงานพร้อมช่วยเหลือ</span></div>
+        </div>
+      </div>`;
+  },
+
+  "lucky-detail"() {
+    hero.classList.add("hidden");
+    const x = state.lucky;
+    if (!x) return `<div class="card"><p>ไม่พบข้อมูลเบอร์</p></div>`;
+    const a = x.analysis ? null : analyzeLucky(x.number);
+    const price = Number(x.price) > 0 ? Number(x.price).toLocaleString("th-TH") + " บาท" : "สอบถามราคา";
+    return `
+      <div class="card lk-top">
+        <div class="lk-num">${x.number}</div>
+        <div class="lk-price">${price}</div>
+        ${x.note ? `<div class="lnote">${x.note}</div>` : ""}
+      </div>
+      ${x.analysis ? `
+      <div class="card">
+        <div class="lk-text">${x.analysis.split("\n").map(l => `<p>${l}</p>`).join("")}</div>
+      </div>` : ""}
+      ${a ? `
+      <div class="card">
+        <div class="lk-row"><span>ผลรวมตัวเลข</span><b>${a.sum} → ${a.root}</b></div>
+        <div class="lk-row"><span>เลขเด่นที่สุด</span><b>${a.top.d} (${a.top.name}) ${a.top.count} ตัว</b></div>
+        <div class="lk-row"><span>ความหมายเลขเด่น</span><b>${a.top.mean}</b></div>
+        <div class="lk-block"><h4>เหมาะกับ</h4><p>${a.fit.who}</p></div>
+        <div class="lk-block"><h4>อาชีพที่เหมาะ</h4><p>${a.fit.job}</p></div>
+        <div class="lk-block"><h4>ส่งเสริมเรื่อง</h4><p>${a.fit.boost}</p></div>
+        <div class="lk-block"><h4>เลขคู่มงคลที่พบ</h4>
+          ${a.pairs.length ? a.pairs.map(p => `<div class="lk-pair"><b>${p.pair}</b>${p.mean}</div>`).join("") : `<p>ไม่พบเลขคู่มงคลในเบอร์นี้</p>`}
+        </div>
+        ${a.warn ? `<div class="lk-warn">⚠️ ${a.warn}</div>` : ""}
+      </div>` : ""}
+      ${Number(x.price) > 0
+        ? `<button class="btn" onclick="buyLucky()">สั่งซื้อเบอร์นี้ · ${Number(x.price).toLocaleString("th-TH")} บาท</button>`
+        : `<p class="lnote" style="text-align:center;margin:0 0 10px">เบอร์นี้ให้สอบถามราคากับร้านทาง LINE</p>`}
+      <button class="btn ghost" onclick="goBack()">ย้อนกลับ</button>`;
+  },
+
+  "lucky-buy"() {
+    hero.classList.add("hidden");
+    const p = state.pkg;
+    if (!p || !String(p.id).startsWith("lucky:")) return `<div class="card"><p>ไม่พบข้อมูลเบอร์</p></div>`;
+    const sh = state.shipping || {};
+    return `
+      <div class="card">
+        <div class="info">
+          <div><span>เบอร์มงคล</span><b>${p.number}</b></div>
+          <div class="total"><span>ราคา</span><span>${Number(p.price).toLocaleString("th-TH")} บาท</span></div>
+        </div>
+        <div class="ship-sec">
+          <div class="ship-h">ผู้ส่ง</div>
+          <div class="ship-sender">ProgramThanarich · ร้านค้า</div>
+        </div>
+
+        <div class="ship-sec">
+          <div class="ship-h">ผู้รับ</div>
+          <label class="field-label" for="shipName">ชื่อ-นามสกุลผู้รับ</label>
+          <div class="input"><span class="i">👤</span>
+            <input id="shipName" placeholder="ชื่อ นามสกุล" value="${esc(sh.name || "")}">
+          </div>
+          <label class="field-label" for="luckyPhone">เบอร์โทรผู้รับ</label>
+          <div class="input"><span class="i">📞</span>
+            <input type="tel" id="luckyPhone" inputmode="numeric" maxlength="12" placeholder="081-234-5678" value="${esc(sh.phone || state.phone || "")}">
+          </div>
+        </div>
+
+        <div class="ship-sec">
+          <div class="ship-h">ที่อยู่จัดส่ง</div>
+          <label class="field-label" for="shipAddr1">บ้านเลขที่ / หมู่บ้าน / อาคาร / ห้อง</label>
+          <div class="input"><span class="i">🏠</span>
+            <input id="shipAddr1" placeholder="เช่น 99/1 หมู่ 2 คอนโด ABC ห้อง 305" value="${esc(sh.addr1 || "")}">
+          </div>
+          <label class="field-label" for="shipRoad">ถนน / ซอย (ถ้ามี)</label>
+          <div class="input"><span class="i">🛣️</span>
+            <input id="shipRoad" placeholder="เช่น ถนนสุขุมวิท ซอย 10" value="${esc(sh.road || "")}">
+          </div>
+          <div class="ship-grid">
+            <div>
+              <label class="field-label" for="shipSub">แขวง / ตำบล</label>
+              <div class="input"><input id="shipSub" value="${esc(sh.sub || "")}"></div>
+            </div>
+            <div>
+              <label class="field-label" for="shipDist">เขต / อำเภอ</label>
+              <div class="input"><input id="shipDist" value="${esc(sh.dist || "")}"></div>
+            </div>
+            <div>
+              <label class="field-label" for="shipProv">จังหวัด</label>
+              <div class="input"><input id="shipProv" value="${esc(sh.prov || "")}"></div>
+            </div>
+            <div>
+              <label class="field-label" for="shipZip">รหัสไปรษณีย์</label>
+              <div class="input"><input id="shipZip" inputmode="numeric" maxlength="5" placeholder="10110" value="${esc(sh.zip || "")}"></div>
             </div>
           </div>
-        </div>`).join("") || `<p class="hint">ยังไม่มีแบนเนอร์</p>`}
-    </div>
+          <label class="field-label" for="shipNote">หมายเหตุถึงพนักงานส่ง (ถ้ามี)</label>
+          <div class="input"><input id="shipNote" placeholder="เช่น ฝากไว้กับ รปภ." value="${esc(sh.note || "")}"></div>
+        </div>
 
-    <div class="card">
-      <h3>🧩 เมนูลัดหน้าแรก (ชื่อและไอคอน)</h3>
-      <p class="hint">ไอคอน: <b>256 × 256 px</b> (จัตุรัส) PNG พื้นหลังโปร่งใส ไม่เกิน 1 MB · แสดงบนหน้าจอประมาณ 56 px<br>พิมพ์ชื่อเมนูแล้วกดบันทึกการตั้งค่า · ถ้าไม่ตั้งชื่อ จะใช้ชื่อเดิม</p>
-      ${[["register", "ลงทะเบียนซิม"], ["net", "สมัครแพ็กเกจเน็ต"], ["port", "สมัครโปรเบอร์เดิม"], ["esim", "รับ E-Sim"]].map(([k, def]) => {
-        const q = (settings.quickMenu || {})[k] || {};
-        const url = (settings.menuIcons || {})[k];
-        return `
-        <div class="photo" style="margin-bottom:12px">
-          <label style="display:block;margin:6px 0">ชื่อเมนู (ชื่อเดิม: ${def})
-            <input value="${esc(q.label || "")}" placeholder="${def}" oninput="setQuickLabel('${k}', this.value)">
-          </label>
-          <div class="ph" style="aspect-ratio:1/1;max-width:140px;margin:8px auto">${url ? `<img src="${esc(url)}" alt="" style="object-fit:contain">` : "ยังไม่มีไอคอน"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกไอคอน
-            <input type="file" accept="image/*" class="hidden" onchange="uploadMenuIcon('${k}', this.files[0])">
-          </label>
-          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearMenuIcon('${k}')">ลบไอคอน</button></div>` : ""}
+        <div class="err" id="luckyErr"></div>
+        <button class="btn" style="margin-top:14px" onclick="luckyNext()">ไปหน้าชำระเงิน →</button>
+      </div>
+      <button class="btn ghost" onclick="goBack()">ย้อนกลับ</button>`;
+  },
+
+  // สมัครแพ็กเกจเน็ต: ให้ลูกค้าเลือกเครือข่ายก่อน แล้วค่อยเลือกเติมเงินเอง หรือกับทางร้าน
+  "net-carrier"() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <label class="carrier-title">เลือกเครือข่ายมือถือที่ต้องการสมัคร <span class="req">*</span></label>
+        <div class="carrier-list">
+          ${SIM_CARRIERS.map(c => {
+            const url = (CONFIG.carrierLogos || {})[c.key];
+            return `
+            <button class="carrier-btn" onclick="pickNetCarrier('${c.key}')" aria-label="${c.key}">
+              ${url ? `<img src="${url}" alt="${c.key}">` : `<b>${c.key}</b>`}
+            </button>`;
+          }).join("")}
+        </div>
+        <button class="btn ghost" style="margin-top:14px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  // dtac / AIS: กรอกเบอร์ลูกค้า พร้อมรูปตัวอย่างเดียวกับต่อแพ็กเกจเดือนที่ 2 ของเครือข่ายนั้น
+  "net-phone"() {
+    hero.classList.add("hidden");
+    const url = (CONFIG.month2Samples || {})[netCarrierKey()];
+    return `
+      <div class="card m2">
+        <div class="m2-sample">
+          <div class="m2-sample-h">ตัวอย่างรูปภาพ</div>
+          ${url
+            ? `<img src="${url}" alt="ตัวอย่างรูปยืนยันเบอร์">`
+            : `<div class="m2-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่างของเครือข่ายนี้ (ตั้งได้ที่หลังบ้าน)</div>`}
+        </div>
+        <label class="m2-title" for="netPhone">กรอกเบอร์โทรศัพท์ <span class="req">*</span></label>
+        <input id="netPhone" class="m2-input" type="tel" inputmode="numeric" maxlength="10" placeholder="กรอกเบอร์โทรศัพท์" value="${esc(state.phone || "")}">
+        <div class="err" id="netErr"></div>
+        <button class="btn" onclick="netPhoneNext()">เลือกแพ็กเกจเน็ต →</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  "net-menu"() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <div class="menu-list">
+          <button class="menu-item" onclick="startFlow('self')">
+            <div class="mi">${menuIconHtml("self", "💳")}</div>
+            <div class="mt"><b>${menuText("selfTitle")}</b><span>${menuText("selfDesc")}</span></div>
+            <div class="chev">›</div>
+          </button>
+          <button class="menu-item" onclick="startFlow('shop')">
+            <div class="mi">${menuIconHtml("shop", "🏪")}</div>
+            <div class="mt">
+              <b>${menuText("shopTitle")} <span class="tag green">ลด ${globalDiscountLabel()}</span></b>
+              <span>${menuText("shopDesc")}</span>
+            </div>
+            <div class="chev">›</div>
+          </button>
+        </div>
+        <button class="btn ghost" style="margin-top:12px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  "sim-form"() {
+    hero.classList.add("hidden");
+    const isShop = state.mode === "shop";
+    return `
+      <div class="card">
+
+        ${photoBlock("receivedPhoneEx", "ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน")}
+
+        <label class="field-label" for="phone">เบอร์มือถือที่ได้รับหลังลงทะเบียน</label>
+        <div class="input"><span class="i">📞</span>
+          <input type="tel" id="phone" inputmode="numeric" maxlength="10" placeholder="081-234-5678" value="${state.phone}">
+        </div>
+
+        ${photoBlock("simNumberEx", "ตัวอย่างหมายเลขซีเรียลซิม")}
+
+        <label class="field-label" for="serial">หมายเลขซีเรียลซิมที่ได้รับ</label>
+        <div class="input"><span class="i">🔢</span>
+          <input type="text" id="serial" inputmode="numeric" placeholder="กรอกตัวเลขบนซิม" value="${state.serial}">
+        </div>
+
+        <div class="how">
+          <b>วิธีใช้งาน</b>
+          <ol>
+            <li>กรอกเบอร์มือถือ</li>
+            <li>เลือกแพ็กเกจที่ต้องการ</li>
+            <li>กดปุ่ม "ยืนยันข้อมูล"</li>
+          </ol>
+        </div>
+
+        <div class="err" id="formErr"></div>
+        <button class="btn" id="simSubmit" onclick="submitSim()">ยืนยันข้อมูล →</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  "sim-carrier"() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <label class="carrier-title">เลือกเครือข่ายที่ต้องการลงทะเบียน <span class="req">*</span></label>
+        <div class="carrier-list">
+          ${SIM_CARRIERS.map(c => {
+            const url = (CONFIG.carrierLogos || {})[c.key];
+            return `
+            <button class="carrier-btn" onclick="pickCarrier('${c.key}')" aria-label="${c.label}">
+              ${url ? `<img src="${url}" alt="${c.key}">` : ""}
+            </button>`;
+          }).join("")}
+        </div>
+      </div>`;
+  },
+
+  "sim-register"() {
+    hero.classList.add("hidden");
+    const step = state.regStep || "guide";
+    const title = carrierLabel(state.regCarrier);
+    const reg = (CONFIG.carrierRegister || {})[state.regCarrier] || {};
+    if (step === "guide") {
+      return `
+        <div class="reg-plain">
+          <div class="reg-sample">
+            ${reg.sample
+              ? `<img src="${reg.sample}" alt="รูปตัวอย่างลงทะเบียนซิม">`
+              : `<div class="reg-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่าง</div>`}
+          </div>
+          <div class="reg-terms">
+            <p class="reg-terms-title">⚠️ เงื่อนไขการลงทะเบียนซิม</p>
+            <ol>
+              <li>หลังลงทะเบียนซิมเสร็จ ต้องสมัครเน็ตภายในวันที่ลงทะเบียนซิมเท่านั้น ถ้าเกิน 1 วันหลังลงทะเบียนซิม สมัครเน็ตไม่ได้ ทางร้านจะไม่รับผิดชอบทุกกรณี</li>
+              <li>ซิมใช้ในการสมัครเน็ตเท่านั้น ลูกค้าที่นำซิมไปใช้ในรูปแบบอื่นนอกเหนือจากการสมัครเน็ต ถ้าซิมถูกระงับ หรือรายชื่อของลูกค้าติดแบล็กลิสต์จาก True, DTAC, AIS และเครือข่ายอื่นๆ ทางร้านจะไม่รับผิดชอบทุกกรณี</li>
+            </ol>
+            <label class="reg-accept"><input type="checkbox" id="regAccept" onchange="regAcceptChange(this.checked)"> ข้าพเจ้าได้อ่านและยอมรับเงื่อนไขข้างต้นแล้ว</label>
+            <p class="reg-terms-note">หากไม่ยอมรับเงื่อนไข ทางร้านขอสงวนสิทธิ์ในการลงทะเบียนซิม และไม่สามารถกดปุ่มลงทะเบียนได้</p>
+          </div>
+          ${reg.url
+            ? `<a id="regGo" class="reg-btn green reg-link is-disabled" href="${reg.url}" target="_blank" rel="noopener">ลงทะเบียนซิม</a>`
+            : `<button class="reg-btn" disabled>ยังไม่ได้ตั้งลิงก์ลงทะเบียน</button>`}
         </div>`;
-      }).join("")}
-    </div>
-
-    <div class="card">
-      <h3>🖼️ ไอคอนเมนูสมัครเน็ต</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>256 × 256 px</b> (จัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส · ไม่เกิน 1 MB<br>ถ้าไม่ตั้งรูป จะแสดงไอคอนเดิม</p>
-      ${[["self", "💳 เติมเงินสมัครเน็ตเอง"], ["shop", "🏪 สมัครเน็ตกับทางร้าน"]].map(([k, label]) => {
-        const url = (settings.menuIcons || {})[k];
-        return `
-        <div class="photo" style="margin-bottom:10px">
-          <div class="t">${label}</div>
-          <div class="ph" style="aspect-ratio:1/1;max-width:140px;margin:0 auto 8px">${url ? `<img src="${esc(url)}" alt="" style="object-fit:contain">` : "ยังไม่มีไอคอน"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกไอคอน
-            <input type="file" accept="image/*" class="hidden" onchange="uploadMenuIcon('${k}', this.files[0])">
-          </label>
-          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearMenuIcon('${k}')">ลบไอคอน</button></div>` : ""}
+    }
+    if (step === 1) {
+      return `
+        <div class="reg-dark">
+          <div class="reg-logo">${carrierLogoBox(state.regCarrier)}</div>
+          <div class="reg-title">📲 ${title}</div>
+          <div class="reg-sub">กรอกเลข Serial ที่พิมพ์อยู่บนซิม</div>
+          <label class="reg-label" for="regSerial">เลข Serial ซิม (8966...)</label>
+          <input id="regSerial" class="reg-inp mono" inputmode="numeric" placeholder="896604..." value="${state.regSerial || ""}">
+          <div class="reg-err" id="regErr"></div>
+          <button class="reg-btn" onclick="regNext()">ถัดไป →</button>
         </div>`;
-      }).join("")}
-    </div>
+    }
+    return `
+      <div class="reg-dark">
+        <div class="reg-logo">${carrierLogoBox(state.regCarrier)}</div>
+        <div class="reg-title">📲 ${title}</div>
+        <div class="reg-found">
+          <div class="reg-found-h">📦 รับ Serial แล้ว — กรอกเบอร์ที่ได้รับ</div>
+          <div class="reg-kv"><span>Serial</span><b>${state.regSerial}</b></div>
+        </div>
+        <label class="reg-label" for="regPhone">เบอร์โทรที่ได้รับ (ถ้ามี)</label>
+        <input id="regPhone" class="reg-inp" type="tel" inputmode="numeric" maxlength="12" placeholder="0812345678">
+        <div class="reg-err" id="regErr"></div>
+        <button class="reg-btn green" id="regSubmit" onclick="regSubmit()">✅ บันทึกการลงทะเบียน</button>
+        <button class="reg-btn ghost" onclick="regBackStep()">แก้ไข Serial</button>
+      </div>`;
+  },
 
-    <div class="card">
-      <h3>🔗 ลิงก์และรูปตัวอย่างลงทะเบียนซิม</h3>
-      <p class="hint">หน้าเลือกเครือข่ายของลูกค้า: เมื่อกดเครือข่ายจะแสดงรูปตัวอย่างและปุ่มลงทะเบียน ปุ่มจะเปิดลิงก์ที่ตั้งไว้ในแท็บนี้<br>ขนาดที่แนะนำรูปตัวอย่าง: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
-      ${CARRIERS.map(c => {
-        const reg = (settings.carrierRegister || {})[c] || {};
-        return `
-        <div class="photo" style="margin-bottom:12px">
-          <div class="t">${c}</div>
-          <label style="display:block;margin:6px 0">ลิงก์ลงทะเบียนของ ${c}
-            <input value="${esc(reg.url || "")}" placeholder="https://..." oninput="setCarrierReg('${c}','url',this.value)">
-          </label>
-          <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${reg.sample ? `<img src="${esc(reg.sample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกรูปตัวอย่างลงทะเบียน ${c}
-            <input type="file" accept="image/*" class="hidden" onchange="uploadCarrierSample('${c}', this.files[0])">
-          </label>
-          ${reg.sample ? `<div style="margin-top:6px"><button class="danger" onclick="clearCarrierSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
-        </div>`;
-      }).join("")}
-    </div>
+  // ต่อแพ็กเกจเดือนที่ 2: เลือกเครือข่ายก่อน แล้วค่อยกรอกข้อมูล
+  "month2-carrier"() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <label class="carrier-title">เลือกเครือข่ายมือถือที่ต้องการต่อ <span class="req">*</span></label>
+        <div class="carrier-list">
+          ${SIM_CARRIERS.map(c => {
+            const url = (CONFIG.carrierLogos || {})[c.key];
+            const on = (CONFIG.month2Carriers || {})[c.key] !== false;
+            return `
+            <button class="carrier-btn ${on ? "" : "is-off"}" ${on ? `onclick="m2PickCarrier('${c.key}')"` : "disabled"} aria-label="${c.key}">
+              ${url ? `<img src="${url}" alt="${c.key}">` : `<b>${c.key}</b>`}
+            </button>`;
+          }).join("")}
+        </div>
+        <button class="btn ghost" style="margin-top:14px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
 
-    <div class="card">
-      <h3>🖼️ รูปตัวอย่างต่อแพ็กเกจเดือนที่ 2</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
-      <p class="hint">แยกรูปตามเครือข่าย ลูกค้าจะเห็นรูปของเครือข่ายที่เลือก</p>
-      ${CARRIERS.map(c => {
-        const url = (settings.month2Samples || {})[c] || "";
-        return `
-        <div class="photo" style="margin-bottom:12px">
-          <div class="t">${c === "truemove H" ? "True" : c}</div>
-          <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${url ? `<img src="${esc(url)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกรูปตัวอย่างเดือนที่ 2 ของ ${c === "truemove H" ? "True" : c}
-            <input type="file" accept="image/*" class="hidden" onchange="uploadMonth2Sample('${c}', this.files[0])">
-          </label>
-          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearMonth2Sample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
-        </div>`;
-      }).join("")}
-    </div>
+  // เดือนที่ 2: กรอกเบอร์ อัปโหลดรูปยืนยัน ติ๊กยืนยัน แล้วเลือกแพ็กเกจ
+  "month2"() {
+    hero.classList.add("hidden");
+    const m = m2Init();
+    return `
+      <div class="card m2">
+        <div class="m2-step">ขั้นตอนที่ 1</div>
+        <label class="m2-title" for="m2Phone">กรอกเบอร์โทรศัพท์ <span class="req">*</span></label>
+        <input id="m2Phone" class="m2-input" type="tel" inputmode="numeric" maxlength="10" placeholder="กรอกเบอร์โทรศัพท์" value="${esc(m.phone)}" oninput="m2Set('phone', this.value)">
 
-    <div class="card">
-      <h3>🔄 เมนูโปรเน็ตเบอร์เดิม (ตรวจอายุซิม)</h3>
-      <p class="hint">เปิด/ปิดเครือข่ายและแพ็กเกจของเมนูนี้ ตั้งที่แท็บแพ็กเกจ → "แพ็กเกจโปรเบอร์เดิม"</p>
-      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
-      ${CARRIERS.map(c => {
-        const url = (settings.simAgeSamples || {})[c] || "";
-        const name = c === "truemove H" ? "True" : c;
-        return `
-        <div class="photo" style="margin-bottom:12px">
-          <div class="t">${name}</div>
-          <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${url ? `<img src="${esc(url)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกรูปตัวอย่างแสดงอายุซิมของ ${name}
-            <input type="file" accept="image/*" class="hidden" onchange="uploadSimAgeSample('${c}', this.files[0])">
-          </label>
-          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearSimAgeSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
-        </div>`;
-      }).join("")}
-    </div>
+        <div class="m2-step">ขั้นตอนที่ 2</div>
+        <div class="m2-title">อัปโหลดรูปข้อความยืนยันเบอร์ <span class="req">*</span></div>
+        <label class="m2-upload" for="m2File">${m.confirmUrl ? "✅ อัปโหลดรูปแล้ว (กดเพื่อเปลี่ยน)" : m.uploading ? "กำลังอัปโหลด..." : "🖼️ อัปโหลดรูปภาพ"}</label>
+        <input type="file" id="m2File" accept="image/*" class="sr-only" onchange="m2Upload(this)">
 
-    <div class="card">
-      <h3>🔢 รูปตัวอย่าง OTP (เมนูโปรเน็ตเบอร์เดิม)</h3>
-      <p class="hint">รูปนี้แสดงให้ลูกค้าเห็นตอนรอกรอกเลข OTP ที่ได้รับจากเบอร์ของตัวเอง</p>
-      <div class="photo">
-        <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${settings.portOtpSample ? `<img src="${esc(settings.portOtpSample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง OTP"}</div>
-        <label style="cursor:pointer;color:var(--blue);font-weight:700">
-          📁 เลือกรูปตัวอย่าง OTP
-          <input type="file" accept="image/*" class="hidden" onchange="uploadPortOtpSample(this.files[0])">
+        <div class="m2-sample">
+          <div class="m2-sample-h">ตัวอย่างรูปภาพ</div>
+          ${((CONFIG.month2Samples || {})[m.carrier])
+            ? `<img src="${(CONFIG.month2Samples || {})[m.carrier]}" alt="ตัวอย่างรูปยืนยันเบอร์">`
+            : `<div class="m2-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่างของเครือข่ายนี้ (ตั้งได้ที่หลังบ้าน)</div>`}
+        </div>
+
+        <label class="m2-agree"><input type="checkbox" id="m2Agree" ${m.agree ? "checked" : ""} onchange="m2Set('agree', this.checked)"> ยืนยันความถูกต้อง</label>
+        <div class="err" id="m2Err" style="${m.err ? "display:block" : ""}">${esc(m.err || "")}</div>
+        <button class="btn m2-btn ${m2Ready() ? "" : "is-disabled"}" id="m2Btn" onclick="m2Next()">เลือกแพ็กเกจเน็ต →</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  // เมนูโปรเน็ตเบอร์เดิม: เลือกเครือข่ายก่อน (เปิด/ปิดรายเครือข่ายได้ที่หลังบ้าน)
+  "sim-age-carrier"() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <label class="carrier-title">เลือกเครือข่ายมือถือที่ต้องการตรวจสอบอายุซิม <span class="req">*</span></label>
+        <div class="carrier-list">
+          ${SIM_CARRIERS.map(c => {
+            const url = (CONFIG.carrierLogos || {})[c.key];
+            const on = (CONFIG.simAgeCarriers || {})[c.key] !== false;
+            return `
+            <button class="carrier-btn ${on ? "" : "is-off"}" ${on ? `onclick="saPickCarrier('${c.key}')"` : "disabled"} aria-label="${c.key}">
+              ${url ? `<img src="${url}" alt="${c.key}">` : `<b>${c.key}</b>`}
+            </button>`;
+          }).join("")}
+        </div>
+        <button class="btn ghost" style="margin-top:14px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  // กรอกเบอร์ อัปโหลดรูปแสดงอายุซิม ติ๊กยืนยัน แล้วเลือกแพ็กเกจ
+  "sim-age"() {
+    hero.classList.add("hidden");
+    const m = saInit();
+    return `
+      <div class="card m2">
+        <div class="m2-step">ขั้นตอนที่ 1</div>
+        <label class="m2-title" for="saPhone">กรอกเบอร์โทรศัพท์ <span class="req">*</span></label>
+        <input id="saPhone" class="m2-input" type="tel" inputmode="numeric" maxlength="10" placeholder="กรอกเบอร์โทรศัพท์" value="${esc(m.phone)}" oninput="saSet('phone', this.value)">
+
+        <div class="m2-step">ขั้นตอนที่ 2</div>
+        <div class="m2-title">อัปโหลดรูปแสดงอายุซิม <span class="req">*</span></div>
+        <label class="m2-upload" for="saFile">${m.confirmUrl ? "✅ อัปโหลดรูปแล้ว (กดเพื่อเปลี่ยน)" : m.uploading ? "กำลังอัปโหลด..." : "🖼️ อัปโหลดรูปภาพ"}</label>
+        <input type="file" id="saFile" accept="image/*" class="sr-only" onchange="saUpload(this)">
+
+        <div class="m2-sample">
+          <div class="m2-sample-h">ตัวอย่างรูปภาพ</div>
+          ${((CONFIG.simAgeSamples || {})[m.carrier])
+            ? `<img src="${(CONFIG.simAgeSamples || {})[m.carrier]}" alt="ตัวอย่างรูปแสดงอายุซิม">`
+            : `<div class="m2-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่างของเครือข่ายนี้ (ตั้งได้ที่หลังบ้าน)</div>`}
+        </div>
+
+        <label class="m2-agree"><input type="checkbox" id="saSim1y" ${m.sim1y ? "checked" : ""} onchange="saSet('sim1y', this.checked)"> ยืนยันอายุซิมเกิน 1 ปีแล้ว</label>
+        <label class="m2-agree"><input type="checkbox" id="saAgree" ${m.agree ? "checked" : ""} onchange="saSet('agree', this.checked)"> ยืนยันความถูกต้อง</label>
+        <div class="err" id="saErr" style="${m.err ? "display:block" : ""}">${esc(m.err || "")}</div>
+        <button class="btn m2-btn ${saReady() ? "" : "is-disabled"}" id="saBtn" onclick="saNext()">รอยืนยัน OTP เพื่อตรวจสอบเน็ต</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  // เมนูโปรเน็ตเบอร์เดิม: รอ OTP จากร้าน → ร้านเลือกแพ็กเกจ → ลูกค้าชำระหรือยกเลิก
+  "port-wait"() {
+    hero.classList.add("hidden");
+    const m = saInit();
+    portEnsurePolling();
+    // ปุ่มยกเลิกแสดงเฉพาะตอนที่ร้านส่งแพ็กเกจให้ลูกค้าแล้ว (port_ready)
+    const cancelBtn = "";
+    if (m.status === "port_cancelled") {
+      return `<div class="card"><h3 style="text-align:center">ยกเลิกการสมัครโปรเบอร์เดิมแล้ว</h3>
+        <button class="btn" onclick="resetTo('home')">กลับหน้าหลัก</button></div>`;
+    }
+    if (m.status === "port_ready") {
+      const cancelBtn = `<button class="btn ghost" style="margin-top:10px" onclick="portCancelRequest()">ยกเลิกการสมัครโปรเบอร์เดิม</button>`;
+      const ids = m.portPackageIds || [];
+      const list = PACKAGES.filter(p => p.simAge && ids.includes(p.id));
+      return `<div class="card">
+        <h3 style="text-align:center">แพ็กเกจที่ใช้ได้กับเบอร์ ${esc(m.phone)}</h3>
+        <p class="hint" style="text-align:center">เลือกแพ็กเกจที่ต้องการแล้วกดชำระเงินได้เลย ถ้าไม่โอเคกดยกเลิกการสมัครได้</p>
+        ${list.length ? planCardsHtml(list) : `<p class="hint" style="text-align:center;padding:20px 0">ไม่พบแพ็กเกจ กรุณาติดต่อร้าน</p>`}
+        ${cancelBtn}
+      </div>`;
+    }
+    if (m.status === "port_verified") {
+      return `<div class="card">
+        <h3 style="text-align:center">OTP ถูกต้องแล้ว</h3>
+        <p class="hint" style="text-align:center">กรุณารอทางร้านเลือกแพ็กเกจที่เบอร์ ${esc(m.phone)} สามารถใช้ได้ ระบบจะแสดงแพ็กเกจในหน้านี้อัตโนมัติ</p>
+        ${cancelBtn}
+      </div>`;
+    }
+    if (m.status === "port_otp") {
+      return `<div class="card">
+        <h3 style="text-align:center">ส่ง OTP ให้ทางร้านแล้ว</h3>
+        <p class="hint" style="text-align:center">กรุณารอทางร้านตรวจสอบ OTP ของเบอร์ ${esc(m.phone)} สถานะจะขึ้นในหน้านี้อัตโนมัติ</p>
+        ${cancelBtn}
+      </div>`;
+    }
+    const retryNote = m.status === "port_need_otp"
+      ? `<div class="err" style="display:block">OTP ไม่ถูกต้อง กรุณากรอก OTP ใหม่ที่ส่งเข้าเบอร์ของคุณ</div>`
+      : "";
+    const sample0 = CONFIG.portOtpSample;
+    if (!m.otpAt) m.otpAt = new Date().toISOString();
+    portEnsureCountdown();
+    const timerLine = `<div id="portTimer" style="text-align:center;font-weight:700;color:#b45309;margin:8px 0">${portTimerText()}</div>`;
+    return `<div class="card m2">
+      <div class="m2-step">ขั้นตอนที่ 1</div>
+      <div class="m2-title">รอรับ OTP ที่ส่งเข้าเบอร์ ${esc(m.phone)}</div>
+      <p class="hint">ทางร้านจะตรวจสอบเบอร์และส่ง OTP เข้าเบอร์ของคุณ เมื่อได้รับ OTP แล้วให้กรอกเลขด้านล่าง</p>
+      <div class="m2-step">ขั้นตอนที่ 2</div>
+      <label class="m2-title" for="portOtp">กรอกเลข OTP <span class="req">*</span></label>
+      <input id="portOtp" class="m2-input" type="tel" inputmode="numeric" maxlength="8" placeholder="กรอกเลข OTP">
+      <div class="m2-sample">
+        <div class="m2-sample-h">ตัวอย่างรูป OTP</div>
+        ${sample0 ? `<img src="${sample0}" alt="ตัวอย่างรูป OTP">` : `<div class="m2-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่าง OTP (ตั้งได้ที่หลังบ้าน)</div>`}
+      </div>
+      ${timerLine}
+      ${retryNote}
+      <div class="err" style="${m.err ? "display:block" : ""}">${esc(m.err || "")}</div>
+      <button class="btn m2-btn" onclick="portSendOtp()">ส่ง OTP ให้ทางร้าน</button>
+      ${cancelBtn}
+    </div>`;
+  },
+
+  "port-wait-old"() {
+    hero.classList.add("hidden");
+    const m = saInit();
+    portEnsurePolling();
+    const cancelBtn = `<button class="btn ghost" style="margin-top:10px" onclick="portCancelRequest()">ยกเลิกการสมัครโปรเบอร์เดิม</button>`;
+    if (m.status === "port_cancelled") {
+      return `<div class="card"><h3 style="text-align:center">ยกเลิกการสมัครโปรเบอร์เดิมแล้ว</h3>
+        <button class="btn" onclick="resetTo('home')">กลับหน้าหลัก</button></div>`;
+    }
+    if (m.status === "port_ready") {
+      const list = PACKAGES.filter(p => p.simAge && p.id === m.portPackageId);
+      return `<div class="card">
+        <h3 style="text-align:center">แพ็กเกจที่ใช้ได้กับเบอร์ ${esc(m.phone)}</h3>
+        <p class="hint" style="text-align:center">ถ้าโอเคกับแพ็กเกจนี้ กดเลือกเพื่อชำระเงินได้เลย ถ้าไม่โอเคกดยกเลิกการสมัครได้</p>
+        ${list.length ? planCardsHtml(list) : `<p class="hint" style="text-align:center;padding:20px 0">ไม่พบแพ็กเกจ กรุณาติดต่อร้าน</p>`}
+        ${cancelBtn}
+      </div>`;
+    }
+    if (m.status === "port_otp") {
+      return `<div class="card">
+        <h3 style="text-align:center">ส่ง OTP ให้ทางร้านแล้ว</h3>
+        <p class="hint" style="text-align:center">กรุณารอทางร้านตรวจสอบเบอร์ ${esc(m.phone)} และเลือกแพ็กเกจที่ใช้ได้ สถานะจะขึ้นในหน้านี้อัตโนมัติ</p>
+        ${cancelBtn}
+      </div>`;
+    }
+    const sample = CONFIG.portOtpSample;
+    return `<div class="card m2">
+      <div class="m2-step">ขั้นตอนที่ 1</div>
+      <div class="m2-title">รอรับ OTP ที่ส่งเข้าเบอร์ ${esc(m.phone)}</div>
+      <p class="hint">ทางร้านจะตรวจสอบเบอร์และส่ง OTP เข้าเบอร์ของคุณ เมื่อได้รับ OTP แล้วให้กรอกเลขด้านล่าง</p>
+      <div class="m2-step">ขั้นตอนที่ 2</div>
+      <label class="m2-title" for="portOtp">กรอกเลข OTP <span class="req">*</span></label>
+      <input id="portOtp" class="m2-input" type="tel" inputmode="numeric" maxlength="8" placeholder="กรอกเลข OTP">
+      <div class="m2-sample">
+        <div class="m2-sample-h">ตัวอย่างรูป OTP</div>
+        ${sample ? `<img src="${sample}" alt="ตัวอย่างรูป OTP">` : `<div class="m2-sample-empty">ยังไม่ได้ตั้งรูปตัวอย่าง OTP (ตั้งได้ที่หลังบ้าน)</div>`}
+      </div>
+      <div class="err" style="${m.err ? "display:block" : ""}">${esc(m.err || "")}</div>
+      <button class="btn m2-btn" onclick="portSendOtp()">ส่ง OTP ให้ทางร้าน</button>
+      ${cancelBtn}
+    </div>`;
+  },
+
+  // เมนูโปรเน็ตเบอร์เดิม: แสดงเฉพาะแพ็กเกจที่ตั้งไว้ในกลุ่มโปรเบอร์เดิม ของเครือข่ายที่เลือก
+  "sim-age-packages"() {
+    hero.classList.add("hidden");
+    const car = state.sa && state.sa.carrier ? state.sa.carrier : "truemove H";
+    const list = PACKAGES.filter(p => p.simAge && carrierOf(p) === car);
+    return `
+      <div class="card">
+        ${list.length
+          ? planCardsHtml(list)
+          : `<p class="hint" style="text-align:center;padding:20px 0">ยังไม่มีแพ็กเกจในขณะนี้ กรุณาติดต่อร้าน</p>`}
+        <button class="btn ghost" style="margin-top:12px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  "month2-packages"() {
+    hero.classList.add("hidden");
+    const list = PACKAGES.filter(p => p.month2 && carrierOf(p) === (state.m2 && state.m2.carrier ? state.m2.carrier : "truemove H"));
+    return `
+      <div class="card">
+        ${list.length
+          ? planCardsHtml(list)
+          : `<p class="hint" style="text-align:center;padding:20px 0">ยังไม่มีแพ็กเกจเดือนที่ 2 ในขณะนี้ กรุณาติดต่อร้าน</p>`}
+        <button class="btn ghost" style="margin-top:12px" onclick="goBack()">ย้อนกลับ</button>
+      </div>`;
+  },
+
+  packages() {
+    hero.classList.add("hidden");
+    return `
+      <div class="card">
+        <div class="pk-head">
+          <div class="pk-title">
+            <span class="pk-gift">🎁</span>
+            <div>
+              <h2>แพ็กเกจที่ให้บริการ</h2>
+              <div class="pk-sub">เลือกแพ็กเกจที่ใช่ สำหรับคุณ</div>
+            </div>
+          </div>
+          <span class="pk-more">ดูรายละเอียดทั้งหมด →</span>
+        </div>
+        ${planCardsHtml(PACKAGES.filter(p => !p.month2 && !p.simAge && carrierOf(p) === netCarrierKey() && (state.mode !== "shop" || p.shopVisible)))}
+      </div>`;
+  },
+
+  "self-detail"() {
+    hero.classList.add("hidden");
+    const p = state.pkg;
+    return `
+      <div class="card">
+        <div class="code-box">
+          <small>รหัสสมัครเน็ต</small>
+          <div class="code">${p.code}</div>
+        </div>
+        <b style="font-size:14px">ขั้นตอนการสมัคร</b>
+        <ol class="steps">${(carrierOf(p) === "truemove H" ? SELF_STEPS : ((CONFIG.SELF_STEPS_BY || {})[carrierOf(p)] || [])).map(s => `<li>${s}</li>`).join("") || "<li>ยังไม่ได้ตั้งขั้นตอนสมัครของเครือข่ายนี้</li>"}</ol>
+        <button class="btn ghost" onclick="resetTo('home')">กลับหน้าหลัก</button>
+      </div>`;
+  },
+
+  payment() {
+    hero.classList.add("hidden");
+    const p = state.pkg;
+    const base = firstPriceOf(p);
+    const hasFirst = base !== p.price;
+    const info = shopDiscountInfo(p);
+    const net = base - info.amount;
+    return `
+      <div class="card">
+        <div class="info">
+          <div><span>แพ็กเกจ</span><b>${p.name}</b></div>
+          <div><span>${hasFirst ? "ราคาเดือนแรก" : "ราคาปกติ"}</span><span>${base} บาท</span></div>
+          <div><span>ส่วนลดร้าน</span><span>- ${info.amount} บาท</span></div>
+          ${hasFirst ? `<div><span>หลังจากนี้ ต่อเดือน</span><span>${p.price} บาท</span></div>` : ""}
+          <div class="total"><span>ยอดชำระ</span><span>${net} บาท</span></div>
+        </div>
+        <div class="qr">${CONFIG.QR_IMAGE_URL
+          ? `<img src="${CONFIG.QR_IMAGE_URL}" alt="QR พร้อมเพย์">`
+          : `<div class="qr-empty">QR พร้อมเพย์</div>`}</div>
+        ${CONFIG.QR_IMAGE_URL ? `<button type="button" class="qr-dl" onclick="downloadQR()">⬇ ดาวน์โหลด QR Code</button>` : ""}
+        ${CONFIG.SLIP_CHECK === false ? "" : `
+        <label class="field-label" for="slip">แนบสลิปการโอนเงิน</label>
+        <label class="slip-drop" id="slipDrop" for="slip">
+          <span class="slip-icon">🧾</span>
+          <span class="slip-text">
+            <b id="slipName">ยังไม่ได้เลือกรูปสลิป</b>
+            <small>รองรับไฟล์รูปภาพ JPG / PNG</small>
+          </span>
+          <span class="slip-pick">เลือกรูป</span>
         </label>
-        ${settings.portOtpSample ? `<div style="margin-top:6px"><button class="danger" onclick="clearPortOtpSample()">ลบรูปตัวอย่าง</button></div>` : ""}
+        <input type="file" id="slip" accept="image/*" class="sr-only" onchange="onSlipPick(this)">`}
+        <div class="err" id="payErr"></div>
+        <button class="btn" id="paySubmit" onclick="submitPayment()" style="margin-top:14px">ยืนยันการชำระเงิน →</button>
+      </div>`;
+  },
+
+  result(ok, msg, showContact = false) {
+    hero.classList.add("hidden");
+    const line = CONFIG.lineContactUrl
+      ? `<a class="btn" href="${CONFIG.lineContactUrl}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;background:#06c755;margin-top:10px">💬 ติดต่อร้านผ่าน LINE</a>`
+      : "";
+    return `
+      <div class="card result">
+        <div class="icon">${ok ? "✅" : "❌"}</div>
+        <h2>${ok ? "ชำระเงินสำเร็จ" : "ดำเนินการไม่สำเร็จ"}</h2>
+        <p>${msg}</p>
+        ${line}
+        <button class="btn" onclick="resetTo('home')">กลับหน้าหลัก</button>
+      </div>`;
+  }
+};
+
+// กล่องรูปตัวอย่าง 1 รูป (รูปแก้ไขได้จากหลังบ้าน ตามคีย์ที่ส่งมา เช่น receivedPhoneEx, simNumberEx)
+function photoBlock(key, label) {
+  const url = (CONFIG.photos || {})[key];
+  // รูปในฟอร์มกรอกซิมแสดงเป็นจัตุรัส 526 × 526
+  const isSquare = (key === "receivedPhoneEx" || key === "simNumberEx");
+  const square = isSquare ? " sample-square" : "";
+  if (!url) {
+    return `<div class="sample${square}"><div class="sample-empty">${label}<br>(ยังไม่ได้ตั้งค่า)</div></div>`;
+  }
+  return `
+    <div class="sample${square}">
+      <div class="sample-slides">
+        <figure>
+          <img src="${url}" alt="${label}">
+          ${isSquare ? "" : `<figcaption>${label}</figcaption>`}
+        </figure>
       </div>
-    </div>
-
-    <div class="card">
-      <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
-      <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
-      ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
-      <div class="photo">
-        <div class="ph" style="aspect-ratio:1/1;max-width:140px;margin:0 auto 8px">${settings.logoImage ? `<img src="${esc(settings.logoImage)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
-        <label style="cursor:pointer;color:var(--blue);font-weight:700">
-          📁 เลือกโลโก้ร้าน
-          <input type="file" accept="image/*" class="hidden" onchange="uploadLogo(this.files[0])">
-        </label>
-        ${settings.logoImage ? `<div style="margin-top:8px"><button class="danger" onclick="clearLogo()">ลบโลโก้</button></div>` : ""}
-      </div>
-    </div>
-
-
-    <div class="card">
-      <div class="head"><h3>🛍️ ช่องทางสั่งซื้อ</h3>
-        <button class="ghost" onclick="addChannel()">+ เพิ่มช่องทาง</button></div>
-      ${settings.channels.length ? settings.channels.map((c, i) => `
-        <div class="grid2" style="margin-bottom:8px">
-          <input value="${esc(c.name)}" placeholder="ชื่อช่องทาง" oninput="settings.channels[${i}].name=this.value;markDirty()">
-          <input value="${esc(c.url)}" placeholder="ลิงก์" oninput="settings.channels[${i}].url=this.value;markDirty()">
-        </div>`).join("") : `<p class="hint">ยังไม่มีช่องทาง</p>`}
-    </div>
-
-    <div class="card">
-      <h3>🧭 ข้อความหน้าเมนูสมัคร</h3>
-      <p class="hint">เว้นว่างช่องไหนไว้ ระบบจะใช้ข้อความเดิม · ป้าย "ลด ..." ดึงจากแท็บ "ส่วนลด & QR" อัตโนมัติ</p>
-      ${[
-        ["menuTitle", "หัวข้อเมนูสมัคร"],
-        ["selfTitle", "ชื่อตัวเลือก: เติมเงินสมัครเอง"],
-        ["selfDesc", "คำอธิบาย: เติมเงินสมัครเอง"],
-        ["shopTitle", "ชื่อตัวเลือก: สมัครกับทางร้าน"],
-        ["shopDesc", "คำอธิบาย: สมัครกับทางร้าน"]
-      ].map(([k, label]) => `
-        <label style="margin-bottom:8px">${label}
-          <input value="${esc(settings.menuTexts[k])}" oninput="settings.menuTexts['${k}']=this.value;markDirty()">
-        </label>`).join("")}
-    </div>
-
-    <div class="card">
-      <h3>💬 ช่องทางติดต่อร้าน (LINE)</h3>
-      <p class="hint">ใส่ลิงก์ LINE Official ของร้าน เช่น https://line.me/R/ti/p/@xxxx ถ้าเว้นว่าง ปุ่มติดต่อร้านจะไม่แสดงในหน้าที่มีปัญหา</p>
-      <input value="${esc(settings.lineContactUrl || "")}" placeholder="https://line.me/R/ti/p/@..." oninput="settings.lineContactUrl=this.value;markDirty()">
-      <label style="margin-top:10px">LIFF ID <small>(ได้จากการสร้างแอป LIFF ใน LINE Developers ไม่ใช่ความลับ ถ้าเว้นว่างเว็บจะทำงานเป็นเว็บปกติ)</small>
-        <input value="${esc(settings.liffId || "")}" placeholder="เช่น 1234567890-AbCdEfGh" oninput="settings.liffId=this.value.trim();markDirty()">
-      </label>
-    </div>
-
-    <div class="card">
-      <h3>📦 คำอธิบายเลขพัสดุ</h3>
-      <textarea rows="3" oninput="settings.trackingHelp=this.value;markDirty()">${esc(settings.trackingHelp)}</textarea>
-    </div>
-    <div class="card">
-      <h3>🔖 คำอธิบายซิมหมายเลข</h3>
-      <textarea rows="3" oninput="settings.simHelp=this.value;markDirty()">${esc(settings.simHelp)}</textarea>
-    </div>
-
-    <div class="card">
-      <h3>📷 รูปตัวอย่างการถ่ายรูป</h3>
-      <p class="hint">รูปที่ลูกค้าเห็นในฟอร์มกรอกข้อมูลซิม (เบอร์มือถือและซีเรียลซิม)<br>ขนาดที่แนะนำ: <b>526 × 526 px</b> (จัตุรัส) · ไฟล์ JPG หรือ PNG ไม่เกิน 5 MB</p>
-      <div class="grid3">
-        ${slots.map(([key, label]) => `
-          <div class="photo">
-            <div class="t">${label}</div>
-            <div class="ph" style="aspect-ratio:1/1">${ph[key] ? `<img src="${esc(ph[key])}" alt="" style="object-fit:contain">` : "ยังไม่มีรูป"}</div>
-            <label style="cursor:pointer;color:var(--blue);font-weight:700;align-items:center">
-              📁 เลือกรูปตัวอย่าง
-              <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto('${key}', this.files[0])">
-            </label>
-          </div>`).join("")}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="head"><h3>✉️ ข้อความปฏิเสธ</h3>
-        <button class="ghost" onclick="addReject()">+ เพิ่มข้อความ</button></div>
-      ${settings.rejectMessages.length ? settings.rejectMessages.map((m, i) => `
-        <div class="grid2" style="grid-template-columns:1fr auto;margin-bottom:8px">
-          <input value="${esc(m)}" oninput="settings.rejectMessages[${i}]=this.value;markDirty()">
-          <button class="danger" onclick="delReject(${i})">ลบ</button>
-        </div>`).join("") : `<p class="hint">ยังไม่มีข้อความ</p>`}
-    </div>
-
-    <div class="card">
-      <h3>💬 ข้อความแจ้งลูกค้า</h3>
-      <p class="hint">ตัวแปรที่ใช้ได้: {simPhone} {orderNo} {pkgName} {simCode} {remaining} {maxQuota}</p>
-      <label>ยืนยันแพ็กเกจ — ส่งวิธีสมัครเน็ต
-        <textarea rows="3" oninput="settings.messages.confirm=this.value;markDirty()">${esc(settings.messages.confirm)}</textarea>
-      </label>
-      <label style="margin-top:10px">สมัครเน็ตแล้ว — กดยืนยัน
-        <textarea rows="3" oninput="settings.messages.done=this.value;markDirty()">${esc(settings.messages.done)}</textarea>
-      </label>
-      <label style="margin-top:10px">ขั้นตอนหลังชำระเงิน — กดปุ่ม "ส่งขั้นตอน" ในรายการสั่งซื้อ
-        <textarea rows="12" oninput="settings.messages.steps=this.value;markDirty()">${esc(settings.messages.steps ?? STEPS_TEMPLATE)}</textarea>
-      </label>
     </div>`;
 }
 
-function addChannel() { settings.channels.push({ name: "", url: "" }); markDirty(); saveAll(); render(); }
-function addReject() { settings.rejectMessages.push(""); markDirty(); saveAll(); render(); }
-function delReject(i) { settings.rejectMessages.splice(i, 1); markDirty(); saveAll(); render(); }
-
-// ย่อรูปที่ใหญ่เกิน 4 MB ก่อนอัพโหลด (เซิร์ฟเวอร์รับได้ไม่เกิน 5 MB) โดยให้ด้านยาวสุดไม่เกิน 1600 px
-async function shrinkImage(file) {
-  if (!file.type.startsWith("image/") || file.size <= 4 * 1024 * 1024) return file;
-  const src = URL.createObjectURL(file);
+// ส่งข้อมูลเข้าไลน์ และแจ้งสาเหตุชัดเจนเมื่อไม่สำเร็จ
+async function sendLineStrict(payload) {
+  if (!CONFIG.LINE_ENDPOINT) throw new Error("ยังไม่ได้ตั้งค่าระบบ");
+  let res;
   try {
-    const img = await new Promise((res, rej) => {
-      const i = new Image();
-      i.onload = () => res(i);
-      i.onerror = () => rej(new Error("อ่านรูปไม่ได้"));
-      i.src = src;
+    res = await fetch(CONFIG.LINE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: payload })
     });
-    const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.85));
-    if (!blob) throw new Error("ย่อรูปไม่ได้");
-    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
-  } finally {
-    URL.revokeObjectURL(src);
-  }
-}
-
-// อัพโหลดรูปไปที่หลังบ้าน (คืนลิงก์รูป)
-async function uploadFile(file) {
-  const prepared = await shrinkImage(file);
-  const fd = new FormData();
-  fd.append("file", prepared, prepared.name);
-  const r = await api("/admin/upload", { method: "POST", body: fd });
-  return r.url;
-}
-
-async function uploadCarrierLogo(name, file) {
-  if (!file) return;
-  try {
-    settings.carrierLogos = settings.carrierLogos || {};
-    settings.carrierLogos[name] = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดโลโก้ " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
   } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
+    throw new Error("เชื่อมต่อระบบไม่ได้");
   }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.reason || ("รหัสข้อผิดพลาด " + res.status));
+  return data;
 }
 
-function clearCarrierLogo(name) {
-  delete settings.carrierLogos[name];
-  markDirty(); saveAll();
-  render();
+function render(html) {
+  const current = history_[history_.length - 1];
+  backBtn.classList.toggle("show", history_.length > 1);
+  if (typeof html === "string") { app.innerHTML = html; return; }
+  app.innerHTML = (screens[current] || screens.home)();
 }
 
-function setQuickLabel(key, value) {
-  settings.quickMenu = settings.quickMenu || {};
-  settings.quickMenu[key] = { ...(settings.quickMenu[key] || {}), label: value.trim() };
-  markDirty();
-}
-
-function setCarrierReg(name, field, value) {
-  settings.carrierRegister = settings.carrierRegister || {};
-  settings.carrierRegister[name] = { ...(settings.carrierRegister[name] || {}), [field]: value.trim() };
-  markDirty();
-}
-
-async function uploadCarrierSample(name, file) {
-  if (!file) return;
-  try {
-    const url = await uploadFile(file);
-    settings.carrierRegister = settings.carrierRegister || {};
-    settings.carrierRegister[name] = { ...(settings.carrierRegister[name] || {}), sample: url };
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปตัวอย่าง " + name + " แล้ว กดบันทึกเพื่อใช้งาน");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function addBanner() {
-  settings.banners = settings.banners || [];
-  if (settings.banners.length >= 5) { toast("ใส่แบนเนอร์ได้สูงสุด 5 รูป", false); return; }
-  settings.banners.push({ url: "", link: "" });
-  markDirty(); saveAll();
-  render();
-}
-
-function setBanner(i, field, value) {
-  settings.banners[i][field] = value.trim();
-  markDirty();
-}
-
-async function uploadBanner(i, file) {
-  if (!file) return;
-  try {
-    settings.banners[i].url = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดแบนเนอร์แล้ว กดบันทึกเพื่อใช้งาน");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function delBanner(i) {
-  if (!confirm("ลบแบนเนอร์นี้?")) return;
-  settings.banners.splice(i, 1);
-  markDirty(); saveAll();
-  render();
-}
-
-function moveBanner(i, dir) {
-  const arr = settings.banners;
-  const j = i + dir;
-  if (j < 0 || j >= arr.length) return;
-  [arr[i], arr[j]] = [arr[j], arr[i]];
-  markDirty(); saveAll();
-  render();
-}
-
-async function uploadMenuIcon(key, file) {
-  if (!file) return;
-  try {
-    settings.menuIcons = settings.menuIcons || {};
-    settings.menuIcons[key] = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดไอคอนแล้ว กดบันทึกเพื่อใช้งาน");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function clearMenuIcon(key) {
-  if (settings.menuIcons) delete settings.menuIcons[key];
-  markDirty(); saveAll();
-  render();
-}
-
-async function uploadMonth2Sample(c, file) {
-  if (!file) return;
-  try {
-    settings.month2Samples = { ...(settings.month2Samples || {}), [c]: await uploadFile(file) };
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปตัวอย่างเดือนที่ 2 ของ " + c + " แล้ว");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function setMonth2Carrier(c, on) {
-  settings.month2Carriers = { ...(settings.month2Carriers || {}), [c]: !!on };
-  markDirty(); saveAll();
-  render();
-}
-
-function clearMonth2Sample(c) {
-  settings.month2Samples = { ...(settings.month2Samples || {}), [c]: "" };
-  markDirty(); saveAll();
-  render();
-}
-
-async function uploadSimAgeSample(c, file) {
-  if (!file) return;
-  try {
-    settings.simAgeSamples = { ...(settings.simAgeSamples || {}), [c]: await uploadFile(file) };
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปตัวอย่างแสดงอายุซิมของ " + c + " แล้ว");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function setSimAgeCarrier(c, on) {
-  settings.simAgeCarriers = { ...(settings.simAgeCarriers || {}), [c]: !!on };
-  markDirty(); saveAll();
-  render();
-}
-
-function clearSimAgeSample(c) {
-  settings.simAgeSamples = { ...(settings.simAgeSamples || {}), [c]: "" };
-  markDirty(); saveAll();
-  render();
-}
-
-async function uploadPortOtpSample(file) {
-  if (!file) return;
-  try {
-    settings.portOtpSample = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปตัวอย่าง OTP แล้ว");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
-  }
-}
-
-function clearPortOtpSample() {
-  settings.portOtpSample = "";
-  markDirty(); saveAll();
-  render();
-}
-
-// คำสั่งซื้อโปรเบอร์เดิม: แสดงเบอร์ OTP และให้ร้านเลือกแพ็กเกจที่เบอร์นี้สมัครได้
-function portOrderHTML(o) {
-  const sh = o.shipping || {};
-  const st = o.status;
-  const portLabel = {
-    port_wait: "รอลูกค้าส่ง OTP", port_need_otp: "รอ OTP ใหม่จากลูกค้า", port_otp: "ลูกค้าส่ง OTP แล้ว (รอตรวจ)",
-    port_verified: "OTP ถูกต้อง รอเลือกแพ็กเกจ", port_ready: "ส่งแพ็กเกจแล้ว", port_cancelled: "ลูกค้ายกเลิก"
+/* ==========================================================
+   ลอจิกการทำงาน
+   ========================================================== */
+// สั่งซื้อเบอร์มงคล: ใช้ id ขึ้นต้นด้วย "lucky:" เพื่อให้หลังบ้านรู้ว่าเป็นเบอร์มงคล
+function buyLucky() {
+  const x = state.lucky;
+  if (!x || !(Number(x.price) > 0)) return;
+  state.mode = "lucky";
+  state.serial = "";
+  state.phone = "";
+  state.pkg = {
+    id: "lucky:" + x.number,
+    name: "เบอร์มงคล " + x.number,
+    number: x.number,
+    price: Number(x.price),
+    firstPrice: "",
+    discType: "none"
   };
-  const carrier = sh.carrier || "truemove H";
-  const pkgs = (settings.PACKAGES || []).filter(p => p.simAge && (p.carrier || "truemove H") === carrier);
-  const picked = Array.isArray(sh.portPackageIds) ? sh.portPackageIds : [];
-  const otpOk = st === "port_verified" || st === "port_ready";
-  const canVerifyOrRetry = st === "port_otp" || st === "port_verified";
-  const oid = esc(o.id);
-  const pkgSection = otpOk ? `
-    <div style="margin-top:8px">
-      <label class="meta">เลือกแพ็กเกจที่เบอร์นี้สมัครได้ (เลือกได้มากกว่า 1)</label>
-      ${pkgs.length
-        ? pkgs.map(p => `<label style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" style="width:auto" name="portPkg-${oid}" value="${esc(p.id)}" ${picked.includes(p.id) ? "checked" : ""}> ${esc(p.name)}${p.price ? " · " + fmt(p.price) + " บาท" : ""}</label>`).join("")
-        : `<div class="meta">ยังไม่มีแพ็กเกจโปรเบอร์เดิมของเครือข่ายนี้ ให้เพิ่มที่แท็บแพ็กเกจก่อน</div>`}
-    </div>` : "";
-  const otpText = sh.otp
-    ? `<span style="font-size:18px;font-weight:800;letter-spacing:2px">${esc(sh.otp)}</span>`
-    : (st === "port_need_otp" ? "รอลูกค้าส่ง OTP ใหม่" : "ยังไม่ได้ส่ง");
-  return `
-    <div class="order">
-      <div class="top2">
-        <div>
-          <b>#${esc(o.orderNo || o.id)}</b> · 🔄 คำสั่งซื้อโปรเบอร์เดิม
-          <div class="meta">SIM ${esc(sh.phone || o.phone)} · เครือข่าย ${esc(sh.carrier || "-")} · ${dayOf(o).toLocaleString("th-TH")}</div>
-          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
-            <b>OTP ที่ลูกค้าส่งให้ร้าน:</b> ${otpText}<br>
-            ${sh.confirmImg ? `<a href="${esc(sh.confirmImg)}" target="_blank" rel="noopener" style="color:#0b5ed7;font-weight:700">🖼️ เปิดรูปแสดงอายุซิม</a>` : ""}
-          </div>
-          ${pkgSection}
-        </div>
-        <span class="pill ${esc(st)}">${esc(portLabel[st] || st || "-")}</span>
-      </div>
-      <div class="btns">
-        ${canVerifyOrRetry ? `<button class="primary" onclick="portVerify('${oid}')">OTP ถูกต้อง</button>
-        <button class="ghost" onclick="portRetry('${oid}')">ขอ OTP ใหม่จากลูกค้า</button>` : ""}
-        ${otpOk ? `<button class="primary" onclick="assignPort('${oid}')">${st === "port_ready" ? "อัปเดตแพ็กเกจที่ส่งให้ลูกค้า" : "ส่งแพ็กเกจให้ลูกค้า"}</button>` : ""}
-        <button class="danger" onclick="setOrder('${oid}','rejected')">ปิดรายการ</button>
-      </div>
-    </div>`;
+  go("lucky-buy");
 }
 
-function portOrderHTML_old(o) {
-  const sh = o.shipping || {};
-  const portLabel = { port_wait: "รอ OTP", port_otp: "ลูกค้าส่ง OTP แล้ว", port_ready: "ส่งแพ็กเกจแล้ว", port_cancelled: "ลูกค้ายกเลิก" };
-  const pkgs = (settings.PACKAGES || []).filter(p => p.simAge && (p.carrier || "truemove H") === (sh.carrier || "truemove H"));
-  const pick = sh.portPackageId || "";
-  return `
-    <div class="order">
-      <div class="top2">
-        <div>
-          <b>#${esc(o.orderNo || o.id)}</b> · 🔄 คำสั่งซื้อโปรเบอร์เดิม
-          <div class="meta">SIM ${esc(sh.phone || o.phone)} · เครือข่าย ${esc(sh.carrier || "-")} · ${dayOf(o).toLocaleString("th-TH")}</div>
-          <div style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#f1f5f9;font-size:13px;line-height:1.6">
-            <b>OTP ที่ลูกค้าส่งให้ร้าน:</b> ${sh.otp ? `<span style="font-size:18px;font-weight:800;letter-spacing:2px">${esc(sh.otp)}</span>` : "ยังไม่ได้ส่ง"}<br>
-            ${sh.confirmImg ? `<a href="${esc(sh.confirmImg)}" target="_blank" rel="noopener" style="color:#0b5ed7;font-weight:700">🖼️ เปิดรูปแสดงอายุซิม</a>` : ""}
-          </div>
-          <div style="margin-top:8px">
-            <label class="meta">เลือกแพ็กเกจที่เบอร์นี้สมัครได้</label>
-            <select id="portPkg-${esc(o.id)}" style="width:100%">
-              <option value="">-- เลือกแพ็กเกจ --</option>
-              ${pkgs.map(p => `<option value="${esc(p.id)}" ${p.id === pick ? "selected" : ""}>${esc(p.name)}${p.price ? " · " + fmt(p.price) + " บาท" : ""}</option>`).join("")}
-            </select>
-            ${pkgs.length ? "" : `<div class="meta">ยังไม่มีแพ็กเกจโปรเบอร์เดิมของเครือข่ายนี้ ให้เพิ่มที่แท็บแพ็กเกจก่อน</div>`}
-          </div>
-        </div>
-        <span class="pill ${esc(o.status)}">${esc(portLabel[o.status] || o.status || "-")}</span>
-      </div>
-      <div class="btns">
-        <button class="primary" onclick="assignPort('${esc(o.id)}')">ส่งแพ็กเกจให้ลูกค้า</button>
-        <button class="danger" onclick="setOrder('${esc(o.id)}','rejected')">ปิดรายการ</button>
-      </div>
-    </div>`;
+function luckyNext() {
+  const v = id => (document.getElementById(id)?.value || "").trim();
+  const phone = v("luckyPhone").replace(/[-\s]/g, "");
+  const err = document.getElementById("luckyErr");
+  const fail = msg => { err.textContent = msg; err.style.display = "block"; };
+
+  const shipping = {
+    name: v("shipName"),
+    phone,
+    addr1: v("shipAddr1"),
+    road: v("shipRoad"),
+    sub: v("shipSub"),
+    dist: v("shipDist"),
+    prov: v("shipProv"),
+    zip: v("shipZip"),
+    note: v("shipNote")
+  };
+  if (!shipping.name) return fail("กรุณากรอกชื่อ-นามสกุลผู้รับ");
+  if (!/^0\d{8,9}$/.test(phone)) return fail("เบอร์โทรผู้รับไม่ถูกต้อง (ตัวอย่าง 0812345678)");
+  if (!shipping.addr1) return fail("กรุณากรอกบ้านเลขที่ / หมู่บ้าน / อาคาร");
+  if (!shipping.sub || !shipping.dist || !shipping.prov) return fail("กรุณากรอกแขวง/ตำบล เขต/อำเภอ และจังหวัด");
+  if (!/^\d{5}$/.test(shipping.zip)) return fail("รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก");
+
+  state.phone = phone;
+  state.shipping = shipping;
+  go("payment");
 }
 
-async function portVerify(id) {
-  try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { action: "verify" } });
-    const o = orders.find(x => x.id === id);
-    if (o) o.status = "port_verified";
-    render();
-    toast("ยืนยัน OTP แล้ว เลือกแพ็กเกจได้เลย");
-  } catch (e) {
-    toast("ไม่สำเร็จ: " + e.message, false);
+// แพ็กเกจที่ไม่มีค่า carrier ถือว่าเป็นของ True
+function carrierOf(p) { return p.carrier || "truemove H"; }
+function netCarrierKey() { return state.netCarrier || "truemove H"; }
+// True ต้องกรอกเบอร์กับซีเรียลซิม ส่วน AIS / dtac ข้ามไปเลือกแพ็กเกจได้เลย
+function needsSimForm() { return netCarrierKey() === "truemove H"; }
+
+function startFlow(mode) {
+  state.mode = mode;
+  state.serial = "";
+  state.phone = "";
+  state.shipping = needsSimForm() ? null : { carrier: netCarrierKey() };
+  if (needsSimForm()) go("sim-form");
+  else go("net-phone");
+}
+
+function netPhoneNext() {
+  const phone = (document.getElementById("netPhone").value || "").replace(/[-\s]/g, "").trim();
+  const err = document.getElementById("netErr");
+  if (!/^0\d{8,9}$/.test(phone)) {
+    err.textContent = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
+    err.style.display = "block";
+    return;
+  }
+  state.phone = phone;
+  state.serial = "";
+  state.shipping = { carrier: netCarrierKey() };
+  if (state.skipToPayment) {
+    state.skipToPayment = false;
+    go("payment");
+  } else {
+    go("packages");
   }
 }
 
-async function portRetry(id) {
-  if (!confirm("ขอ OTP ใหม่จากลูกค้าคนนี้? ลูกค้าจะต้องกรอก OTP ใหม่")) return;
-  try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { action: "retry" } });
-    const o = orders.find(x => x.id === id);
-    if (o) { o.status = "port_need_otp"; o.shipping = { ...(o.shipping || {}), otp: "", portPackageIds: [] }; }
-    render();
-    toast("ขอ OTP ใหม่แล้ว");
-  } catch (e) {
-    toast("ไม่สำเร็จ: " + e.message, false);
+function validSim(serial, phone) {
+  if (!/^0\d{8,9}$/.test(phone)) return "เบอร์มือถือไม่ถูกต้อง";
+  if (!/^\d{10,25}$/.test(serial)) return "หมายเลขซีเรียลซิมไม่ถูกต้อง (ตัวเลข 10-25 หลัก)";
+  return null;
+}
+
+// ปิดการส่งข้อความเข้า LINE ชั่วคราว (ตั้งเป็น false เมื่อพร้อมเปิดใช้งาน)
+// ดาวน์โหลดรูป QR พร้อมเพย์ไปชำระเงินในแอปธนาคาร (ถ้าดาวน์โหลดตรงไม่ได้ จะเปิดรูปในแท็บใหม่แทน)
+async function downloadQR(url = CONFIG.QR_IMAGE_URL) {
+  if (!url) return;
+  // แอปแชต (Messenger, Facebook, Instagram, LINE) มักบล็อกการดาวน์โหลดไฟล์ จึงเปิดหน้าต่างให้บันทึกเองทันที
+  if (/FBAN|FBAV|Messenger|Instagram|Line\//i.test(navigator.userAgent)) {
+    showQRModal(url);
+    return;
   }
-}
-
-async function assignPort(id) {
-  const packageIds = [...document.querySelectorAll(`input[name="portPkg-${id}"]:checked`)].map(x => x.value);
-  if (!packageIds.length) { toast("กรุณาเลือกแพ็กเกจอย่างน้อย 1 รายการ", false); return; }
+  const filename = "promptpay-qr.png";
   try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { action: "send", packageIds } });
-    const o = orders.find(x => x.id === id);
-    if (o) { o.status = "port_ready"; o.shipping = { ...(o.shipping || {}), portPackageIds: packageIds }; }
-    render();
-    toast("ส่งแพ็กเกจให้ลูกค้าแล้ว (" + packageIds.length + " แพ็กเกจ)");
-  } catch (e) {
-    toast("ส่งไม่สำเร็จ: " + e.message, false);
-  }
-}
-
-async function assignPort_old(id) {
-  const sel = document.getElementById("portPkg-" + id);
-  const packageId = sel ? sel.value : "";
-  if (!packageId) { toast("กรุณาเลือกแพ็กเกจก่อน", false); return; }
-  try {
-    await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { packageId } });
-    const o = orders.find(x => x.id === id);
-    if (o) { o.status = "port_ready"; o.shipping = { ...(o.shipping || {}), portPackageId: packageId }; }
-    render();
-    toast("ส่งแพ็กเกจให้ลูกค้าแล้ว");
-  } catch (e) {
-    toast("ส่งไม่สำเร็จ: " + e.message, false);
-  }
-}
-
-function clearCarrierSample(name) {
-  if (settings.carrierRegister && settings.carrierRegister[name]) delete settings.carrierRegister[name].sample;
-  markDirty(); saveAll();
-  render();
-}
-
-async function uploadLogo(file) {
-  if (!file) return;
-  try {
-    settings.logoImage = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดโลโก้แล้ว กดบันทึกเพื่อใช้งาน");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
-  }
-}
-
-function clearLogo() {
-  settings.logoImage = "";
-  markDirty();
-  render();
-}
-
-async function uploadHero(file) {
-  if (!file) return;
-  try {
-    settings.heroImage = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปหัวเว็บแล้ว กดบันทึกเพื่อใช้งาน");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
-  }
-}
-
-function clearHero() {
-  settings.heroImage = "";
-  markDirty();
-  render();
-}
-
-async function uploadPhoto(key, file) {
-  if (!file) return;
-  try {
-    settings.photos[key] = await uploadFile(file);
-    markDirty(); saveAll();
-    render();
-    toast("อัปโหลดรูปแล้ว");
-  } catch (e) {
-    toast("อัปโหลดรูปไม่สำเร็จ", false);
-  }
-}
-
-/* ==========================================================
-   ลบประวัติคำขอ
-   ========================================================== */
-function viewDanger() {
-  return `
-    <div class="danger-zone">
-      <h3>🗑️ ลบประวัติคำขอ</h3>
-      <p class="hint" style="color:var(--err)">การลบจะลบประวัติทั้งหมดในระบบอย่างถาวร กู้คืนไม่ได้</p>
-      <label>ยืนยันด้วยรหัสผู้ดูแล
-        <input id="delPw" type="password" placeholder="รหัสผู้ดูแล">
-      </label>
-      <div class="err" id="delErr">❌ รหัสไม่ถูกต้อง</div>
-      <div class="actions" style="justify-content:flex-end;margin-top:12px">
-        <button onclick="setTab('packages')">ยกเลิก</button>
-        <button class="danger" onclick="confirmDelete()">🗑️ ยืนยันลบ</button>
-      </div>
-    </div>`;
-}
-
-async function confirmDelete() {
-  const p = $("delPw").value;
-  if (!p) { $("delErr").style.display = "block"; return; }
-  if (!confirm("ยืนยันลบประวัติทั้งหมด?")) return;
-  try {
-    await api("/admin/history", { method: "DELETE", json: { password: p } });
-    orders = [];
-    toast("ลบประวัติแล้ว");
-    setTab("orders");
-  } catch (e) {
-    $("delErr").style.display = "block";
-    toast("ลบไม่สำเร็จ", false);
-  }
-}
-
-/* ==========================================================
-   บันทึก
-   ========================================================== */
-async function saveAll() {
-  const btn = $("saveBtn");
-  btn.disabled = true;
-  try {
-    settings.PACKAGES = settings.PACKAGES.map(p => ({
-      ...p,
-      price: Number(p.price) || 0,
-      firstPrice: Number(p.firstPrice) > 0 ? Number(p.firstPrice) : ""
-    }));
-    settings.DISCOUNT_SHOP = Number(settings.DISCOUNT_SHOP) || 0;
-    settings.DISCOUNT_SHOP_TYPE = settings.DISCOUNT_SHOP_TYPE === "percent" ? "percent" : "baht";
-    settings.luckyNumbers = (settings.luckyNumbers || []).map(x => ({
-      ...x,
-      price: Number(x.price) || 0,
-      analysis: x.analysis || analysisText(x.number)
-    }));
-    await api("/admin/settings", { method: "PUT", json: settings });
-    $("dirtyTag").textContent = "";
-    toast("บันทึกการตั้งค่าแล้ว");
-  } catch (e) {
-    toast("บันทึกไม่สำเร็จ: " + e.message, false);
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-/* ==========================================================
-   เริ่มต้น
-   ========================================================== */
-(async function init() {
-  if (token) {
-    try {
-      settings = normalize(await api("/admin/settings"));
-      showDash();
-      loadOrders(true);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("fetch failed");
+    const blob = await res.blob();
+    // มือถือส่วนใหญ่: ใช้เมนูแชร์/บันทึกรูปของเครื่อง
+    const file = new File([blob], filename, { type: blob.type || "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "QR พร้อมเพย์" });
       return;
-    } catch (e) { /* token ไม่ถูกต้องหรือ API ไม่ตอบ → ให้เข้าสู่ระบบใหม่ */ }
+    }
+    // เบราว์เซอร์ที่รองรับการดาวน์โหลดไฟล์
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 3000);
+  } catch (e) {
+    if (e && e.name === "AbortError") return; // ลูกค้ากดยกเลิกการแชร์เอง
+    showQRModal(url);
   }
-  $("login").classList.remove("hidden");
-})();
+}
+
+// สร้าง QR ตามยอดจากหลังบ้าน แล้วตรวจสถานะการจ่ายเป็นระยะ
+let payTimer = null;
+
+async function initPayment() {
+  const box = document.getElementById("qrBox");
+  if (!box || !state.pkg) return;
+  clearInterval(payTimer);
+  state.payment = null;
+  try {
+    const r = await fetch(API_BASE + "/payment/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ packageId: state.pkg.id, serial: state.serial, phone: state.phone })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "ไม่สามารถสร้าง QR ได้");
+    state.payment = { orderNo: d.orderNo, qrUrl: d.qrUrl, expiresAt: d.expiresAt };
+    box.innerHTML = `<img src="${d.qrUrl}" alt="QR ชำระเงิน" style="width:100%;height:auto;display:block">`;
+    document.getElementById("qrMsg").textContent = "กรุณาชำระภายใน 10 นาที ระบบจะตรวจสอบให้อัตโนมัติ";
+    const dl = document.getElementById("qrDl");
+    if (dl) dl.style.display = "block";
+    startPaymentPolling();
+  } catch (e) {
+    const err = document.getElementById("payErr");
+    if (err) { err.textContent = e.message; err.style.display = "block"; }
+  }
+}
+
+function startPaymentPolling() {
+  payTimer = setInterval(async () => {
+    if (!document.getElementById("qrBox") || !state.payment) { clearInterval(payTimer); return; }
+    try {
+      const r = await fetch(API_BASE + "/payment/status?orderNo=" + encodeURIComponent(state.payment.orderNo));
+      const d = await r.json();
+      if (d.status === "paid") {
+        clearInterval(payTimer);
+        history_ = ["home"];
+        render(screens.result(true, "ชำระค่าแพ็กเกจเรียบร้อยแล้ว ระบบได้รับข้อมูลของคุณแล้ว"));
+      } else if (d.status === "expired") {
+        clearInterval(payTimer);
+        render(screens.result(false, "QR หมดอายุแล้ว กรุณาเลือกแพ็กเกจใหม่อีกครั้ง"));
+      }
+    } catch (e) { /* รอรอบถัดไป */ }
+  }, 3000);
+}
+
+// เมื่อดาวน์โหลดตรงไม่ได้ (เช่น เปิดในแอป Messenger) ให้แสดงรูป QR ให้กดค้างแล้วบันทึกเอง
+function showQRModal(url) {
+  document.getElementById("qrModal")?.remove();
+  const el = document.createElement("div");
+  el.id = "qrModal";
+  el.className = "so-overlay";
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="so-box">
+      <h3>บันทึกรูป QR</h3>
+      <p>วิธีที่ 1: กดปุ่ม "เปิดรูป QR" ด้านล่าง แล้วกดค้างที่รูป เลือก "บันทึกรูปภาพ"<br>วิธีที่ 2: ถ้าเปิดจาก Messenger / LINE ให้กดเมนู ⋯ แล้วเลือก "เปิดในเบราว์เซอร์" ก่อน จากนั้นกดค้างที่รูปเพื่อบันทึก</p>
+      <img src="${url}" alt="QR พร้อมเพย์" style="width:100%;height:auto;display:block;border-radius:10px">
+      <a class="btn" href="${url}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:12px">เปิดรูป QR เพื่อบันทึก</a>
+      <button class="btn ghost" style="margin-top:10px" onclick="document.getElementById('qrModal').remove()">ปิด</button>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+// LINE LIFF: เปิดเว็บจากแอป LINE ได้ ถ้ายังไม่ได้ใส่ LIFF ID ในหลังบ้าน ระบบจะทำงานเป็นเว็บปกติ
+async function initLiff() {
+  if (!CONFIG.liffId || typeof liff === "undefined") return;
+  try {
+    await liff.init({ liffId: CONFIG.liffId });
+    if (liff.isLoggedIn()) {
+      const p = await liff.getProfile();
+      state.lineUser = { userId: p.userId, displayName: p.displayName };
+    }
+  } catch (e) { /* ไม่มี LIFF ก็ใช้เว็บได้ตามปกติ */ }
+}
+
+const SKIP_LINE_SEND = true;
+
+async function submitSim() {
+  const serial = document.getElementById("serial").value.replace(/\s/g, "").trim();
+  const phone = document.getElementById("phone").value.replace(/[-\s]/g, "").trim();
+  const err = document.getElementById("formErr");
+  const msg = validSim(serial, phone);
+  if (msg) { err.textContent = msg; err.style.display = "block"; return; }
+
+  const btn = document.getElementById("simSubmit");
+  btn.disabled = true;
+  btn.textContent = "กำลังส่งข้อมูล...";
+  try {
+    if (!SKIP_LINE_SEND) {
+      await sendLineStrict({
+        type: state.mode === "shop" ? "สมัครกับร้าน" : "เติมเงินสมัครเอง",
+        serial, phone, time: new Date().toLocaleString("th-TH")
+      });
+    }
+    state.serial = serial;
+    state.phone = phone;
+    if (state.skipToPayment) {
+      state.skipToPayment = false;
+      go("payment");
+    } else {
+      go("packages");
+    }
+  } catch (e) {
+    err.textContent = "ส่งข้อมูลไม่สำเร็จ: " + e.message;
+    err.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "ยืนยันข้อมูล →";
+  }
+}
+
+function selectPackage(id) {
+  const p = PACKAGES.find(x => x.id === id);
+  state.pkg = p;
+  // แพ็กเกจที่ต้องสมัครกับทางร้านเท่านั้น: ลูกค้าเมนูเองจะเห็นป๊อปอัปแทนขั้นตอนสมัครเอง
+  // สมัครเน็ตกับทางร้าน: แสดงขั้นตอนการสมัครก่อน แล้วกดชำระค่าแพ็กเกจ
+  if (state.mode === "shop") {
+    showShopOnlyPopup(p);
+    return;
+  }
+  if (p.shopOnly) {
+    showShopOnlyPopup(p);
+    return;
+  }
+  go("self-detail");
+}
+
+function showShopOnlyPopup(p) {
+  closeShopOnly();
+  const el = document.createElement("div");
+  el.id = "shopOnlyPop";
+  el.className = "so-overlay";
+  el.innerHTML = `
+    <div class="so-box">
+      <h3>${esc(p.name)}</h3>
+      <p>${state.mode !== "shop" ? "ไม่สามารถสมัครเองได้ " : ""}กดปุ่มด้านล่างเพื่อชำระค่าแพ็กเกจเน็ต</p>
+      <div class="so-steps">
+        <b>ขั้นตอนการสมัคร</b>
+        <ol>
+          <li>กดปุ่มชำระค่าแพ็คเกจ และแนบสลิปการชำระเงิน</li>
+          <li>รอทางร้านตรวจสอบ และยืนยันการสมัครเน็ต ระบบจะแจ้งสถานะการสมัครเน็ตให้ลูกค้าทราบผ่านหน้าจอ <b style="display:inline;font-size:13px">ห้ามทักซ้ำ</b> เพราะจะทำให้การสมัครเน็ตล่าช้า</li>
+          <li>เมื่อทางร้านสมัครเน็ตให้ลูกค้าเสร็จเรียบร้อย ระบบจะแจ้งเตือนแพ็คเกจเน็ตผ่าน SMS เมื่อได้รับ SMS แล้วลูกค้าสามารถใช้งานเน็ตได้เลย</li>
+        </ol>
+      </div>
+      <button class="btn" onclick="payShopOnly('${p.id}')">ชำระค่าแพ็กเกจเน็ต →</button>
+      <button class="btn ghost" style="margin-top:10px" onclick="closeShopOnly()">ปิด</button>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function closeShopOnly() {
+  const el = document.getElementById("shopOnlyPop");
+  if (el) el.remove();
+}
+
+function payShopOnly(id) {
+  closeShopOnly();
+  state.mode = "shop";
+  state.pkg = PACKAGES.find(p => p.id === id);
+  const ready = needsSimForm() ? (state.serial && state.phone) : state.phone;
+  if (ready) {
+    go("payment");
+  } else {
+    state.skipToPayment = true;
+    go(needsSimForm() ? "sim-form" : "net-phone");
+  }
+}
+
+// ติดตามสถานะคำสั่งซื้อจนกว่าแอดมินจะกดยืนยันการสมัคร
+let orderTimer = null;
+const ORDER_KEY = "program_order_v1";
+
+// ขั้นตอนที่ลูกค้าเห็น (index ตรงกับสถานะของคำสั่งซื้อในหลังบ้าน)
+const ORDER_STEPS = [
+  { label: "ชำระเงินเรียบร้อย" },
+  { label: "ทางร้านตรวจสอบรายการ" },
+  { label: "ทางร้านยืนยันแพ็กเกจและกำลังสมัครให้" },
+  { label: "สมัครเน็ตเรียบร้อย" }
+];
+// new = รอร้านตรวจ (ขั้นที่ 1), confirmed = ร้านยืนยันแล้ว (ขั้นที่ 2)
+const ORDER_STEP_OF = { new: 1, confirmed: 2 };
+
+function stepsHtml(cur) {
+  return `<div class="ostep-list">${ORDER_STEPS.map((s, i) => {
+    const cls = i < cur ? "ok" : i === cur ? "now" : "todo";
+    const mark = i < cur ? "✓" : i === cur ? "…" : String(i + 1);
+    return `<div class="ostep ${cls}"><span class="ostep-dot">${mark}</span><span>${s.label}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function showPending(orderNo, cur = 1) {
+  hero.classList.add("hidden");
+  const contact = CONFIG.lineContactUrl
+    ? `<a class="btn" href="${CONFIG.lineContactUrl}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;background:#06c755;margin-top:10px">💬 ติดต่อร้านผ่าน LINE</a>`
+    : "";
+  render(`
+    <div class="card result" id="pendingBox">
+      <div class="icon">⏳</div>
+      <h2>อยู่ระหว่างดำเนินการ</h2>
+      ${orderNo ? `<p class="order-no">หมายเลขคำสั่งซื้อ <b>${orderNo}</b></p>` : ""}
+      ${stepsHtml(cur)}
+      <p class="next-step">ขั้นตอนต่อไป: ทางร้านจะตรวจสอบและสมัครเน็ตให้ ไม่ต้องทำอะไรเพิ่ม หน้านี้จะอัปเดตเองเมื่อมีความคืบหน้า</p>
+      <p class="next-hint">หากปิดหน้านี้ไปแล้ว ให้เปิดเว็บเดิมอีกครั้ง หรือแจ้งหมายเลขคำสั่งซื้อให้ร้านทาง LINE</p>
+      ${contact}
+      <button class="btn ghost" style="margin-top:10px" onclick="resetTo('home')">กลับหน้าหลัก</button>
+    </div>`);
+}
+
+function saveOrder(order) {
+  try { sessionStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch (e) { /* ไม่มี sessionStorage ก็ใช้งานต่อได้ */ }
+}
+function clearOrder() {
+  try { sessionStorage.removeItem(ORDER_KEY); } catch (e) {}
+}
+
+function watchOrder(orderId, orderNo) {
+  clearInterval(orderTimer);
+  saveOrder({ id: orderId, orderNo: orderNo || "" });
+  showPending(orderNo, 1);
+  let lastStep = 1;
+  orderTimer = setInterval(async () => {
+    // หยุดตรวจเมื่อลูกค้าออกจากหน้านี้แล้ว
+    if (!document.getElementById("pendingBox")) { clearInterval(orderTimer); return; }
+    try {
+      const r = await fetch(API_BASE + "/orders/status?id=" + encodeURIComponent(orderId));
+      const d = await r.json();
+      if (d.status === "done") {
+        clearInterval(orderTimer);
+        clearOrder();
+        render(screens.result(true, "สมัครเน็ตเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ"));
+      } else if (d.status === "rejected") {
+        clearInterval(orderTimer);
+        clearOrder();
+        render(screens.result(false, "ไม่สามารถดำเนินการสมัครได้ กรุณาติดต่อร้านค้า", true));
+      } else if (ORDER_STEP_OF[d.status] !== undefined && ORDER_STEP_OF[d.status] !== lastStep) {
+        // วาดหน้าใหม่เฉพาะตอนที่ขั้นตอนเปลี่ยน
+        lastStep = ORDER_STEP_OF[d.status];
+        showPending(orderNo, lastStep);
+      }
+    } catch (e) { /* รอรอบถัดไป */ }
+  }, 5000);
+}
+
+// เปิดหน้าใหม่ในแท็บเดิมแล้วยังมีคำสั่งซื้อค้างอยู่ ให้กลับไปติดตามต่อ
+function resumeOrderWatch() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(ORDER_KEY) || "null");
+    if (saved && saved.id) watchOrder(saved.id, saved.orderNo);
+  } catch (e) { /* ข้าม */ }
+}
+
+function onSlipPick(input) {
+  const f = input.files && input.files[0];
+  const name = document.getElementById("slipName");
+  const drop = document.getElementById("slipDrop");
+  const err = document.getElementById("payErr");
+  if (name) name.textContent = f ? f.name : "ยังไม่ได้เลือกรูปสลิป";
+  if (drop) drop.classList.toggle("has-file", !!f);
+  if (err) err.style.display = "none";
+}
+
+async function submitPayment() {
+  // โหมดทดสอบ (ปิดการตรวจสลิปจากหลังบ้าน) ไม่ต้องแนบสลิป
+  const slipOn = CONFIG.SLIP_CHECK !== false;
+  const slipInput = document.getElementById("slip");
+  const file = slipOn && slipInput ? slipInput.files[0] : null;
+  const err = document.getElementById("payErr");
+  if (slipOn && !file) { err.textContent = "กรุณาแนบสลิปการโอนเงิน"; err.style.display = "block"; return; }
+
+  const btn = document.getElementById("paySubmit");
+  btn.disabled = true;
+  btn.textContent = "กำลังตรวจสอบสลิป...";
+  try {
+    const check = slipOn ? await verifySlip(file) : { ok: true };
+    if (!check.ok) {
+      render(screens.result(false, check.reason || "สลิปไม่ถูกต้องหรือไม่สามารถตรวจสอบได้"));
+      return;
+    }
+    const amount = firstPriceOf(state.pkg) - shopDiscountInfo(state.pkg).amount;
+    const created = await postJSON(CONFIG.BACKEND_ENDPOINT, {
+      serial: state.serial, phone: state.phone,
+      package: state.pkg, amount, time: new Date().toISOString(),
+      lineUserId: state.lineUser ? state.lineUser.userId : "",
+      shipping: state.shipping || (state.netCarrier ? { carrier: state.netCarrier } : null),
+      slipRef: check && check.ref ? check.ref : ""
+    });
+    // แจ้งไลน์ร้านเป็นเรื่องรอง ถ้าพลาดไม่ควรทำให้ลูกค้าเห็นว่าชำระไม่สำเร็จ
+    try {
+      await sendToLine({
+        type: "ชำระเงินสำเร็จ", serial: state.serial, phone: state.phone, package: state.pkg.name,
+        lineName: state.lineUser ? state.lineUser.displayName : "-",
+        lineUserId: state.lineUser ? state.lineUser.userId : ""
+      });
+    } catch (e) { /* ข้าม */ }
+    history_ = ["home"];
+    clearSavedState();
+    if (created && created.id) {
+      // รอแอดมินยืนยันการสมัครเน็ตหลังร้านก่อน จึงค่อยแสดงว่าสำเร็จ
+      watchOrder(created.id, created.orderNo);
+    } else {
+      // ยังติดตามสถานะไม่ได้ (ระบบหลังบ้านยังไม่ตอบกลับหมายเลขคำสั่งซื้อ)
+      showPending("", 1);
+    }
+  } catch (e) {
+    render(screens.result(false, "เกิดข้อผิดพลาด กรุณาติดต่อร้านค้า", true));
+  }
+}
+
+// แบนเนอร์เลื่อนอัตโนมัติทุก 2 วินาที (หยุดชั่วคราวเมื่อลูกค้าแตะหรือปัดแบนเนอร์เอง)
+let bannerPausedUntil = 0;
+document.addEventListener("touchstart", e => {
+  if (e.target.closest && e.target.closest(".banner-slides")) bannerPausedUntil = Date.now() + 4000;
+}, { passive: true });
+setInterval(() => {
+  const el = document.querySelector(".banner-slides");
+  if (!el || Date.now() < bannerPausedUntil) return;
+  const n = el.children.length;
+  if (n < 2) return;
+  const w = el.clientWidth;
+  const next = (Math.round(el.scrollLeft / w) + 1) % n;
+  el.scrollTo({ left: next * w, behavior: "smooth" });
+}, 2000);
+
+loadRemoteSettings().then(() => { restoreState(); render(); initLiff(); resumeOrderWatch(); });
 </script>
 </body>
 </html>
