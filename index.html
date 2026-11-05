@@ -791,6 +791,37 @@ async function loadOrders(silent = false) {
   render();
 }
 
+// รีเฟรชรายการคำสั่งซื้ออัตโนมัติทุก 15 วินาที (เฉพาะตอนเปิดหน้ารายการคำสั่งซื้ออยู่)
+let lastOrdersJson = "";
+let portPending = false; // ร้านกำลังติ๊กแพ็กเกจแต่ยังไม่ได้กดส่ง ห้ามรีเฟรชทับ
+
+async function autoRefreshOrders() {
+  if (tab !== "orders") return;
+  // ไม่รีเฟรชตอนกำลังพิมพ์ค้นหาหรือกำลังติ๊กแพ็กเกจที่ยังไม่ได้ส่ง
+  const el = document.activeElement;
+  if (el && ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName)) return;
+  if (portPending) return;
+  let data;
+  try {
+    data = await api("/admin/orders");
+  } catch (e) {
+    return;
+  }
+  const json = JSON.stringify(data);
+  if (json === lastOrdersJson) return;
+  lastOrdersJson = json;
+  orders = data;
+  const inp = document.querySelector('input[oninput^="filterOrders"]');
+  const q = inp ? inp.value : "";
+  render();
+  if (q) {
+    const again = document.querySelector('input[oninput^="filterOrders"]');
+    if (again) again.value = q;
+    filterOrders(q);
+  }
+}
+setInterval(autoRefreshOrders, 15000);
+
 function viewOrders() {
   const today = new Date().toDateString();
   const now = new Date();
@@ -1518,7 +1549,7 @@ function portOrderHTML(o) {
     <div style="margin-top:8px">
       <label class="meta">เลือกแพ็กเกจที่เบอร์นี้สมัครได้ (เลือกได้มากกว่า 1)</label>
       ${pkgs.length
-        ? pkgs.map(p => `<label style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" style="width:auto" name="portPkg-${oid}" value="${esc(p.id)}" ${picked.includes(p.id) ? "checked" : ""}> ${esc(p.name)}${p.price ? " · " + fmt(p.price) + " บาท" : ""}</label>`).join("")
+        ? pkgs.map(p => `<label style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" style="width:auto" name="portPkg-${oid}" onchange="portPending=true" value="${esc(p.id)}" ${picked.includes(p.id) ? "checked" : ""}> ${esc(p.name)}${p.price ? " · " + fmt(p.price) + " บาท" : ""}</label>`).join("")
         : `<div class="meta">ยังไม่มีแพ็กเกจโปรเบอร์เดิมของเครือข่ายนี้ ให้เพิ่มที่แท็บแพ็กเกจก่อน</div>`}
     </div>` : "";
   const otpText = sh.otp
@@ -1611,6 +1642,7 @@ async function assignPort(id) {
   try {
     await api("/admin/orders/" + encodeURIComponent(id) + "/port", { method: "POST", json: { action: "send", packageIds } });
     const o = orders.find(x => x.id === id);
+    portPending = false;
     if (o) { o.status = "port_ready"; o.shipping = { ...(o.shipping || {}), portPackageIds: packageIds }; }
     render();
     toast("ส่งแพ็กเกจให้ลูกค้าแล้ว (" + packageIds.length + " แพ็กเกจ)");
