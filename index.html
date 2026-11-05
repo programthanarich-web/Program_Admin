@@ -1708,6 +1708,25 @@ async function uploadLogo(file) {
   }
 }
 
+// โลโก้สำหรับคูปองที่พิมพ์ (แยกจากโลโก้หน้าร้าน)
+async function uploadCouponLogo(file) {
+  if (!file) return;
+  try {
+    settings.couponLogo = await uploadFile(file);
+    markDirty(); saveAll();
+    render();
+    toast("อัปโหลดโลโก้คูปองแล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ", false);
+  }
+}
+
+function clearCouponLogo() {
+  settings.couponLogo = "";
+  markDirty(); saveAll();
+  render();
+}
+
 function clearLogo() {
   settings.logoImage = "";
   markDirty();
@@ -1864,7 +1883,7 @@ function couponCardHtml(c) {
   const exp = c.expiresAt
     ? new Date(c.expiresAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
     : "-";
-  const logo = settings && settings.logoImage ? `<img class="cp-logo" src="${esc(settings.logoImage)}" alt="">` : "";
+  const logo = settings && settings.couponLogo ? `<img class="cp-logo" src="${esc(settings.couponLogo)}" alt="">` : "";
   return `<div class="cp">
     <div class="cp-amt">${logo}<div class="cp-head">คูปองส่วนลดค่าเน็ตเดือนแรก</div><div class="cp-val">${esc(c.amount)}<small> บาท</small></div><div class="cp-label">ส่วนลดสมัครเน็ตกับทางร้าน</div></div>
     <div class="cp-code"><div class="cp-cap">รหัสคูปอง</div><div class="cp-num">${esc(fmtCouponCode(c.code))}</div></div>
@@ -1909,7 +1928,20 @@ function viewCoupons() {
   }).join("");
   return `
     <div class="card">
-      <div class="head"><h3>🎟️ สร้างคูปองส่วนลด ${fmt(50)}</h3></div>
+      <div class="head"><h3>🖼️ โลโก้บนคูปองที่พิมพ์</h3><small style="color:var(--muted)">ใช้โลโก้แยกจากโลโก้หน้าร้าน ไม่ตั้งก็ได้</small></div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div class="ph" style="width:120px;height:120px;flex:0 0 auto">${settings && settings.couponLogo ? `<img src="${esc(settings.couponLogo)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
+        <div>
+          <label style="cursor:pointer;color:var(--blue);font-weight:700">
+            📁 เลือกโลโก้คูปอง
+            <input type="file" accept="image/*" class="hidden" onchange="uploadCouponLogo(this.files[0])">
+          </label>
+          ${settings && settings.couponLogo ? `<div style="margin-top:8px"><button class="danger" onclick="clearCouponLogo()">ลบโลโก้คูปอง</button></div>` : ""}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="head"><h3>🎟️ สร้างคูปองส่วนลด</h3></div>
       <p class="hint">สร้างเป็นชุด แล้วพิมพ์หรือส่งรหัสให้ลูกค้าที่ซื้อซิมในช้อปปี้ ใช้ได้ 1 ครั้ง และ 1 คูปองต่อ 1 เบอร์ ใช้ได้เฉพาะแพ็กเกจที่ติ๊ก "สมัครเน็ตกับทางร้าน" และไม่มีส่วนลดร้านอยู่แล้ว (ไม่ซ้อนกัน)</p>
       <div class="grid3">
         <label>จำนวนคูปอง (1-500)<input id="cpCount" type="number" min="1" max="500" value="10"></label>
