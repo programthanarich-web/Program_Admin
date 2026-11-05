@@ -604,8 +604,9 @@ function stepsOfCarrier(c) {
 
 function viewPackages() {
   const all = settings.PACKAGES.map((p, i) => ({ p, i })).filter(x => pkgCarrierOf(x.p) === pkgTab);
-  const first = all.filter(x => !x.p.month2);
-  const second = all.filter(x => x.p.month2);
+  const first = all.filter(x => !x.p.month2 && !x.p.simAge);
+  const second = all.filter(x => x.p.month2 && !x.p.simAge);
+  const third = all.filter(x => x.p.simAge);
   const list = (rows) => rows.length
     ? rows.map(x => pkgCardHTML(x.p, x.i)).join("")
     : `<p class="hint">ยังไม่มีแพ็กเกจในกลุ่มนี้</p>`;
@@ -640,6 +641,14 @@ function viewPackages() {
     </div>
 
     <div class="card">
+      <div class="head"><h3>แพ็กเกจโปรเบอร์เดิม (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${third.length} แพ็กเกจ)</small></h3>
+        <button class="ghost" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจ</button></div>
+      <p class="hint">แพ็กเกจของเมนู "โปรเน็ตเบอร์เดิม" (ลูกค้าเลือกเครือข่าย ใส่เบอร์ อัปโหลดรูปแสดงอายุซิม แล้วเลือกแพ็กเกจ) แยกจากแพ็กเกจเดือนแรกและเดือนที่ 2 ชำระเงินและแนบสลิปเหมือนเดิม</p>
+      ${list(third)}
+      <button class="ghost" style="width:100%;margin-top:4px" onclick="addPkg(false, true)">+ เพิ่มแพ็กเกจโปรเบอร์เดิมใหม่</button>
+    </div>
+
+    <div class="card">
       <h3>ขั้นตอนสมัครเน็ต — ${pkgTab === "truemove H" ? "True" : pkgTab} (เมนูเติมเงินเอง)</h3>
       <p class="hint">พิมพ์บรรทัดละ 1 ขั้นตอน ขั้นตอนนี้แสดงเฉพาะลูกค้าที่เลือกเครือข่ายนี้</p>
       <textarea rows="5" oninput="setSteps(this.value)">${esc(stepsOfCarrier(pkgTab).join("\n"))}</textarea>
@@ -653,12 +662,12 @@ function upd(key, i, field, val) {
   markDirty();
 }
 
-function addPkg(month2 = false) {
+function addPkg(month2 = false, simAge = false) {
   const id = "P" + Date.now().toString(36);
   settings.PACKAGES.push({
     id, name: "", speed: "", desc: "",
-    price: 0, code: "", badge: "", color: month2 ? "#7c3aed" : "#0b5ed7", features: [],
-    month2: !!month2, carrier: pkgTab
+    price: 0, code: "", badge: "", color: simAge ? "#0ea5e9" : (month2 ? "#7c3aed" : "#0b5ed7"), features: [],
+    month2: !!month2 && !simAge, simAge: !!simAge, carrier: pkgTab
   });
   lastAddedPkg = id;
   markDirty();
