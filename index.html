@@ -221,6 +221,8 @@ function normalize(s) {
     SELF_STEPS_BY: s.SELF_STEPS_BY || {},
     month2Carriers: s.month2Carriers || {},
     month2Samples: s.month2Samples || {},
+    simAgeCarriers: s.simAgeCarriers || {},
+    simAgeSamples: s.simAgeSamples || {},
     SIM_SAMPLE_IMAGES: s.SIM_SAMPLE_IMAGES || [],
     channels: s.channels || [],
     menuTexts: { ...MENU_TEXT_DEFAULT, ...(s.menuTexts || {}) },
@@ -1091,6 +1093,30 @@ function viewSettings() {
     </div>
 
     <div class="card">
+      <h3>🔄 เมนูโปรเน็ตเบอร์เดิม (ตรวจอายุซิม)</h3>
+      <p class="hint">ลูกค้าเลือกเครือข่ายก่อน ถ้าไม่ติ๊กเครือข่ายไหน ลูกค้าจะกดเลือกเครือข่ายนั้นไม่ได้</p>
+      <p class="hint">ขนาดที่แนะนำ: <b>1080 × 1350 px</b> (แนวตั้ง 4:5) · ไม่เกิน 5 MB</p>
+      ${CARRIERS.map(c => {
+        const url = (settings.simAgeSamples || {})[c] || "";
+        const name = c === "truemove H" ? "True" : c;
+        return `
+        <div class="photo" style="margin-bottom:12px">
+          <div class="t">${name}</div>
+          <label style="display:block;margin:6px 0">
+            <input type="checkbox" style="width:auto" ${(settings.simAgeCarriers || {})[c] !== false ? "checked" : ""} onchange="setSimAgeCarrier('${c}', this.checked)">
+            เปิดให้ลูกค้าเลือกเครือข่ายนี้ในเมนูโปรเน็ตเบอร์เดิม
+          </label>
+          <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${url ? `<img src="${esc(url)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
+          <label style="cursor:pointer;color:var(--blue);font-weight:700">
+            📁 เลือกรูปตัวอย่างแสดงอายุซิมของ ${name}
+            <input type="file" accept="image/*" class="hidden" onchange="uploadSimAgeSample('${c}', this.files[0])">
+          </label>
+          ${url ? `<div style="margin-top:6px"><button class="danger" onclick="clearSimAgeSample('${c}')">ลบรูปตัวอย่าง</button></div>` : ""}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
       <h3>🏷️ โลโก้ร้าน (มุมบนซ้าย)</h3>
       <p class="hint">ขนาดที่แนะนำ: <b>512 × 512 px</b> (สี่เหลี่ยมจัตุรัส) · ไฟล์ PNG พื้นหลังโปร่งใส หรือ JPG · ไม่เกิน 1 MB<br>
       ถ้าไม่ตั้งรูป หน้าเว็บจะแสดงไอคอนเดิม</p>
@@ -1354,6 +1380,30 @@ function setMonth2Carrier(c, on) {
 
 function clearMonth2Sample(c) {
   settings.month2Samples = { ...(settings.month2Samples || {}), [c]: "" };
+  markDirty(); saveAll();
+  render();
+}
+
+async function uploadSimAgeSample(c, file) {
+  if (!file) return;
+  try {
+    settings.simAgeSamples = { ...(settings.simAgeSamples || {}), [c]: await uploadFile(file) };
+    markDirty(); saveAll();
+    render();
+    toast("อัปโหลดรูปตัวอย่างแสดงอายุซิมของ " + c + " แล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
+  }
+}
+
+function setSimAgeCarrier(c, on) {
+  settings.simAgeCarriers = { ...(settings.simAgeCarriers || {}), [c]: !!on };
+  markDirty(); saveAll();
+  render();
+}
+
+function clearSimAgeSample(c) {
+  settings.simAgeSamples = { ...(settings.simAgeSamples || {}), [c]: "" };
   markDirty(); saveAll();
   render();
 }
