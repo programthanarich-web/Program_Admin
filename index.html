@@ -1083,7 +1083,8 @@ function viewSettings() {
   const ph = settings.photos;
   const slots = [
     ["receivedPhoneEx", "📱 ตัวอย่างเบอร์มือถือที่ได้รับหลังลงทะเบียน"],
-    ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม"]
+    ["simNumberEx", "🔖 ตัวอย่างหมายเลขซีเรียลซิม (สำหรับกรอกเอง)"],
+    ["simBarcodeEx", "📊 ตัวอย่างบาร์โค้ดบนซองซิม (สำหรับสแกน)"]
   ];
   const slipOn = settings.SLIP_CHECK !== false;
   return `
