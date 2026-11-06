@@ -208,8 +208,7 @@ const TABS = [
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
   ["coupons", "คูปองส่วนลด"],
-  ["stockA", "สต๊อกซิม อารยา"],
-  ["stockW", "สต๊อกซิม วรายุทธ"],
+  ["stock", "สต๊อกซิม"],
   ["settings", "การตั้งค่า"],
   ["danger", "ลบประวัติ"]
 ];
@@ -353,9 +352,8 @@ function setTab(t) {
   tab = t;
   if (t === "orders") { loadOrders(); return; }
   if (t === "coupons") { loadCoupons(); return; }
-  if (t === "stockA" || t === "stockW") {
-    stockPartner = STOCK_PARTNERS[t].code;
-    stockSelected = "";
+  if (t === "stock") {
+    if (!stockPartner) stockPartner = STOCK_PARTNERS.stockA.code;
     renderTabs();
     loadStock();
     return;
@@ -368,7 +366,7 @@ function render() {
   const views = {
     packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
     orders: viewOrders, settings: viewSettings, danger: viewDanger, coupons: viewCoupons,
-    stockA: viewStock, stockW: viewStock
+    stock: viewStock
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
 }
@@ -2118,6 +2116,7 @@ async function stockSave(serial, patch) {
 
 function stockPick(serial, mode) { stockSelected = serial; stockSub = mode; render(); }
 function stockSetSub(k) { stockSub = k; render(); }
+function stockSetPartner(code) { stockPartner = code; stockSelected = ""; stockSub = "list"; render(); }
 function stockSetFilter(f) { stockFilter = f; render(); }
 function stockSetQ(v) { stockQ = v; const el = document.getElementById("stockRows"); if (el) el.innerHTML = stockRowsHtml(); }
 
@@ -2364,8 +2363,11 @@ function viewStock() {
   if (!stockLoaded) return `<div class="card">กำลังโหลดข้อมูลสต๊อก...</div>`;
   const subs = [["list", "รายการทั้งหมด"], ["sell", "บันทึกขาย"], ["reg", "ลงทะเบียน"], ["sum", "สรุปยอด"], ["import", "นำเข้า Excel"]];
   const bodies = { list: stockListHtml, sell: stockSellHtml, reg: stockRegHtml, sum: stockSumHtml, import: stockImportHtml };
+  if (!stockPartner) stockPartner = STOCK_PARTNERS.stockA.code;
+  const partners = Object.values(STOCK_PARTNERS).map(p => `<button class="${stockPartner === p.code ? "primary" : "ghost"}" onclick="stockSetPartner('${p.code}')">${esc(p.name)}</button>`).join("");
   return `<div class="card">
     <div class="head"><h3>สต๊อกซิม ${esc(stockPartnerName())}</h3><button class="ghost" onclick="loadStock()">โหลดข้อมูลใหม่</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${partners}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       ${subs.map(([k, l]) => `<button class="${stockSub === k ? "primary" : "ghost"}" onclick="stockSetSub('${k}')">${l}</button>`).join("")}
     </div>
