@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>SIM Commission Tracker</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;min-height:100vh;font-family:'Noto Sans Thai',Sarabun,sans-serif;color:#e2e8f0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.4);border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeIn 0.25s ease}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+// PDF.js worker
+if(typeof pdfjsLib!=="undefined"){
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+// ──────────────────────────────────────────
+// Firebase config
+// ──────────────────────────────────────────
+const FB="https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
+const COLLECTION="/sim_commission";
+const ORDERS_COL="/sim_orders";
+const CUSTOMERS_COL="/customers";
+
+const fbG=p=>fetch(FB+p+".json").then(r=>r.json()).catch(()=>null);
+const fbS=(p,d)=>fetch(FB+p+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}).catch(()=>null);
+const fbP=(p,d)=>fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}).catch(()=>null);
+const fbD=p=>fetch(FB+p+".json",{method:"DELETE"}).catch(()=>null);
+const toKey=s=>String(s).replace(/[.#$[\]/\s]/g,"_").substring(0,60);
+
+const PARTNER_MAP={"10048452":"กาฬสินธุ์","10049224":"เลย"};
+
+const lsG=k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+
+// ──────────────────────────────────────────
+// Styles
+// ──────────────────────────────────────────
+const S={
+  card:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:16,marginBottom:12},
+  cardAlert:{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:16,padding:16,marginBottom:12},
+  cardWarn:{background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:16,padding:16,marginBottom:12},
+  h2:{color:"#e2e8f0",fontSize:16,fontWeight:800,marginBottom:12},
+  h3:{color:"#94a3b8",fontSize:13,fontWeight:700,marginBottom:8},
+  inp:{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 14px",color:"white",fontSize:14,outline:"none",fontFamily:"inherit"},
+  btn:{background:"linear-gradient(135deg,#4f46e5,#7c3aed)",border:"none",borderRadius:10,padding:"10px 20px",color:"white",fontWeight:700,cursor:"pointer",fontSize:14,fontFamily:"inherit"},
+  btnGreen:{background:"linear-gradient(135deg,#059669,#10b981)",border:"none",borderRadius:10,padding:"10px 20px",color:"white",fontWeight:700,cursor:"pointer",fontSize:14,fontFamily:"inherit"},
+  btnRed:{background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:10,padding:"8px 14px",color:"#f87171",cursor:"pointer",fontSize:12,fontFamily:"inherit"},
+  btnGhost:{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 14px",color:"#94a3b8",cursor:"pointer",fontSize:13,fontFamily:"inherit"},
+  th:{padding:"8px 12px",background:"rgba(255,255,255,0.04)",color:"#64748b",fontSize:11,fontWeight:700,textAlign:"left",borderBottom:"1px solid rgba(255,255,255,0.06)"},
+  td:{padding:"10px 12px",borderBottom:"1px solid rgba(255,255,255,0.04)",color:"#e2e8f0",fontSize:12},
+  tag:{display:"inline-block",borderRadius:99,padding:"2px 10px",fontSize:11,fontWeight:700},
+};
+
+const provColor=code=>({
+  "10048452":"#7c3aed",
+  "10049224":"#0284c7",
+}[code]||"#475569");
+
+const fmtDate=ts=>{
+  if(!ts)return"-";
+  return new Date(ts).toLocaleString("th-TH",{timeZone:"Asia/Bangkok",hour12:false,year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+};
+const todayBKK=()=>new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Bangkok"});
+// Strip Shopee PUA font chars (U+F700–U+F8FF) then normalize whitespace
+const stripPUA=s=>String(s||"").replace(/[-]/g,"");
+const norm=s=>stripPUA(String(s||"")).replace(/\s+/g," ").trim();
+
+// ──────────────────────────────────────────
+// PDF Parsing (Shopee / TikTok)
+// ──────────────────────────────────────────
+function detectPlatform(text){
+  if(/tiktok/i.test(text))return"TikTok";
+  if(/shopee/i.test(text))return"Shopee";
+  if(/lazada/i.test(text))return"Lazada";
+  return"ไม่ระบุ";
+}
+
+function parseShopeePageText(lines){
+  const txt=lines.join("\n");
+  let orderId="";
+  const oM=txt.match(/Shopee\s+Order\s+No[.\s:]*([A-Z0-9]+)/i)||txt.match(/Order\s+No[.\s:]*([A-Z0-9]+)/i)||txt.match(/([0-9]{10,}[A-Z0-9]+)/);
+  if(oM)orderId=norm(oM[1]);
+  let trackingNo="";
+  // Shopee SPEED tracking = THxxxxxx at top of label
+  const tM=txt.match(/\b(TH[A-Z0-9]{8,})\b/)||txt.match(/Tracking[^:]*:\s*([A-Z0-9]+)/i);
+  if(tM)trackingNo=norm(tM[1]||tM[0]);
+  let customerName="",customerAddr="";
+  // Shopee format: "ผูรับ (TO)" label, then name on NEXT line, then address
+  // PUA chars already stripped by extractPdfPages; use loose regex to catch all variants
+  const toIdx=lines.findIndex(l=>/ผ.?ร.?บ|\(TO\)|^ถ.?ง|^To\s*:/i.test(l.trim()));
+  if(toIdx>=0){
+    // name is on the next non-empty line after the label (skip zone codes K01, "(TO)", etc.)
+    let nameIdx=toIdx+1;
+    while(nameIdx<lines.length&&!norm(lines[nameIdx]))nameIdx++;
+    while(nameIdx<lines.length&&/^([A-Z]\d{2,3}|\(TO\)|TO\)|SPEED|FROM|ผ.?ส.?ง)/i.test(norm(lines[nameIdx]||""))){nameIdx++;}
+    customerName=norm(lines[nameIdx]||"");
+    const stopKw=/^(ผ[ูุ]ส่ง|FROM|PICKUP|SHIP BY|NOTE|Shopee Order|Flash|Tracking|เก็บเงิน|ไม่ต้อง|COD|สินค้า|Product|ราคา|รวม|#|DROP|ROS|BG)/i;
+    let addrLines=[];
+    for(let i=nameIdx+1;i<Math.min(nameIdx+8,lines.length);i++){
+      const l=norm(lines[i]);
+      if(!l)continue;
+      if(stopKw.test(l))break;
+      addrLines.push(l);
+    }
+    customerAddr=addrLines.join(" ");
+  }
+  let shipDate="";
+  const shipM=txt.match(/Ship\s*by[^:]*:\s*([0-9\-\/]+)/i)||txt.match(/(\d{2}[\-\/]\d{2}[\-\/]\d{4})/);
+  if(shipM)shipDate=norm(shipM[1]);
+  let payType="prepaid";
+  if(/เก็บเงินปลายทาง|COD/i.test(txt))payType="COD";
+  let product="";
+  const prodM=txt.match(/(?:สินค้า|Product)[^:\n]*:?\s*\n?([^\n]+)/i);
+  if(prodM)product=norm(prodM[1]);
+  return{orderId,trackingNo,customerName,customerAddr,shipDate,payType,product,platform:"Shopee"};
+}
+
+function parseTikTokPageText(lines){
+  const txt=lines.join("\n");
+  let orderId="";
+  const oM=txt.match(/(\d{15,})/);
+  if(oM)orderId=oM[1];
+  let trackingNo="";
+  const tM=txt.match(/TH[A-Z0-9]{10,}|([A-Z]{2,3}[0-9]{10,}[A-Z0-9]*)/);
+  if(tM)trackingNo=norm(tM[0]);
+  let customerName="",customerAddr="",customerPhone="";
+  const toIdx=lines.findIndex(l=>/^ถึง/i.test(norm(l)));
+  if(toIdx>=0){
+    customerName=norm(lines[toIdx]).replace(/^ถึง\s*:?\s*/i,"");
+    if(!customerName&&lines[toIdx+1])customerName=norm(lines[toIdx+1]);
+    const stopKw=/^(จาก|From|สินค้า|Product|COD|เก็บ|Flash|TikTok|Order)/i;
+    let addrLines=[];
+    for(let i=toIdx+1;i<Math.min(toIdx+8,lines.length);i++){
+      const l=norm(lines[i]);
+      if(!l)continue;
+      if(stopKw.test(l))break;
+      if(/\+66|\(66\)|0[689]\d/.test(l)){customerPhone=l;continue;}
+      addrLines.push(l);
+    }
+    customerAddr=addrLines.join(" ");
+  }
+  let payType="prepaid";
+  if(/เก็บเงินปลายทาง|COD/i.test(txt))payType="COD";
+  let product="";
+  const pM=txt.match(/(?:สินค้า|Product|SKU)[^:\n]*:?\s*\n?([^\n]+)/i);
+  if(pM)product=norm(pM[1]);
+  let shipDate="";
+  const sM=txt.match(/(\d{2}[\-\/]\d{2}[\-\/]\d{4})/);
+  if(sM)shipDate=sM[1];
+  return{orderId,trackingNo,customerName,customerAddr,customerPhone,shipDate,payType,product,platform:"TikTok"};
+}
+
+async function extractPdfPages(file){
+  const arrayBuffer=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  const pages=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const tc=await page.getTextContent();
+    // PDF.js returns text fragments in draw order (NOT reading order).
+    // Shopee SPEED labels use a 2-column layout so naive order gives
+    // FROM before TO. Fix: group by Y-coordinate, sort each row by X.
+    const YGAP=4;
+    const items=tc.items
+      .map(it=>({str:stripPUA(it.str),x:it.transform[4],y:it.transform[5]}))
+      .filter(it=>it.str.trim());
+    const rows={};
+    for(const it of items){
+      const yk=String(Math.round(it.y/YGAP)*YGAP);
+      if(!rows[yk])rows[yk]=[];
+      rows[yk].push(it);
+    }
+    const lines=Object.entries(rows)
+      .sort((a,b)=>Number(b[0])-Number(a[0]))
+      .map(([,frags])=>frags.sort((a,b)=>a.x-b.x)
+        .map(f=>f.str).join("").trim())
+      .filter(Boolean);
+    pages.push(lines);
+  }
+  return pages;
+}
+
+async function parsePdfOrders(file){
+  const pages=await extractPdfPages(file);
+  const orders=[];
+  const firstTxt=pages[0]?.join(" ")||"";
+  const globalPlatform=detectPlatform(firstTxt);
+  for(const lines of pages){
+    if(lines.length<3)continue;
+    const pageTxt=lines.join(" ");
+    const plat=detectPlatform(pageTxt)||globalPlatform;
+    let order;
+    if(plat==="TikTok"||(/TH[A-Z0-9]{10}/.test(pageTxt)&&/\d{15,}/.test(pageTxt))){
+      order=parseTikTokPageText(lines);order.platform="TikTok";
+    }else{
+      order=parseShopeePageText(lines);order.platform=plat||"Shopee";
+    }
+    if(order.orderId||order.trackingNo){
+      order.importedAt=Date.now();order.fileName=file.name;orders.push(order);
+    }
+  }
+  return orders;
+}
+
+// ──────────────────────────────────────────
+// Shipping-label PDF parser (for Customer Tracker tab)
+// ──────────────────────────────────────────
+async function parseShippingLabelPdf(file){
+  const pages=await extractPdfPages(file);
+  const results=[];
+  for(const lines of pages){
+    if(lines.length<2)continue;
+    const txt=lines.join(" ").replace(/\s+/g," ").trim();
+    let name="",address="",orderId="",tracking="",phone="";
+
+    // ── Tracking: TH... at line start (Shopee SPEED format)
+    for(const pat of [/\b(TH[A-Z0-9]{8,})\b/,/\b(SP[A-Z0-9]{12,})\b/,/\b([0-9]{20,})\b/,/(?:Tracking|เลขพัสดุ)[^:]*:?\s*([A-Z0-9]{10,30})/i]){
+      const m=txt.match(pat);if(m){tracking=(m[1]||m[0]).trim();break;}
+    }
+    // Also try first line that starts with TH
+    if(!tracking){const tl=lines.find(l=>/^TH[A-Z0-9]{8}/.test(l.trim()));if(tl)tracking=tl.trim();}
+
+    // ── Shopee / SPEED format: "ผูรับ (TO)" label → name on next line → address lines
+    // Shopee uses PUA font chars that appear between Thai chars; strip before matching
+    const toIdx=lines.findIndex(l=>/ผ.?ร.?บ|\(TO\)|^ถ.?ง|^To\s*:/i.test(l.trim()));
+    if(toIdx>=0){
+      let ni=toIdx+1;
+      while(ni<lines.length&&!lines[ni].trim())ni++;
+      let candidate=norm(lines[ni]||"");
+      // skip Shopee zone codes like K01, K02, F02, etc.
+      if(/^[A-Z]\d{2,3}$/.test(candidate)){ni++;candidate=norm(lines[ni]||"");}
+      // skip if candidate looks like a label, tracking, or the "(TO)" label itself
+      const isLabel=/^(SPEED|Flash|Kerry|Ninja|J&T|DHL|TH[A-Z0-9]|ผ.?ส.?ง|FROM|PICKUP|\(TO\)|TO\))/i.test(candidate);
+      if(candidate&&!isLabel){
+        name=candidate;
+      }
+      // collect address: next lines until stop keywords
+      const stopKw=/^(ผ[ูุ]ส่ง|FROM|PICKUP|SHIP|NOTE|Shopee Order|Order No|Flash|Track|เก็บ|ไม่ต้อง|COD|สินค้า|Product|ราคา|รวม|#|DROP|ROS|BG|SPEED|[A-Z]{2}\d{2})/i;
+      let addrLines=[];
+      for(let i=ni+1;i<Math.min(ni+10,lines.length);i++){
+        const l=lines[i].trim();
+        if(!l)continue;
+        if(stopKw.test(l))break;
+        addrLines.push(l);
+      }
+      address=addrLines.join(" ").replace(/\s+/g," ").trim();
+    }
+
+    // ── Order ID: Shopee Order No. pattern
+    const oM=txt.match(/Shopee\s+Order\s+No\.?\s*([A-Z0-9]{8,30})/i)
+      ||txt.match(/Order\s+No\.?\s*([A-Z0-9]{8,30})/i)
+      ||txt.match(/([0-9]{6}[A-Z0-9]{6,20})/);
+    if(oM)orderId=(oM[1]||oM[0]).trim();
+
+    // ── Phone
+    const phoneM=txt.match(/(?:Tel|โทร|Phone)\s*:?\s*(0[6-9]\d{8})/i)
+      ||txt.match(/\b(0[6-9]\d{8})\b/);
+    if(phoneM)phone=phoneM[1].replace(/[\s\-]/g,"");
+
+    // ── Fallback name: first Thai-only short line if still empty
+    if(!name){
+      for(const l of lines.slice(0,20)){
+        const lt=l.trim();
+        if(/^[ก-๙a-zA-Z][ก-๙a-zA-Z\s]{2,}$/.test(lt)&&lt.length>=3&&lt.length<=35
+          &&!/SPEED|Flash|Kerry|Ninja|Shopee|TikTok|Lazada|Order|Track|ขนส่ง|จาก|ส่ง|PICKUP|SHIP|FROM|COD|NOTE|DROP/i.test(lt)){
+          name=lt;break;
+        }
+      }
+    }
+
+    if(name||orderId||tracking)results.push({name:name||"ไม่ระบุ",address,phone,orderId,tracking});
+  }
+  return results;
+}
+
+// ──────────────────────────────────────────
+// Duplicate detection (fuzzy)
+// ──────────────────────────────────────────
+function dedupKey(order){
+  const name=norm(order.customerName).replace(/\s/g,"").toLowerCase();
+  const addr=norm(order.customerAddr).replace(/\s/g,"").toLowerCase().slice(0,25);
+  return name+"|"+addr;
+}
+function lev(a,b){
+  const m=a.length,n=b.length;
+  if(!m)return n;if(!n)return m;
+  const dp=Array.from({length:m+1},(_,i)=>i);
+  for(let j=1;j<=n;j++){
+    let prev=dp[0];dp[0]=j;
+    for(let i=1;i<=m;i++){const tmp=dp[i];dp[i]=a[i-1]===b[j-1]?prev:1+Math.min(prev,dp[i],dp[i-1]);prev=tmp;}
+  }
+  return dp[m];
+}
+function isSimilarCustomer(a,b){
+  const ka=dedupKey(a),kb=dedupKey(b);
+  if(ka===kb)return true;
+  const na=norm(a.customerName).toLowerCase(),nb=norm(b.customerName).toLowerCase();
+  if(na&&nb&&na===nb)return true;
+  if(na&&nb&&na.length>3&&nb.length>3){const d=lev(na,nb);if(d<=2&&Math.max(na.length,nb.length)<=10)return true;}
+  return false;
+}
+// Customer fuzzy match
+function normStr(s){return String(s||"").toLowerCase().replace(/\s+/g,"").replace(/[^ก-๙a-z0-9]/gi,"");}
+function strSim(a,b){
+  a=normStr(a);b=normStr(b);
+  if(!a||!b)return 0;
+  if(a===b)return 1;
+  const sh=a.length<b.length?a:b,lo=a.length<b.length?b:a;
+  if(lo.includes(sh)&&sh.length>4)return 0.9;
+  const bigrams=s=>{const bg=new Set();for(let i=0;i<s.length-1;i++)bg.add(s[i]+s[i+1]);return bg;};
+  const b1=bigrams(a),b2=bigrams(b);
+  let inter=0;b1.forEach(x=>{if(b2.has(x))inter++;});
+  return(2*inter)/(b1.size+b2.size)||0;
+}
+function findCustMatch(customers,name,address){
+  const matches=[];
+  for(const [key,c] of Object.entries(customers)){
+    const ns=strSim(name,c.name),as=strSim(address,c.address);
+    if(ns>0.85||(ns>0.7&&as>0.6))matches.push({key,customer:c,ns,as});
+  }
+  return matches;
+}
+
+// ──────────────────────────────────────────
+// Excel parser
+// ──────────────────────────────────────────
+function parseExcel(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:"binary",cellText:true,raw:false});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:""});
+        let headerIdx=rows.findIndex(r=>r.some(c=>String(c).includes("หมายเลข SIM")||String(c).includes("serial")||String(c).toLowerCase().includes("sim serial")));
+        if(headerIdx<0)headerIdx=0;
+        const header=rows[headerIdx];
+        const data=rows.slice(headerIdx+1).filter(r=>r.some(c=>c&&String(c).match(/^8966/)));
+        const colIdx=(keywords)=>{for(const kw of keywords){const i=header.findIndex(h=>String(h).includes(kw));if(i>=0)return i;}return -1;};
+        const iSerial=colIdx(["หมายเลข SIM","serial","SIM"]);
+        const iScanDate=colIdx(["วันที่สแกน","scan"]);
+        const iPartnerCode=colIdx(["รหัสพันธมิตรทางการค้า SIM","รหัสพันธมิตร"]);
+        const iPartnerName=colIdx(["ชื่อพันธมิตรทางการค้า SIM","ชื่อพันธมิตร"]);
+        const iOwnerCode=colIdx(["รหัสเจ้าของ SIM","รหัสเจ้าของ"]);
+        const iOwnerName=colIdx(["ชื่อเจ้าของ SIM","ชื่อเจ้าของ"]);
+        const iSubCode=colIdx(["รหัสตัวแทนคู่ค้า","รหัสตัวแทน"]);
+        const iSubName=colIdx(["ชื่อตัวแทนคู่ค้า","ชื่อตัวแทน"]);
+        const iStatus=colIdx(["สถานะ","status"]);
+        const iReason=colIdx(["เหตุผล","reason"]);
+        const iType=colIdx(["ประเภท"]);
+        const sims=data.map(r=>{
+          const serial=String(r[iSerial]||"").replace(/\.0+$/,"").trim();
+          const partnerCode=String(r[iPartnerCode]||"").trim();
+          return{serial,scanDate:iScanDate>=0?String(r[iScanDate]||"").trim():"",partnerCode,partnerName:iPartnerName>=0?String(r[iPartnerName]||"").trim():"",ownerCode:iOwnerCode>=0?String(r[iOwnerCode]||"").trim():"",ownerName:iOwnerName>=0?String(r[iOwnerName]||"").trim():"",subCode:iSubCode>=0?String(r[iSubCode]||"").trim():"",subName:iSubName>=0?String(r[iSubName]||"").trim():"",simStatus:iStatus>=0?String(r[iStatus]||"").trim():"",failReason:iReason>=0?String(r[iReason]||"").trim():"",simType:iType>=0?String(r[iType]||"").trim():"",province:PARTNER_MAP[partnerCode]||"ไม่ระบุ",importedAt:Date.now(),registered:false,registeredAt:null,customerPhone:"",customerName:"",platform:"",orderId:"",sold:false,soldAt:null,notes:""};
+        }).filter(s=>s.serial.match(/^8966/));
+        resolve(sims);
+      }catch(err){reject(err);}
+    };
+    reader.readAsBinaryString(file);
+  });
+}
+
+// ──────────────────────────────────────────
+// Toast
+// ──────────────────────────────────────────
+function Toast({msg,type,onClose}){
+  useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t);},[]);
+  const bg={ok:"#059669",warn:"#d97706",err:"#dc2626"}[type||"ok"];
+  return(<div style={{position:"fixed",top:20,right:16,zIndex:9999,background:bg,color:"white",padding:"10px 18px",borderRadius:12,fontWeight:600,fontSize:14,boxShadow:"0 4px 20px rgba(0,0,0,0.5)",maxWidth:320}}>{msg}</div>);
+}
+
+// ──────────────────────────────────────────
+// ImportTab (Excel)
+// ──────────────────────────────────────────
+function ImportTab({onImport}){
+  const [dragging,setDragging]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [preview,setPreview]=useState(null);
+  const [err,setErr]=useState("");
+  const fileRef=useRef();
+  const process=async(file)=>{
+    setErr("");setLoading(true);setPreview(null);
+    try{const sims=await parseExcel(file);if(sims.length===0){setErr("ไม่พบข้อมูลซิม (8966...) ในไฟล์นี้");setLoading(false);return;}setPreview({sims,fileName:file.name});}
+    catch(e){setErr("อ่านไฟล์ไม่ได้: "+e.message);}
+    setLoading(false);
+  };
+  const onDrop=e=>{e.preventDefault();setDragging(false);const f=e.dataTransfer.files[0];if(f)process(f);};
+  const confirm=()=>{if(!preview)return;onImport(preview.sims,preview.fileName);setPreview(null);};
+  const byProv=preview?preview.sims.reduce((a,s)=>{a[s.province]=(a[s.province]||0)+1;return a},{}):{}
+  const byStatus=preview?preview.sims.reduce((a,s)=>{a[s.simStatus]=(a[s.simStatus]||0)+1;return a},{}):{}
+  return(
+    <div style={{padding:16,maxWidth:700,margin:"0 auto"}}>
+      <div style={S.card}>
+        <div style={S.h2}>📂 นำเข้าไฟล์ Excel จากทรู</div>
+        <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={onDrop} onClick={()=>fileRef.current.click()} style={{border:`2px dashed ${dragging?"#6366f1":"rgba(255,255,255,0.15)"}`,borderRadius:14,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:dragging?"rgba(99,102,241,0.08)":"transparent",transition:"all .2s",marginBottom:16}}>
+          <div style={{fontSize:40,marginBottom:12}}>📊</div>
+          <div style={{fontWeight:700,color:"#e2e8f0",marginBottom:6}}>ลาก & วาง ไฟล์ Excel ที่นี่</div>
+          <div style={{color:"#64748b",fontSize:13}}>หรือคลิกเพื่อเลือกไฟล์ (.xls, .xlsx)</div>
+          <input ref={fileRef} type="file" accept=".xls,.xlsx" style={{display:"none"}} onChange={e=>e.target.files[0]&&process(e.target.files[0])}/>
+        </div>
+        {loading&&<div style={{textAlign:"center",color:"#a78bfa",padding:20}}>⏳ กำลังอ่านไฟล์...</div>}
+        {err&&<div style={{color:"#f87171",fontSize:13,padding:"8px 12px",background:"rgba(239,68,68,0.1)",borderRadius:8,marginBottom:12}}>{err}</div>}
+        {preview&&(
+          <div className="fade">
+            <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:12,padding:14,marginBottom:14}}>
+              <div style={{color:"#6ee7b7",fontWeight:700,fontSize:14,marginBottom:10}}>✅ พบข้อมูลซิม {preview.sims.length} รายการ จาก "{preview.fileName}"</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
+                <div><div style={{color:"#94a3b8",fontSize:12,marginBottom:6}}>แยกตามจังหวัด/โค้ด</div>{Object.entries(byProv).map(([p,c])=>(<div key={p} style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}><span style={{...S.tag,background:"rgba(99,102,241,0.2)",color:"#a78bfa"}}>{p}</span><span style={{color:"#e2e8f0",fontWeight:700}}>{c} ซิม</span></div>))}</div>
+                <div><div style={{color:"#94a3b8",fontSize:12,marginBottom:6}}>สถานะในระบบทรู</div>{Object.entries(byStatus).map(([s,c])=>(<div key={s} style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}><span style={{...S.tag,background:s==="SUCCESS"?"rgba(5,150,105,0.2)":"rgba(239,68,68,0.2)",color:s==="SUCCESS"?"#6ee7b7":"#f87171"}}>{s||"ไม่ระบุ"}</span><span style={{color:"#e2e8f0",fontWeight:700}}>{c} รายการ</span></div>))}</div>
+              </div>
+              <div style={{marginTop:10,color:"#94a3b8",fontSize:11}}>ตัวอย่าง Serial: {preview.sims.slice(0,3).map(s=>s.serial).join(", ")}</div>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={confirm} style={{...S.btnGreen,flex:1}}>✅ นำเข้าระบบ {preview.sims.length} รายการ</button>
+              <button onClick={()=>setPreview(null)} style={{...S.btnGhost}}>ยกเลิก</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// OrderImportTab (PDF ออเดอร์ Shopee/TikTok)
+// ──────────────────────────────────────────
+function OrderImportTab({orders,onImportOrders,toast}){
+  const [dragging,setDragging]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [preview,setPreview]=useState(null);
+  const [err,setErr]=useState("");
+  const [dupDetails,setDupDetails]=useState([]);
+  const [filterDup,setFilterDup]=useState(false);
+  const [searchQ,setSearchQ]=useState("");
+  const fileRef=useRef();
+  const process=async(file)=>{
+    setErr("");setLoading(true);setPreview(null);setDupDetails([]);
+    try{
+      if(typeof pdfjsLib==="undefined"){setErr("PDF.js ยังโหลดไม่เสร็จ — กรุณารอสักครู่แล้วลองใหม่");setLoading(false);return;}
+      const parsed=await parsePdfOrders(file);
+      if(parsed.length===0){setErr("ไม่พบข้อมูลออเดอร์ในไฟล์นี้");setLoading(false);return;}
+      const dups=[];
+      parsed.forEach(newOrd=>{const matches=orders.filter(ex=>isSimilarCustomer(ex,newOrd));if(matches.length>0)dups.push({newOrder:newOrd,existing:matches});});
+      setDupDetails(dups);setPreview({orders:parsed,fileName:file.name});
+    }catch(e){setErr("อ่าน PDF ไม่ได้: "+e.message);}
+    setLoading(false);
+  };
+  const onDrop=e=>{e.preventDefault();setDragging(false);const f=e.dataTransfer.files[0];if(f)process(f);};
+  const confirmImport=()=>{if(!preview)return;onImportOrders(preview.orders,preview.fileName);setPreview(null);setDupDetails([]);};
+  const byPlatform=preview?preview.orders.reduce((a,o)=>{a[o.platform]=(a[o.platform]||0)+1;return a},{}):{}
+  const codCount=preview?preview.orders.filter(o=>o.payType==="COD").length:0;
+  const dupOrderIds=new Set(dupDetails.map(d=>d.newOrder.orderId||d.newOrder.trackingNo));
+  const allOrders=useMemo(()=>{
+    let r=[...orders].sort((a,b)=>(b.importedAt||0)-(a.importedAt||0));
+    if(filterDup){const dupKeys=new Set(orders.filter(o=>orders.some(o2=>o2!==o&&isSimilarCustomer(o,o2))).map(o=>o.orderId||o.trackingNo));r=r.filter(o=>dupKeys.has(o.orderId||o.trackingNo));}
+    if(searchQ){const q=searchQ.toLowerCase();r=r.filter(o=>String(o.customerName).toLowerCase().includes(q)||String(o.orderId).toLowerCase().includes(q)||String(o.trackingNo).toLowerCase().includes(q)||String(o.customerAddr).toLowerCase().includes(q));}
+    return r;
+  },[orders,filterDup,searchQ]);
+  const allDupNames=useMemo(()=>{const dupSet=new Set();orders.forEach(o=>{if(orders.some(o2=>o2!==o&&isSimilarCustomer(o,o2)))dupSet.add(o.orderId||o.trackingNo);});return dupSet;},[orders]);
+  return(
+    <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
+      <div style={S.card}>
+        <div style={S.h2}>📦 นำเข้าคำสั่งซื้อ PDF (Shopee / TikTok)</div>
+        <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={onDrop} onClick={()=>fileRef.current.click()} style={{border:`2px dashed ${dragging?"#6366f1":"rgba(255,255,255,0.15)"}`,borderRadius:14,padding:"32px 20px",textAlign:"center",cursor:"pointer",background:dragging?"rgba(99,102,241,0.08)":"transparent",transition:"all .2s",marginBottom:12}}>
+          <div style={{fontSize:36,marginBottom:10}}>📄</div>
+          <div style={{fontWeight:700,color:"#e2e8f0",marginBottom:4}}>ลาก & วาง ไฟล์ PDF ใบปะหน้าพัสดุ</div>
+          <div style={{color:"#64748b",fontSize:13}}>รองรับ Shopee (หลายหน้า) และ TikTok Shop</div>
+          <input ref={fileRef} type="file" accept=".pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&process(e.target.files[0])}/>
+        </div>
+        {loading&&(<div style={{textAlign:"center",padding:20}}><div style={{width:32,height:32,border:"3px solid rgba(255,255,255,0.1)",borderTop:"3px solid #6366f1",borderRadius:"50%",animation:"spin 1s linear infinite",margin:"0 auto 10px"}}/><div style={{color:"#a78bfa",fontSize:13}}>กำลังอ่าน PDF...</div></div>)}
+        {err&&<div style={{color:"#f87171",background:"rgba(239,68,68,0.08)",borderRadius:8,padding:"8px 12px",fontSize:13,marginBottom:8}}>{err}</div>}
+        {preview&&(
+          <div className="fade">
+            <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:12,padding:14,marginBottom:12}}>
+              <div style={{color:"#6ee7b7",fontWeight:700,marginBottom:10}}>✅ พบ {preview.orders.length} ออเดอร์ จาก "{preview.fileName}"</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
+                <div><div style={{color:"#94a3b8",fontSize:12,marginBottom:4}}>แพลตฟอร์ม</div>{Object.entries(byPlatform).map(([p,c])=>(<div key={p} style={{display:"flex",gap:8,alignItems:"center",marginBottom:3}}><span style={{...S.tag,background:"rgba(99,102,241,0.2)",color:"#a78bfa"}}>{p}</span><span style={{color:"#e2e8f0",fontWeight:700}}>{c}</span></div>))}</div>
+                <div><div style={{color:"#94a3b8",fontSize:12,marginBottom:4}}>ชำระเงิน</div><div style={{color:"#e2e8f0",fontSize:13}}>💳 โอน: {preview.orders.length-codCount}</div><div style={{color:"#fbbf24",fontSize:13}}>💵 COD: {codCount}</div></div>
+              </div>
+            </div>
+            {dupDetails.length>0&&(
+              <div style={{...S.cardAlert,marginBottom:12}}>
+                <div style={{color:"#f87171",fontWeight:800,fontSize:14,marginBottom:8}}>⚠️ พบออเดอร์ซ้ำ {dupDetails.length} รายการ!</div>
+                {dupDetails.slice(0,5).map((d,i)=>(
+                  <div key={i} style={{background:"rgba(239,68,68,0.06)",borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                    <div style={{color:"#fbbf24",fontWeight:700,fontSize:12}}>🆕 {d.newOrder.customerName||"ไม่ระบุ"} ({d.newOrder.platform}) Order: {d.newOrder.orderId||d.newOrder.trackingNo}</div>
+                    {d.existing.map((ex,j)=>(<div key={j} style={{color:"#fca5a5",fontSize:11,marginTop:3,paddingLeft:12}}>↳ เคยสั่ง: {ex.platform} | {ex.orderId||ex.trackingNo} | {new Date(ex.importedAt).toLocaleDateString("th-TH")}</div>))}
+                  </div>
+                ))}
+                {dupDetails.length>5&&<div style={{color:"#64748b",fontSize:11}}>...และอีก {dupDetails.length-5} รายการ</div>}
+              </div>
+            )}
+            <div style={{background:"rgba(255,255,255,0.02)",borderRadius:10,overflow:"hidden",marginBottom:12,maxHeight:280,overflowY:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead><tr>{["แพลตฟอร์ม","ชื่อลูกค้า","ที่อยู่","Order / Tracking","ชำระ","ซ้ำ?"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+                <tbody>{preview.orders.map((o,i)=>{const isDup=dupOrderIds.has(o.orderId||o.trackingNo);return(<tr key={i} style={{background:isDup?"rgba(239,68,68,0.05)":"transparent"}}><td style={S.td}><span style={{...S.tag,background:"rgba(99,102,241,0.2)",color:"#a78bfa",fontSize:10}}>{o.platform}</span></td><td style={{...S.td,fontWeight:isDup?700:400,color:isDup?"#fbbf24":"#e2e8f0"}}>{o.customerName||"—"}</td><td style={{...S.td,fontSize:11,maxWidth:140,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{o.customerAddr||"—"}</td><td style={{...S.td,fontFamily:"monospace",fontSize:10}}>{o.orderId||o.trackingNo||"—"}</td><td style={S.td}><span style={{...S.tag,background:o.payType==="COD"?"rgba(251,191,36,0.2)":"rgba(5,150,105,0.2)",color:o.payType==="COD"?"#fbbf24":"#6ee7b7",fontSize:10}}>{o.payType==="COD"?"COD":"โอน"}</span></td><td style={S.td}>{isDup?<span style={{...S.tag,background:"rgba(239,68,68,0.2)",color:"#f87171",fontSize:10}}>⚠️ ซ้ำ</span>:"—"}</td></tr>);})}</tbody>
+              </table>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={confirmImport} style={{...S.btnGreen,flex:1}}>✅ นำเข้า {preview.orders.length} ออเดอร์{dupDetails.length>0?` (ซ้ำ ${dupDetails.length})`:""}</button>
+              <button onClick={()=>{setPreview(null);setDupDetails([]);}} style={S.btnGhost}>ยกเลิก</button>
+            </div>
+          </div>
+        )}
+      </div>
+      {orders.length>0&&(
+        <div style={S.card}>
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
+            <div style={{...S.h2,marginBottom:0}}>📋 ออเดอร์ทั้งหมด ({orders.length})</div>
+            {allDupNames.size>0&&<button onClick={()=>setFilterDup(p=>!p)} style={{...S.btnRed,background:filterDup?"rgba(239,68,68,0.25)":"rgba(239,68,68,0.1)",padding:"5px 12px"}}>⚠️ ซ้ำ ({allDupNames.size})</button>}
+            <input placeholder="ค้นหา..." value={searchQ} onChange={e=>setSearchQ(e.target.value)} style={{...S.inp,flex:1,minWidth:160,padding:"7px 12px",fontSize:13}}/>
+          </div>
+          <div style={{overflowX:"auto",maxHeight:400,overflowY:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+              <thead><tr>{["แพลตฟอร์ม","ชื่อลูกค้า","ที่อยู่","Order / Tracking","ชำระ","วันที่ส่ง","สถานะ"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+              <tbody>{allOrders.slice(0,200).map((o,i)=>{const isDup=allDupNames.has(o.orderId||o.trackingNo);return(<tr key={i} style={{background:isDup?"rgba(239,68,68,0.04)":"transparent"}}><td style={S.td}><span style={{...S.tag,background:"rgba(99,102,241,0.15)",color:"#a78bfa",fontSize:10}}>{o.platform}</span></td><td style={{...S.td,color:isDup?"#fbbf24":"#e2e8f0",fontWeight:isDup?700:400}}>{o.customerName||"—"}</td><td style={{...S.td,fontSize:11,maxWidth:160,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} title={o.customerAddr}>{o.customerAddr||"—"}</td><td style={{...S.td,fontFamily:"monospace",fontSize:10}}>{o.orderId&&<div>{o.orderId}</div>}{o.trackingNo&&<div style={{color:"#64748b"}}>{o.trackingNo}</div>}</td><td style={S.td}><span style={{...S.tag,background:o.payType==="COD"?"rgba(251,191,36,0.15)":"rgba(5,150,105,0.15)",color:o.payType==="COD"?"#fbbf24":"#6ee7b7",fontSize:10}}>{o.payType==="COD"?"COD":"โอน"}</span></td><td style={{...S.td,fontSize:11}}>{o.shipDate||"—"}</td><td style={S.td}>{isDup?<span style={{...S.tag,background:"rgba(239,68,68,0.2)",color:"#f87171",fontSize:10}}>⚠️ ซ้ำ</span>:<span style={{color:"#4ade80",fontSize:10}}>✓</span>}</td></tr>);})}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// SellTab
+// ──────────────────────────────────────────
+function SellTab({sims,orders,onSell,toast}){
+  const [search,setSearch]=useState("");
+  const [selected,setSelected]=useState(null);
+  const [platform,setPlatform]=useState("Shopee");
+  const [orderId,setOrderId]=useState("");
+  const [custName,setCustName]=useState("");
+  const [custPhone,setCustPhone]=useState("");
+  const [custId,setCustId]=useState("");
+  const [dupCheck,setDupCheck]=useState(null);
+  const available=sims.filter(s=>!s.sold&&s.simStatus==="SUCCESS");
+  const filtered=available.filter(s=>!search||s.serial.includes(search)||s.province.includes(search)||s.partnerCode.includes(search));
+  const checkDup=()=>{
+    if(!custId&&!custPhone&&!custName.trim())return;
+    const prev=sims.filter(s=>s.sold&&((custId&&(s.customerIdCard===custId||s.customerId===custId))||(custPhone&&s.customerPhone===custPhone)||(custName.trim()&&s.customerName&&s.customerName.trim()===custName.trim())));
+    const orderDups=(orders||[]).filter(o=>{if(custName.trim()&&o.customerName){const na=custName.trim().toLowerCase(),nb=o.customerName.toLowerCase();if(na===nb)return true;if(na.length>3&&nb.length>3&&lev(na,nb)<=2)return true;}return false;});
+    const allDups=[...prev,...orderDups.map(o=>({...o,serial:"(จากออเดอร์ PDF)",soldAt:o.importedAt,customerName:o.customerName,orderId:o.orderId||o.trackingNo}))];
+    setDupCheck(allDups.length>0?allDups:null);
+  };
+  useEffect(()=>{checkDup();},[custId,custPhone,custName]);
+  const doSell=()=>{
+    if(!selected)return;
+    if(!custName.trim()){toast("กรุณากรอกชื่อลูกค้า","warn");return;}
+    if(dupCheck&&dupCheck.length>0){if(!confirm(`⚠️ พบลูกค้านี้เคยสั่งซื้อแล้ว ${dupCheck.length} ครั้ง!\nยืนยันขายต่อหรือไม่?`))return;}
+    onSell(selected.serial,{platform,orderId,customerName:custName,customerPhone:custPhone,customerId:custId,soldAt:Date.now()});
+    setSelected(null);setOrderId("");setCustName("");setCustPhone("");setCustId("");setDupCheck(null);
+  };
+  return(
+    <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
+      {dupCheck&&dupCheck.length>0&&(
+        <div style={{...S.cardAlert,marginBottom:12}}>
+          <div style={{color:"#f87171",fontWeight:800,fontSize:14,marginBottom:6}}>⚠️ พบการสั่งซื้อซ้ำ!</div>
+          {dupCheck.map(s=>(<div key={s.serial} style={{color:"#fca5a5",fontSize:12}}>{s.customerName} | {s.platform} | {new Date(s.soldAt).toLocaleDateString("th-TH")} | Serial: {s.serial}</div>))}
+          <div style={{color:"#fbbf24",fontSize:12,marginTop:6}}>True จำกัด 1 ซิมต่อ 1 ท่าน</div>
+        </div>
+      )}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div style={S.card}>
+          <div style={S.h2}>📦 เลือกซิมที่จะขาย</div>
+          <div style={{color:"#64748b",fontSize:12,marginBottom:10}}>พร้อมขาย: {available.length} ซิม</div>
+          <input placeholder="ค้นหาด้วย Serial / จังหวัด / โค้ด" value={search} onChange={e=>setSearch(e.target.value)} style={{...S.inp,marginBottom:10}}/>
+          <div style={{maxHeight:360,overflowY:"auto"}}>
+            {filtered.slice(0,50).map(s=>(<div key={s.serial} onClick={()=>setSelected(s)} style={{padding:"10px 12px",borderRadius:10,marginBottom:6,cursor:"pointer",border:`1px solid ${selected?.serial===s.serial?"#6366f1":"rgba(255,255,255,0.06)"}`,background:selected?.serial===s.serial?"rgba(99,102,241,0.12)":"rgba(255,255,255,0.02)"}}><div style={{display:"flex",gap:8,alignItems:"center",marginBottom:2}}><span style={{...S.tag,background:provColor(s.partnerCode)+"33",color:provColor(s.partnerCode),fontSize:10}}>{s.province}</span><span style={{color:"#a78bfa",fontWeight:700,fontSize:12,fontFamily:"monospace"}}>{s.serial}</span></div><div style={{color:"#64748b",fontSize:11}}>{s.partnerName} | {s.scanDate}</div></div>))}
+            {filtered.length===0&&<div style={{color:"#64748b",fontSize:12,textAlign:"center",padding:20}}>ไม่พบซิมที่ค้นหา</div>}
+          </div>
+        </div>
+        <div style={S.card}>
+          <div style={S.h2}>👤 ข้อมูลการขาย</div>
+          {selected?(<div style={{background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:14}}><div style={{color:"#a78bfa",fontWeight:700,fontSize:13}}>ซิมที่เลือก</div><div style={{color:"#e2e8f0",fontFamily:"monospace",fontSize:12,marginTop:2}}>{selected.serial}</div><div style={{color:"#64748b",fontSize:11}}>{selected.province} | {selected.simType}</div></div>):(<div style={{color:"#64748b",fontSize:13,marginBottom:14,padding:20,textAlign:"center"}}>← เลือกซิมจากด้านซ้าย</div>)}
+          <div style={{marginBottom:10}}><div style={S.h3}>ช่องทางการขาย</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{["Shopee","TikTok","Lazada","หน้าร้าน","อื่นๆ"].map(p=>(<button key={p} onClick={()=>setPlatform(p)} style={{...S.btnGhost,background:platform===p?"rgba(99,102,241,0.3)":"rgba(255,255,255,0.04)",color:platform===p?"#a78bfa":"#94a3b8",padding:"6px 14px",fontSize:12}}>{p}</button>))}</div></div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div><div style={S.h3}>Order ID</div><input placeholder="เช่น SPX240101..." value={orderId} onChange={e=>setOrderId(e.target.value)} style={S.inp}/></div>
+            <div><div style={S.h3}>ชื่อลูกค้า *</div><input placeholder="ชื่อ-นามสกุลลูกค้า" value={custName} onChange={e=>setCustName(e.target.value)} style={S.inp}/></div>
+            <div><div style={S.h3}>เบอร์โทร / Username</div><input placeholder="0812345678" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={S.inp}/></div>
+            <div><div style={S.h3}>เลขบัตรประชาชน / ID</div><input placeholder="1234567890123" value={custId} onChange={e=>setCustId(e.target.value)} style={S.inp}/></div>
+          </div>
+          <button onClick={doSell} disabled={!selected} style={{...S.btn,width:"100%",marginTop:16,opacity:selected?1:0.4}}>💰 บันทึกการขาย</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// RegisterTab
+// ──────────────────────────────────────────
+function RegisterTab({sims,onRegister,toast}){
+  const [serial,setSerial]=useState("");
+  const [phone,setPhone]=useState("");
+  const [found,setFound]=useState(null);
+  const [notFound,setNotFound]=useState(false);
+  const search=()=>{const s=serial.trim();if(!s){toast("กรุณากรอกเลข Serial","warn");return;}const sim=sims.find(x=>x.serial===s);if(sim){setFound(sim);setNotFound(false);}else{setFound(null);setNotFound(true);}};
+  const doReg=()=>{if(!found)return;if(found.registered){toast("ซิมนี้ลงทะเบียนไปแล้ว","warn");return;}onRegister(found.serial,{registeredAt:Date.now(),customerRegPhone:phone.trim()});setFound(null);setSerial("");setPhone("");setNotFound(false);};
+  const pending=sims.filter(s=>s.sold&&!s.registered).sort((a,b)=>(b.soldAt||0)-(a.soldAt||0));
+  return(
+    <div style={{padding:16,maxWidth:900,margin:"0 auto"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div style={S.card}>
+          <div style={S.h2}>📲 บันทึกการลงทะเบียนซิม</div>
+          <div style={{marginBottom:12}}><div style={S.h3}>เลข Serial ซิม (8966...)</div><div style={{display:"flex",gap:8}}><input placeholder="896604..." value={serial} onChange={e=>setSerial(e.target.value)} onKeyDown={e=>e.key==="Enter"&&search()} style={{...S.inp,flex:1,fontFamily:"monospace"}}/><button onClick={search} style={{...S.btn,whiteSpace:"nowrap"}}>🔍 ค้นหา</button></div></div>
+          {notFound&&<div style={{color:"#f87171",background:"rgba(239,68,68,0.08)",borderRadius:10,padding:"10px 14px",marginBottom:12}}>❌ ไม่พบ Serial นี้ในระบบ</div>}
+          {found&&(
+            <div className="fade">
+              <div style={{background:found.registered?"rgba(239,68,68,0.08)":"rgba(5,150,105,0.08)",border:`1px solid ${found.registered?"rgba(239,68,68,0.3)":"rgba(5,150,105,0.3)"}`,borderRadius:12,padding:14,marginBottom:12}}>
+                <div style={{color:found.registered?"#f87171":"#6ee7b7",fontWeight:700,marginBottom:8}}>{found.registered?"✅ ลงทะเบียนแล้ว":"📦 พบซิม — ยังไม่ลงทะเบียน"}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[["Serial",found.serial],["จังหวัด",found.province],["ลูกค้า",found.customerName||"-"],["ช่องทาง",found.platform||"-"],["Order ID",found.orderId||"-"],["ลงทะเบียน",found.registered?fmtDate(found.registeredAt):"ยังไม่ได้ลงทะเบียน"]].map(([l,v])=>(<div key={l}><div style={{color:"#64748b",fontSize:10}}>{l}</div><div style={{color:"#e2e8f0",fontSize:12,fontFamily:l==="Serial"?"monospace":"inherit"}}>{v}</div></div>))}
+                </div>
+              </div>
+              {!found.registered&&(<><div style={{marginBottom:10}}><div style={S.h3}>เบอร์โทรที่ได้รับ (ถ้ามี)</div><input placeholder="0812345678" value={phone} onChange={e=>setPhone(e.target.value)} style={S.inp}/></div><button onClick={doReg} style={{...S.btnGreen,width:"100%"}}>✅ บันทึกการลงทะเบียน</button></>)}
+            </div>
+          )}
+        </div>
+        <div style={S.card}>
+          <div style={S.h2}>⏳ รอลงทะเบียน ({pending.length} รายการ)</div>
+          <div style={{maxHeight:500,overflowY:"auto"}}>
+            {pending.map(s=>(<div key={s.serial} onClick={()=>{setSerial(s.serial);setFound(s);setNotFound(false);}} style={{padding:"10px 12px",borderRadius:10,marginBottom:6,cursor:"pointer",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)"}}><div style={{display:"flex",gap:8,alignItems:"center",marginBottom:2}}><span style={{...S.tag,background:provColor(s.partnerCode)+"33",color:provColor(s.partnerCode),fontSize:10}}>{s.province}</span><span style={{color:"#a78bfa",fontFamily:"monospace",fontSize:11}}>{s.serial}</span></div><div style={{color:"#e2e8f0",fontSize:11}}>{s.customerName} | {s.platform}</div><div style={{color:"#64748b",fontSize:10}}>ขายเมื่อ: {fmtDate(s.soldAt)}</div></div>))}
+            {pending.length===0&&<div style={{color:"#64748b",fontSize:12,textAlign:"center",padding:20}}>ไม่มีซิมที่รอลงทะเบียน 🎉</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// SummaryTab
+// ──────────────────────────────────────────
+function SummaryTab({sims,tgBot,tgChat,toast}){
+  const [date,setDate]=useState(todayBKK());
+  const [sending,setSending]=useState(false);
+  const todaySims=useMemo(()=>sims.filter(s=>{if(!s.registeredAt)return false;return new Date(s.registeredAt).toLocaleDateString("en-CA",{timeZone:"Asia/Bangkok"})===date;}),[sims,date]);
+  const byProv=useMemo(()=>{const m={};todaySims.forEach(s=>{if(!m[s.province])m[s.province]={code:s.partnerCode,count:0,serials:[]};m[s.province].count++;m[s.province].serials.push(s.serial);});return m;},[todaySims]);
+  const allSold=sims.filter(s=>s.sold),allReg=sims.filter(s=>s.registered),notReg=allSold.filter(s=>!s.registered);
+  const sendReport=async()=>{
+    if(!tgBot||!tgChat){toast("ยังไม่ได้ตั้งค่า Telegram Bot","warn");return;}
+    setSending(true);
+    const dateStr=new Date(date+"T00:00:00+07:00").toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"});
+    let msg=`📊 รายงานลงทะเบียนซิม\n📅 ${dateStr}\n${"─".repeat(20)}\n✅ ลงทะเบียนวันนี้: ${todaySims.length} ซิม\n\n`;
+    Object.entries(byProv).forEach(([prov,data])=>{msg+=`📍 ${prov} (โค้ด ${data.code}): ${data.count} ซิม\n`;data.serials.forEach(s=>{msg+=`  └ ${s}\n`;});});
+    msg+=`${"─".repeat(20)}\n📦 ขายแล้วทั้งหมด: ${allSold.length}\n✅ ลงทะเบียนแล้ว: ${allReg.length}\n⏳ ยังไม่ลงทะเบียน: ${notReg.length}\n`;
+    try{await fetch(`https://api.telegram.org/bot${tgBot}/sendMessage`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:tgChat,text:msg})});toast("✅ ส่งรายงาน Telegram แล้ว");}
+    catch(e){toast("ส่งไม่ได้: "+e.message,"err");}
+    setSending(false);
+  };
+  return(
+    <div style={{padding:16,maxWidth:800,margin:"0 auto"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+        {[{label:"ซิมทั้งหมด",val:sims.length,color:"#a78bfa",icon:"📦"},{label:"ขายแล้ว",val:allSold.length,color:"#60a5fa",icon:"💰"},{label:"ลงทะเบียนแล้ว",val:allReg.length,color:"#34d399",icon:"✅"},{label:"ยังไม่ลงทะเบียน",val:notReg.length,color:"#fbbf24",icon:"⏳"}].map(({label,val,color,icon})=>(<div key={label} style={{...S.card,textAlign:"center",padding:"14px 10px",marginBottom:0}}><div style={{fontSize:22}}>{icon}</div><div style={{color,fontWeight:800,fontSize:22,margin:"4px 0"}}>{val}</div><div style={{color:"#64748b",fontSize:11}}>{label}</div></div>))}
+      </div>
+      <div style={S.card}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:14,flexWrap:"wrap"}}>
+          <div style={S.h2}>📅 รายงานวันที่</div>
+          <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...S.inp,width:"auto",padding:"8px 12px"}}/>
+          <button onClick={sendReport} disabled={sending} style={{...S.btn,opacity:sending?0.6:1}}>{sending?"⏳ กำลังส่ง...":"📲 ส่ง Telegram"}</button>
+        </div>
+        <div style={{color:"#6ee7b7",fontWeight:700,marginBottom:12}}>ลงทะเบียนวันนี้: {todaySims.length} ซิม</div>
+        {Object.entries(byProv).length>0?Object.entries(byProv).map(([prov,data])=>(<div key={prov} style={{marginBottom:16}}><div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}><span style={{...S.tag,background:provColor(data.code)+"33",color:provColor(data.code)}}>📍 {prov}</span><span style={{color:"#94a3b8",fontSize:13}}>โค้ด {data.code} — {data.count} ซิม</span></div><div style={{background:"rgba(255,255,255,0.02)",borderRadius:10,overflow:"hidden"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{["Serial ซิม","ลูกค้า","ช่องทาง","เวลาลงทะเบียน"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{data.serials.map(sr=>{const s=sims.find(x=>x.serial===sr);return(<tr key={sr}><td style={{...S.td,fontFamily:"monospace",fontSize:11}}>{sr}</td><td style={S.td}>{s?.customerName||"-"}</td><td style={S.td}>{s?.platform||"-"}</td><td style={{...S.td,fontSize:11}}>{fmtDate(s?.registeredAt)}</td></tr>);})}</tbody></table></div></div>)):<div style={{color:"#64748b",fontSize:13,textAlign:"center",padding:30}}>ไม่มีการลงทะเบียนในวันที่เลือก</div>}
+      </div>
+      {notReg.length>0&&(<div style={S.card}><div style={{color:"#fbbf24",fontWeight:700,fontSize:15,marginBottom:12}}>⚠️ ลูกค้าที่ยังไม่ลงทะเบียนซิม ({notReg.length} ราย)</div><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{["Serial","จังหวัด","ลูกค้า","ช่องทาง","วันที่ขาย","นานแค่ไหน"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead><tbody>{notReg.sort((a,b)=>(a.soldAt||0)-(b.soldAt||0)).map(s=>{const days=Math.floor((Date.now()-(s.soldAt||Date.now()))/(1000*86400));return(<tr key={s.serial}><td style={{...S.td,fontFamily:"monospace",fontSize:11}}>{s.serial}</td><td style={S.td}><span style={{...S.tag,background:provColor(s.partnerCode)+"33",color:provColor(s.partnerCode)}}>{s.province}</span></td><td style={S.td}>{s.customerName||"-"}</td><td style={S.td}>{s.platform||"-"}</td><td style={{...S.td,fontSize:11}}>{fmtDate(s.soldAt)}</td><td style={{...S.td,color:days>7?"#f87171":days>3?"#fbbf24":"#6ee7b7",fontWeight:700}}>{days}วัน</td></tr>);})}</tbody></table></div>)}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// AllSimsTab
+// ──────────────────────────────────────────
+function AllSimsTab({sims,onDelete}){
+  const [q,setQ]=useState("");
+  const [filter,setFilter]=useState("all");
+  const filtered=useMemo(()=>{let r=sims;if(filter==="sold")r=r.filter(s=>s.sold);if(filter==="unsold")r=r.filter(s=>!s.sold);if(filter==="registered")r=r.filter(s=>s.registered);if(filter==="notReg")r=r.filter(s=>s.sold&&!s.registered);if(filter==="fail")r=r.filter(s=>s.simStatus==="FAIL");if(q)r=r.filter(s=>s.serial.includes(q)||String(s.customerName).includes(q)||String(s.orderId).includes(q)||String(s.province).includes(q));return r.sort((a,b)=>(b.importedAt||0)-(a.importedAt||0));},[sims,q,filter]);
+  const exportCSV=()=>{const header=["Serial","จังหวัด","โค้ด","สถานะทรู","ขายแล้ว","ช่องทาง","Order ID","ลูกค้า","เบอร์โทร","วันที่ขาย","ลงทะเบียนแล้ว","วันที่ลงทะเบียน","เบอร์ซิม"];const rows=filtered.map(s=>[s.serial,s.province,s.partnerCode,s.simStatus,s.sold?"ใช่":"ไม่",s.platform||"",s.orderId||"",s.customerName||"",s.customerPhone||"",s.soldAt?fmtDate(s.soldAt):"",s.registered?"ใช่":"ไม่",s.registeredAt?fmtDate(s.registeredAt):"",s.customerRegPhone||""]);const csv=[header,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\n");const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sim_report_"+todayBKK()+".csv";a.click();};
+  return(
+    <div style={{padding:16}}>
+      <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <input placeholder="ค้นหา Serial / ชื่อ / Order ID / จังหวัด" value={q} onChange={e=>setQ(e.target.value)} style={{...S.inp,flex:1,minWidth:200}}/>
+        {["all","sold","unsold","registered","notReg","fail"].map(f=>(<button key={f} onClick={()=>setFilter(f)} style={{...S.btnGhost,background:filter===f?"rgba(99,102,241,0.3)":"rgba(255,255,255,0.04)",color:filter===f?"#a78bfa":"#64748b",padding:"8px 14px",fontSize:12}}>
+          {{"all":"ทั้งหมด","sold":"ขายแล้ว","unsold":"ยังไม่ขาย","registered":"ลงทะเบียนแล้ว","notReg":"ยังไม่ลงทะเบียน","fail":"FAIL ทรู"}[f]}{" "}({f==="all"?sims.length:f==="sold"?sims.filter(s=>s.sold).length:f==="unsold"?sims.filter(s=>!s.sold).length:f==="registered"?sims.filter(s=>s.registered).length:f==="notReg"?sims.filter(s=>s.sold&&!s.registered).length:sims.filter(s=>s.simStatus==="FAIL").length})
+        </button>))}
+        <button onClick={exportCSV} style={{...S.btnGreen,padding:"8px 14px",fontSize:12}}>⬇️ Export CSV</button>
+      </div>
+      <div style={{background:"rgba(255,255,255,0.02)",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:900}}>
+            <thead><tr>{["Serial (8966...)","จังหวัด","สถานะทรู","ขาย","ช่องทาง","ลูกค้า","ลงทะเบียน","เบอร์ซิม",""].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+            <tbody>{filtered.slice(0,200).map(s=>(<tr key={s.serial}><td style={{...S.td,fontFamily:"monospace",fontSize:11}}>{s.serial}</td><td style={S.td}><span style={{...S.tag,background:provColor(s.partnerCode)+"33",color:provColor(s.partnerCode)}}>{s.province}</span></td><td style={S.td}><span style={{...S.tag,background:s.simStatus==="SUCCESS"?"rgba(5,150,105,0.2)":"rgba(239,68,68,0.2)",color:s.simStatus==="SUCCESS"?"#6ee7b7":"#f87171"}}>{s.simStatus}</span></td><td style={S.td}>{s.sold?<span style={{...S.tag,background:"rgba(99,102,241,0.2)",color:"#a78bfa"}}>ขายแล้ว</span>:"—"}</td><td style={S.td}>{s.platform||"—"}</td><td style={{...S.td,maxWidth:140}}>{s.customerName||"—"}</td><td style={S.td}>{s.registered?<span style={{...S.tag,background:"rgba(5,150,105,0.2)",color:"#6ee7b7"}}>✅</span>:(s.sold?<span style={{...S.tag,background:"rgba(251,191,36,0.2)",color:"#fbbf24"}}>⏳</span>:"—")}</td><td style={S.td}>{s.customerRegPhone||"—"}</td><td style={S.td}><button onClick={()=>{if(window.confirm("ลบซิม "+s.serial+" ออกจากระบบ?"))onDelete(s.serial);}} style={{...S.btnRed,padding:"4px 10px",fontSize:12}}>🗑️ ลบ</button></td></tr>))}</tbody>
+          </table>
+        </div>
+        {filtered.length===0&&<div style={{color:"#64748b",fontSize:12,textAlign:"center",padding:30}}>ไม่พบข้อมูล</div>}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// CustomerTrackerTab (NEW — รวมมาจากระบบติดตามลูกค้า)
+// ──────────────────────────────────────────
+function CustomerTrackerTab({customers,setCustomers,toast}){
+  const [subTab,setSubTab]=useState("list");
+  const [dragging,setDragging]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [pendingExtracts,setPendingExtracts]=useState([]);
+  const [searchQ,setSearchQ]=useState("");
+  const [filterMode,setFilterMode]=useState("all"); // all | repeat | blacklist
+  const [alertBlacklist,setAlertBlacklist]=useState(null);
+  const [alertRepeat,setAlertRepeat]=useState(null);
+  const fileRef=useRef();
+
+  const handleFiles=async(files)=>{
+    if(!files.length)return;
+    setLoading(true);setPendingExtracts([]);setAlertBlacklist(null);setAlertRepeat(null);
+    const results=[];
+    for(const f of files){
+      try{
+        let items=[];
+        if(f.type==="application/pdf")items=await parseShippingLabelPdf(f);
+        if(items.length>0)results.push(...items);
+        else toast("⚠️ ไม่พบข้อมูลใน "+f.name,"warn");
+      }catch(e){toast("❌ อ่านไฟล์ "+f.name+" ไม่ได้","err");}
+    }
+    setLoading(false);
+    if(results.length>0){
+      setPendingExtracts(results.map(r=>({...r,simSerial:""})));
+      setSubTab("extract");
+      // Check first result for duplicates
+      if(results[0]){
+        const dupes=findCustMatch(customers,results[0].name,results[0].address);
+        if(dupes.length>0){
+          const c=dupes[0].customer;
+          if(c.blacklisted)setAlertBlacklist(c);
+          else setAlertRepeat({customer:c,count:(c.orders||[]).length});
+        }
+      }
+    }
+  };
+
+  const saveExtracts=async()=>{
+    const now=new Date().toLocaleString("th-TH",{timeZone:"Asia/Bangkok",hour12:false});
+    const date=new Date().toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Asia/Bangkok"});
+    let saved=0;
+    const updatedCustomers={...customers};
+    for(let i=0;i<pendingExtracts.length;i++){
+      const e=pendingExtracts[i];
+      const name=document.getElementById(`cname_${i}`)?.value?.trim()||e.name;
+      const address=document.getElementById(`caddr_${i}`)?.value?.trim()||e.address;
+      const phone=document.getElementById(`cphone_${i}`)?.value?.trim()||e.phone;
+      const orderId=document.getElementById(`corder_${i}`)?.value?.trim()||e.orderId;
+      const tracking=document.getElementById(`ctrack_${i}`)?.value?.trim()||e.tracking;
+      const simSerial=document.getElementById(`csim_${i}`)?.value?.trim()||e.simSerial;
+      if(!name)continue;
+      const newOrder={orderId,tracking,simSerial,date,timestamp:now};
+      const dupes=findCustMatch(updatedCustomers,name,address);
+      let targetKey,existing=null;
+      if(dupes.length>0){targetKey=dupes[0].key;existing=dupes[0].customer;}
+      else targetKey=toKey(name+"_"+(address||"").substring(0,20)+"_"+Date.now());
+      const data=existing?{...existing,name,address,phone:phone||existing.phone,orders:[...(existing.orders||[]),newOrder],lastOrder:now,orderCount:(existing.orders||[]).length+1}:{name,address,phone,orders:[newOrder],firstOrder:now,lastOrder:now,orderCount:1,blacklisted:false,notes:""};
+      await fbS(CUSTOMERS_COL+"/"+targetKey,data);
+      updatedCustomers[targetKey]=data;
+      saved++;
+    }
+    setCustomers(updatedCustomers);
+    toast(`✅ บันทึก ${saved} รายการเรียบร้อย`);
+    setPendingExtracts([]);setSubTab("list");setAlertBlacklist(null);setAlertRepeat(null);
+  };
+
+  const toggleBlacklist=async(key)=>{
+    const c=customers[key];if(!c)return;
+    const updated={...customers,[key]:{...c,blacklisted:!c.blacklisted}};
+    await fbP(CUSTOMERS_COL+"/"+key,{blacklisted:!c.blacklisted});
+    setCustomers(updated);
+    toast(!c.blacklisted?"🚫 เพิ่มแบล็คลิสต์แล้ว":"✅ นำออกจากแบล็คลิสต์แล้ว");
+  };
+
+  const deleteCustomer=async(key)=>{
+    if(!confirm("ลบข้อมูลลูกค้านี้ออกจากระบบ?"))return;
+    await fbD(CUSTOMERS_COL+"/"+key);
+    const updated={...customers};delete updated[key];
+    setCustomers(updated);toast("🗑️ ลบข้อมูลแล้ว","warn");
+  };
+
+  const addManual=()=>{setPendingExtracts([{name:"",address:"",phone:"",orderId:"",tracking:"",simSerial:""}]);setSubTab("extract");};
+
+  const allEntries=Object.entries(customers);
+  const filteredEntries=useMemo(()=>{
+    let r=allEntries;
+    if(filterMode==="repeat")r=r.filter(([,c])=>(c.orderCount||1)>1&&!c.blacklisted);
+    else if(filterMode==="blacklist")r=r.filter(([,c])=>c.blacklisted);
+    if(searchQ){const q=searchQ.toLowerCase();r=r.filter(([,c])=>String(c.name).toLowerCase().includes(q)||String(c.address).toLowerCase().includes(q)||(c.orders||[]).some(o=>String(o.orderId).toLowerCase().includes(q)||String(o.tracking).toLowerCase().includes(q)));}
+    return r.sort(([,a],[,b])=>{if(a.blacklisted&&!b.blacklisted)return -1;if(!a.blacklisted&&b.blacklisted)return 1;return(b.orderCount||1)-(a.orderCount||1);});
+  },[customers,filterMode,searchQ]);
+
+  const statTotal=allEntries.length;
+  const statRepeat=allEntries.filter(([,c])=>(c.orderCount||1)>1&&!c.blacklisted).length;
+  const statBlacklist=allEntries.filter(([,c])=>c.blacklisted).length;
+
+  return(
+    <div style={{padding:16,maxWidth:1000,margin:"0 auto"}}>
+      {/* Stats */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}}>
+        {[{label:"ลูกค้าทั้งหมด",val:statTotal,color:"#a78bfa",icon:"👥"},{label:"ซื้อซ้ำ",val:statRepeat,color:"#f77f00",icon:"⚠️"},{label:"แบล็คลิสต์",val:statBlacklist,color:"#ef233c",icon:"🚫"}].map(({label,val,color,icon})=>(<div key={label} style={{...S.card,textAlign:"center",padding:"12px 10px",marginBottom:0}}><div style={{fontSize:20}}>{icon}</div><div style={{color,fontWeight:800,fontSize:24,margin:"4px 0"}}>{val}</div><div style={{color:"#64748b",fontSize:11}}>{label}</div></div>))}
+      </div>
+
+      {/* Alert */}
+      {alertBlacklist&&<div style={{...S.cardAlert,marginBottom:12}}><div style={{color:"#f87171",fontWeight:800,fontSize:14,marginBottom:4}}>🚫 แบล็คลิสต์!</div><div style={{color:"#fca5a5",fontSize:13}}>"{alertBlacklist.name}" ถูกแบล็คลิสต์ไว้ — เคยสั่งซื้อมาแล้ว {(alertBlacklist.orders||[]).length} ครั้ง</div><div style={{color:"#94a3b8",fontSize:12}}>ที่อยู่: {alertBlacklist.address}</div></div>}
+      {alertRepeat&&!alertBlacklist&&<div style={{...S.cardWarn,marginBottom:12}}><div style={{color:"#fbbf24",fontWeight:800,fontSize:14,marginBottom:4}}>⚠️ ลูกค้าซื้อซ้ำ!</div><div style={{color:"#fde68a",fontSize:13}}>"{alertRepeat.customer.name}" เคยสั่งซื้อมาแล้ว {alertRepeat.count} ครั้ง</div><div style={{color:"#94a3b8",fontSize:12}}>ที่อยู่: {alertRepeat.customer.address}</div></div>}
+
+      {/* Upload Zone */}
+      {subTab==="list"&&(
+        <>
+          <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);handleFiles(e.dataTransfer.files);}} onClick={()=>fileRef.current.click()} style={{border:`2px dashed ${dragging?"#6366f1":"rgba(255,255,255,0.15)"}`,borderRadius:14,padding:"28px 20px",textAlign:"center",cursor:"pointer",background:dragging?"rgba(99,102,241,0.08)":"rgba(255,255,255,0.02)",transition:"all .2s",marginBottom:12}}>
+            <div style={{fontSize:32,marginBottom:8}}>📄</div>
+            <div style={{fontWeight:700,color:"#e2e8f0",marginBottom:4}}>อัพโหลดใบปะหน้าพัสดุ (PDF)</div>
+            <div style={{color:"#64748b",fontSize:13}}>รองรับ SPX Express, Flash, Kerry · เลือกหลายไฟล์พร้อมกันได้</div>
+            <input ref={fileRef} type="file" accept=".pdf" multiple style={{display:"none"}} onChange={e=>handleFiles(e.target.files)}/>
+          </div>
+          {loading&&<div style={{textAlign:"center",color:"#a78bfa",padding:16,marginBottom:12}}>⏳ กำลังอ่าน PDF...</div>}
+          <button onClick={addManual} style={{...S.btnGhost,marginBottom:16,width:"100%"}}>✏️ เพิ่มข้อมูลลูกค้าด้วยตนเอง</button>
+
+          {/* Filter + Search */}
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+            {[["all","👥 ทั้งหมด"],["repeat","⚠️ ซื้อซ้ำ"],["blacklist","🚫 แบล็คลิสต์"]].map(([m,l])=>(<button key={m} onClick={()=>setFilterMode(m)} style={{...S.btnGhost,background:filterMode===m?"rgba(99,102,241,0.3)":"rgba(255,255,255,0.04)",color:filterMode===m?"#a78bfa":"#64748b",padding:"8px 14px",fontSize:12}}>{l}</button>))}
+            <input placeholder="🔍 ค้นหาชื่อ, ที่อยู่, Order..." value={searchQ} onChange={e=>setSearchQ(e.target.value)} style={{...S.inp,flex:1,minWidth:180,padding:"8px 12px",fontSize:13}}/>
+          </div>
+
+          {/* Table */}
+          <div style={{background:"rgba(255,255,255,0.02)",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",minWidth:700}}>
+                <thead><tr>{["ชื่อผู้รับ","ที่อยู่","Order / Tracking","ซิม Serial","ครั้งที่สั่ง","วันล่าสุด","สถานะ","จัดการ"].map(h=>(<th key={h} style={S.th}>{h}</th>))}</tr></thead>
+                <tbody>
+                  {filteredEntries.map(([key,c])=>{
+                    const lastOrder=(c.orders||[]).slice(-1)[0]||{};
+                    const sims=(c.orders||[]).map(o=>o.simSerial).filter(Boolean);
+                    const badge=c.blacklisted?<span style={{...S.tag,background:"rgba(239,68,68,0.2)",color:"#f87171"}}>🚫 แบล็คลิสต์</span>:(c.orderCount||1)>1?<span style={{...S.tag,background:"rgba(247,127,0,0.2)",color:"#f77f00"}}>⚠️ ซ้ำ ×{c.orderCount}</span>:<span style={{...S.tag,background:"rgba(5,150,105,0.2)",color:"#6ee7b7"}}>✅ ปกติ</span>;
+                    return(<tr key={key}><td style={S.td}><div style={{fontWeight:700}}>{c.name}</div>{c.phone&&<div style={{color:"#64748b",fontSize:11}}>{c.phone}</div>}</td><td style={{...S.td,maxWidth:160,fontSize:11}}>{c.address||"—"}</td><td style={{...S.td,fontFamily:"monospace",fontSize:10}}>{lastOrder.orderId||"—"}{lastOrder.tracking&&<div style={{color:"#64748b"}}>{lastOrder.tracking}</div>}</td><td style={{...S.td,fontSize:11}}>{sims.length>0?sims.map((s,i)=><span key={i} style={{display:"inline-block",background:"rgba(99,102,241,0.15)",borderRadius:4,padding:"1px 6px",fontSize:10,margin:1,fontFamily:"monospace"}}>{s}</span>):"—"}</td><td style={{...S.td,textAlign:"center",fontWeight:700,color:"#a78bfa"}}>{c.orderCount||1}</td><td style={{...S.td,fontSize:11,whiteSpace:"nowrap"}}>{c.lastOrder||"—"}</td><td style={S.td}>{badge}</td><td style={S.td}><button onClick={()=>toggleBlacklist(key)} style={{...S.btnGhost,padding:"4px 10px",fontSize:11,marginBottom:4,display:"block"}}>{c.blacklisted?"✅ ปลดล็อค":"🚫 แบล็คลิสต์"}</button><button onClick={()=>deleteCustomer(key)} style={{...S.btnRed,padding:"4px 10px",fontSize:11}}>🗑️ ลบ</button></td></tr>);
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {filteredEntries.length===0&&<div style={{color:"#64748b",fontSize:12,textAlign:"center",padding:30}}>ยังไม่มีข้อมูลลูกค้า — อัพโหลด PDF ใบปะหน้าหรือกรอกเอง</div>}
+          </div>
+        </>
+      )}
+
+      {/* Extract / Edit form */}
+      {subTab==="extract"&&(
+        <div>
+          <div style={S.h2}>✏️ ตรวจสอบข้อมูลก่อนบันทึก</div>
+          {pendingExtracts.map((e,i)=>(
+            <div key={i} style={{...S.card,marginBottom:12}}>
+              <div style={{color:"#a78bfa",fontWeight:700,marginBottom:12}}>📦 ใบปะหน้า {i+1}</div>
+              {[["ชื่อผู้รับ *","cname","text",e.name],["ที่อยู่","caddr","text",e.address],["เบอร์โทร","cphone","tel",e.phone||""],["Order ID","corder","text",e.orderId||""],["Tracking No.","ctrack","text",e.tracking||""],["ซิม Serial","csim","text",e.simSerial||""]].map(([label,field,type,val])=>(
+                <div key={field} style={{display:"grid",gridTemplateColumns:"110px 1fr",gap:"6px 12px",marginBottom:8,alignItems:"center"}}>
+                  <label style={{color:"#94a3b8",fontSize:12}}>{label}</label>
+                  <input id={`${field}_${i}`} type={type} defaultValue={val} style={{...S.inp,padding:"8px 12px"}} placeholder={label}/>
+                </div>
+              ))}
+            </div>
+          ))}
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={saveExtracts} style={{...S.btnGreen,flex:1}}>💾 บันทึกทั้งหมด ({pendingExtracts.length} รายการ)</button>
+            <button onClick={()=>{setPendingExtracts([]);setSubTab("list");setAlertBlacklist(null);setAlertRepeat(null);}} style={S.btnGhost}>ยกเลิก</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// SettingsTab
+// ──────────────────────────────────────────
+function SettingsTab({tgBot,tgChat,setTgBot,setTgChat,toast,onClear}){
+  const [bot,setBot]=useState(tgBot);
+  const [chat,setChat]=useState(tgChat);
+  const [testing,setTesting]=useState(false);
+  const save=()=>{setTgBot(bot.trim());setTgChat(chat.trim());lsS("ct_tgbot",bot.trim());lsS("ct_tgchat",chat.trim());toast("✅ บันทึกแล้ว");};
+  const testTg=async()=>{
+    if(!bot||!chat){toast("กรอก Bot Token และ Chat ID ก่อน","warn");return;}
+    setTesting(true);
+    try{const r=await fetch(`https://api.telegram.org/bot${bot}/sendMessage`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:chat,text:"✅ ทดสอบ SIM Commission Tracker เชื่อมต่อสำเร็จ!"})});const d=await r.json();if(d.ok)toast("✅ ส่ง Telegram ทดสอบสำเร็จ");else toast("❌ "+d.description,"err");}
+    catch(e){toast("❌ "+e.message,"err");}
+    setTesting(false);
+  };
+  return(
+    <div style={{padding:16,maxWidth:500,margin:"0 auto"}}>
+      <div style={S.card}>
+        <div style={S.h2}>⚙️ ตั้งค่า Telegram (สำหรับรายงาน)</div>
+        <div style={{marginBottom:12}}><div style={S.h3}>Bot Token</div><input value={bot} onChange={e=>setBot(e.target.value)} placeholder="123456:ABC-..." style={S.inp}/></div>
+        <div style={{marginBottom:16}}><div style={S.h3}>Chat ID / Group ID</div><input value={chat} onChange={e=>setChat(e.target.value)} placeholder="-100xxxxxxx" style={S.inp}/></div>
+        <div style={{display:"flex",gap:10}}><button onClick={save} style={{...S.btn,flex:1}}>💾 บันทึก</button><button onClick={testTg} disabled={testing} style={{...S.btnGhost,flex:1}}>{testing?"⏳ กำลังทดสอบ...":"🧪 ทดสอบส่ง"}</button></div>
+      </div>
+      <div style={S.card}>
+        <div style={S.h2}>🗂️ รหัสโค้ดจังหวัด</div>
+        {Object.entries(PARTNER_MAP).map(([code,prov])=>(<div key={code} style={{display:"flex",gap:12,alignItems:"center",marginBottom:8,padding:"8px 12px",background:"rgba(255,255,255,0.03)",borderRadius:8}}><span style={{...S.tag,background:provColor(code)+"33",color:provColor(code),fontSize:13}}>{code}</span><span style={{color:"#e2e8f0",fontWeight:700}}>{prov}</span></div>))}
+      </div>
+      <div style={{...S.card,border:"1px solid rgba(239,68,68,0.2)"}}>
+        <div style={{color:"#f87171",fontWeight:700,marginBottom:8}}>⚠️ ล้างข้อมูลซิมทั้งหมด</div>
+        <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>ลบข้อมูลซิมออกจากระบบ (ไม่สามารถกู้คืนได้)</div>
+        <button onClick={()=>{if(confirm("ยืนยันล้างข้อมูลซิมทั้งหมด?"))onClear();}} style={{...S.btnRed,width:"100%"}}>🗑️ ล้างข้อมูลซิมทั้งหมด</button>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────
+// App Root
+// ──────────────────────────────────────────
+function App(){
+  const [sims,setSims]=useState([]);
+  const [orders,setOrders]=useState([]);
+  const [customers,setCustomers]=useState({});
+  const [tab,setTab]=useState("import");
+  const [toastMsg,setToastMsg]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [tgBot,setTgBot]=useState(lsG("ct_tgbot")||"");
+  const [tgChat,setTgChat]=useState(lsG("ct_tgchat")||"");
+  const toast=(msg,type="ok")=>setToastMsg({msg,type});
+
+  useEffect(()=>{
+    Promise.all([fbG(COLLECTION),fbG(ORDERS_COL),fbG(CUSTOMERS_COL)]).then(([d,od,cd])=>{
+      if(d&&typeof d==="object"&&!d.error)setSims(Object.values(d).filter(s=>s&&s.serial));
+      if(od&&typeof od==="object"&&!od.error)setOrders(Object.values(od).filter(o=>o&&(o.orderId||o.trackingNo)));
+      if(cd&&typeof cd==="object"&&!cd.error)setCustomers(cd);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
+  const handleImport=useCallback(async(newSims,fileName)=>{
+    const existing=new Set(sims.map(s=>s.serial));
+    const toAdd=newSims.filter(s=>!existing.has(s.serial));
+    const dups=newSims.length-toAdd.length;
+    if(toAdd.length===0){toast(`ไม่มีซิมใหม่ (${dups} ซ้ำทั้งหมด)`,"warn");return;}
+    setSims(prev=>{const next=[...prev,...toAdd];const obj={};next.forEach(s=>{obj[toKey(s.serial)]=s;});fbS(COLLECTION,obj);return next;});
+    toast(`✅ นำเข้า ${toAdd.length} ซิม${dups>0?" (ข้ามซ้ำ "+dups+")":""} จาก ${fileName}`);
+    setTab("all");
+  },[sims]);
+
+  const handleSell=useCallback((serial,info)=>{
+    setSims(prev=>{const next=prev.map(s=>s.serial===serial?{...s,...info,sold:true}:s);const obj={};next.forEach(s=>{obj[toKey(s.serial)]=s;});fbS(COLLECTION,obj);return next;});
+    // ── Auto-save customer when selling ──
+    const custName=info.customerName,custAddr="";
+    if(custName){
+      const now=new Date().toLocaleString("th-TH",{timeZone:"Asia/Bangkok",hour12:false});
+      const date=new Date().toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Asia/Bangkok"});
+      const newOrder={orderId:info.orderId||"",tracking:"",simSerial:serial,date,timestamp:now,platform:info.platform};
+      setCustomers(prev=>{
+        const dupes=findCustMatch(prev,custName,custAddr);
+        let targetKey,existing=null;
+        if(dupes.length>0){targetKey=dupes[0].key;existing=dupes[0].customer;}
+        else targetKey=toKey(custName+"_"+Date.now());
+        const data=existing?{...existing,orders:[...(existing.orders||[]),newOrder],lastOrder:now,orderCount:(existing.orders||[]).length+1}:{name:custName,address:custAddr,phone:info.customerPhone||"",orders:[newOrder],firstOrder:now,lastOrder:now,orderCount:1,blacklisted:false,notes:""};
+        fbS(CUSTOMERS_COL+"/"+targetKey,data);
+        return{...prev,[targetKey]:data};
+      });
+    }
+    toast("💰 บันทึกการขายแล้ว");
+  },[]);
+
+  const handleRegister=useCallback((serial,info)=>{
+    const sim=sims.find(s=>s.serial===serial);
+    if(sim&&tgBot&&tgChat){
+      const now=new Date().toLocaleString("th-TH",{timeZone:"Asia/Bangkok",hour12:false});
+      const msg=`📲 ลูกค้าลงทะเบียนซิมแล้ว!\n📋 Serial: ${serial}\n📍 จังหวัด: ${sim.province} (โค้ด ${sim.partnerCode})\n👤 ลูกค้า: ${sim.customerName||"-"}\n🛒 ช่องทาง: ${sim.platform||"-"}\n📞 เบอร์โทร: ${info.customerRegPhone||"-"}\n⏰ เวลา: ${now}`;
+      fetch(`https://api.telegram.org/bot${tgBot}/sendMessage`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:tgChat,text:msg})}).catch(()=>{});
+    }
+    setSims(prev=>{const next=prev.filter(s=>s.serial!==serial);fbD(COLLECTION+"/"+toKey(serial));return next;});
+    toast("✅ ลงทะเบียนสำเร็จ — ลบซิมออกจากระบบแล้ว");
+  },[sims,tgBot,tgChat]);
+
+  const handleImportOrders=useCallback((newOrders,fileName)=>{
+    const existingKeys=new Set(orders.map(o=>o.orderId||o.trackingNo));
+    const toAdd=newOrders.filter(o=>!(existingKeys.has(o.orderId)||existingKeys.has(o.trackingNo)));
+    const dups=newOrders.length-toAdd.length;
+    if(toAdd.length===0){toast(`ออเดอร์ทั้งหมดมีในระบบแล้ว (${dups} ซ้ำ)`,"warn");return;}
+    setOrders(prev=>{const next=[...prev,...toAdd];const obj={};next.forEach((o,i)=>{const k=toKey(o.orderId||o.trackingNo||String(o.importedAt)+"_"+i);obj[k]=o;});fbS(ORDERS_COL,obj);return next;});
+    toast(`✅ นำเข้า ${toAdd.length} ออเดอร์${dups>0?" (ข้ามซ้ำ "+dups+")":""} จาก ${fileName}`);
+  },[orders]);
+
+  const handleDelete=useCallback((serial)=>{setSims(prev=>{const next=prev.filter(s=>s.serial!==serial);fbD(COLLECTION+"/"+toKey(serial));return next;});toast("🗑️ ลบแล้ว","warn");},[]);
+  const handleClear=useCallback(()=>{setSims([]);fbD(COLLECTION);toast("🗑️ ล้างข้อมูลทั้งหมดแล้ว","warn");},[]);
+
+  const dupOrderCount=useMemo(()=>{const dups=new Set();orders.forEach(o=>{if(orders.some(o2=>o2!==o&&isSimilarCustomer(o,o2)))dups.add(o.orderId||o.trackingNo);});return dups.size;},[orders]);
+  const custBlacklistCount=Object.values(customers).filter(c=>c.blacklisted).length;
+  const custRepeatCount=Object.values(customers).filter(c=>(c.orderCount||1)>1&&!c.blacklisted).length;
+
+  const tabs=[
+    {id:"import",label:"📂 นำเข้า Excel"},
+    {id:"orders",label:`📦 ออเดอร์ PDF${orders.length>0?" ("+orders.length+")":""}${dupOrderCount>0?" ⚠️":""}`},
+    {id:"sell",label:"💰 บันทึกขาย"},
+    {id:"register",label:"📲 ลงทะเบียนซิม"},
+    {id:"summary",label:"📊 สรุปยอด"},
+    {id:"all",label:`📋 ซิมทั้งหมด (${sims.length})`},
+    {id:"customers",label:`🚚 ติดตามลูกค้า${custBlacklistCount>0?" 🚫"+custBlacklistCount:custRepeatCount>0?" ⚠️"+custRepeatCount:""}`},
+    {id:"settings",label:"⚙️ ตั้งค่า"},
+  ];
+
+  const notRegCount=sims.filter(s=>s.sold&&!s.registered).length;
+  const todayReg=sims.filter(s=>{if(!s.registeredAt)return false;return new Date(s.registeredAt).toLocaleDateString("en-CA",{timeZone:"Asia/Bangkok"})===todayBKK();}).length;
+
+  if(loading)return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <div style={{fontSize:48}}>📊</div>
+      <div style={{fontWeight:700,fontSize:18}}>SIM Commission Tracker</div>
+      <div style={{color:"#64748b",fontSize:13}}>กำลังโหลดข้อมูล...</div>
+      <div style={{width:36,height:36,border:"3px solid rgba(255,255,255,0.1)",borderTop:"3px solid #6366f1",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:"100vh"}}>
+      {toastMsg&&<Toast msg={toastMsg.msg} type={toastMsg.type} onClose={()=>setToastMsg(null)}/>}
+      {/* Header */}
+      <div style={{background:"rgba(15,23,42,0.95)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"12px 16px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:100}}>
+        <div style={{width:42,height:42,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>📊</div>
+        <div style={{flex:1}}>
+          <div style={{color:"white",fontWeight:800,fontSize:15}}>SIM Commission Tracker</div>
+          <div style={{color:"#64748b",fontSize:11}}>ติดตามซิม True · ติดตามลูกค้า · ป้องกันมิจฉาชีพ</div>
+        </div>
+        <div style={{display:"flex",gap:16}}>
+          <div style={{textAlign:"center"}}><div style={{color:"#34d399",fontWeight:800,fontSize:18}}>{todayReg}</div><div style={{color:"#64748b",fontSize:10}}>ลงทะเบียนวันนี้</div></div>
+          {notRegCount>0&&<div style={{textAlign:"center"}}><div style={{color:"#fbbf24",fontWeight:800,fontSize:18}}>{notRegCount}</div><div style={{color:"#64748b",fontSize:10}}>รอลงทะเบียน</div></div>}
+          {custBlacklistCount>0&&<div style={{textAlign:"center"}}><div style={{color:"#f87171",fontWeight:800,fontSize:18}}>{custBlacklistCount}</div><div style={{color:"#64748b",fontSize:10}}>แบล็คลิสต์</div></div>}
+        </div>
+      </div>
+      {/* Tabs */}
+      <div style={{display:"flex",overflowX:"auto",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"rgba(15,23,42,0.7)"}}>
+        {tabs.map(t=>(<button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"12px 16px",border:"none",borderBottom:tab===t.id?"2px solid #6366f1":"2px solid transparent",background:"transparent",color:tab===t.id?"#818cf8":"#64748b",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:12,whiteSpace:"nowrap"}}>{t.label}</button>))}
+      </div>
+      {/* Content */}
+      <div style={{paddingBottom:60}}>
+        {tab==="import"&&<ImportTab onImport={handleImport}/>}
+        {tab==="orders"&&<OrderImportTab orders={orders} onImportOrders={handleImportOrders} toast={toast}/>}
+        {tab==="sell"&&<SellTab sims={sims} orders={orders} onSell={handleSell} toast={toast}/>}
+        {tab==="register"&&<RegisterTab sims={sims} onRegister={handleRegister} toast={toast}/>}
+        {tab==="summary"&&<SummaryTab sims={sims} tgBot={tgBot} tgChat={tgChat} toast={toast}/>}
+        {tab==="all"&&<AllSimsTab sims={sims} onDelete={handleDelete}/>}
+        {tab==="customers"&&<CustomerTrackerTab customers={customers} setCustomers={setCustomers} toast={toast}/>}
+        {tab==="settings"&&<SettingsTab tgBot={tgBot} tgChat={tgChat} setTgBot={setTgBot} setTgChat={setTgChat} toast={toast} onClear={handleClear}/>}
+      </div>
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
+</script>
+</body>
+</html>
