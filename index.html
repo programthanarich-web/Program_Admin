@@ -208,6 +208,7 @@ const TABS = [
   ["shop", "ส่วนลด & QR"],
   ["orders", "รายการสั่งซื้อ"],
   ["coupons", "คูปองส่วนลด"],
+  ["stock", "สต๊อกซิม"],
   ["settings", "การตั้งค่า"],
   ["danger", "ลบประวัติ"]
 ];
@@ -346,6 +347,7 @@ function setTab(t) {
   tab = t;
   if (t === "orders") { loadOrders(); return; }
   if (t === "coupons") { loadCoupons(); return; }
+  if (t === "stock") { renderTabs(); loadStock(); return; }
   render();
 }
 
@@ -353,7 +355,8 @@ function render() {
   renderTabs();
   const views = {
     packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
-    orders: viewOrders, settings: viewSettings, danger: viewDanger, coupons: viewCoupons
+    orders: viewOrders, settings: viewSettings, danger: viewDanger, coupons: viewCoupons,
+    stock: viewStock
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
 }
