@@ -266,9 +266,14 @@ async function api(path, opts = {}) {
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(opts.json);
   }
-  const res = await fetch(API_BASE + path, { method: opts.method || "GET", headers, body });
-  if (res.status === 401) { logout(); throw new Error("unauthorized"); }
-  if (!res.ok) throw new Error("HTTP " + res.status);
+  let res;
+  try {
+    res = await fetch(API_BASE + path, { method: opts.method || "GET", headers, body });
+  } catch (e) {
+    throw new Error("เชื่อมต่อหลังบ้าน (Worker) ไม่ได้");
+  }
+  if (res.status === 401) throw new Error("รหัสไม่ผ่านการยืนยัน (401) ตรวจสอบรหัสผู้ดูแล หรือ Deploy Worker ล่าสุด");
+  if (!res.ok) throw new Error("เซิร์ฟเวอร์ตอบกลับผิดปกติ (HTTP " + res.status + ")");
   return res.json();
 }
 
@@ -813,7 +818,7 @@ async function loadOrders(silent = false) {
     orders = await api("/admin/orders");
   } catch (e) {
     orders = [];
-    if (!silent) toast("โหลดรายการไม่สำเร็จ", false);
+    if (!silent) toast("โหลดรายการไม่สำเร็จ: " + e.message, false);
   }
   render();
 }
@@ -1788,7 +1793,7 @@ async function loadCoupons() {
     couponList = await api("/admin/coupons");
   } catch (e) {
     couponList = [];
-    toast("โหลดคูปองไม่สำเร็จ", false);
+    toast("โหลดคูปองไม่สำเร็จ: " + e.message, false);
   }
   render();
 }
@@ -2042,6 +2047,313 @@ async function saveAll() {
   } finally {
     btn.disabled = false;
   }
+}
+
+/* ==========================================================
+   สต๊อกซิม (เก็บใน Firebase ที่ path /stock_sim)
+   ========================================================== */
+const STOCK_FB = "https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
+const STOCK_PATH = "/stock_sim";
+const STOCK_PROVINCE = { "10048452": "กาฬสินธุ์", "10049224": "เลย" };
+const STOCK_PLATFORMS = ["Shopee", "TikTok", "Lazada", "หน้าร้าน", "อื่นๆ"];
+let stockList = [];
+let stockLoaded = false;
+let stockSub = "list";
+let stockFilter = "all";
+let stockQ = "";
+let stockSelected = "";
+let stockPending = [];
+
+const stockKey = s => String(s).replace(/[.#$\[\]\/\s]/g, "_");
+const bkkDay = ts => new Date(ts).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+
+async function stockReq(path, method = "GET", data) {
+  const res = await fetch(STOCK_FB + path + ".json", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: data === undefined ? undefined : JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error("เชื่อมต่อฐานข้อมูลสต๊อกไม่ได้ (" + res.status + ")");
+  return res.json().catch(() => null);
+}
+
+async function loadStock() {
+  try {
+    const d = await stockReq(STOCK_PATH);
+    stockList = d && typeof d === "object" ? Object.values(d).filter(s => s && s.serial) : [];
+    stockLoaded = true;
+  } catch (e) {
+    toast(e.message, false);
+  }
+  render();
+}
+
+async function stockSave(serial, patch) {
+  const s = stockList.find(x => x.serial === serial);
+  if (!s) return false;
+  try {
+    await stockReq(STOCK_PATH + "/" + stockKey(serial), "PATCH", patch);
+    Object.assign(s, patch);
+    return true;
+  } catch (e) {
+    toast(e.message, false);
+    return false;
+  }
+}
+
+function stockPick(serial, mode) { stockSelected = serial; stockSub = mode; render(); }
+function stockSetSub(k) { stockSub = k; render(); }
+function stockSetFilter(f) { stockFilter = f; render(); }
+function stockSetQ(v) { stockQ = v; const el = document.getElementById("stockRows"); if (el) el.innerHTML = stockRowsHtml(); }
+
+function stockMatch(s) {
+  const f = stockFilter;
+  if (f === "available" && (s.sold || s.simStatus !== "SUCCESS")) return false;
+  if (f === "sold" && !s.sold) return false;
+  if (f === "pending" && !(s.sold && !s.registered)) return false;
+  if (f === "registered" && !s.registered) return false;
+  if (f === "fail" && s.simStatus === "SUCCESS") return false;
+  if (stockQ) {
+    const q = stockQ.toLowerCase();
+    return [s.serial, s.customerName, s.orderId, s.province].some(v => String(v || "").toLowerCase().includes(q));
+  }
+  return true;
+}
+
+function stockRowsHtml() {
+  const rows = stockList.filter(stockMatch).sort((a, b) => (b.importedAt || 0) - (a.importedAt || 0)).slice(0, 300);
+  if (!rows.length) return `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">ไม่พบข้อมูล</td></tr>`;
+  return rows.map(s => {
+    const st = s.registered ? `<span class="pill">ลงทะเบียนแล้ว</span>` : s.sold ? `<span class="pill new">รอลงทะเบียน</span>` : "-";
+    return `<tr>
+      <td><code>${esc(s.serial)}</code></td>
+      <td>${esc(s.province || "-")}</td>
+      <td>${esc(s.simStatus || "-")}</td>
+      <td>${s.sold ? "ขายแล้ว" : "-"}</td>
+      <td>${esc(s.customerName || "-")}</td>
+      <td>${st}</td>
+      <td style="white-space:nowrap">
+        <button class="ghost" onclick="stockPick('${esc(s.serial)}','sell')">ขาย</button>
+        <button class="ghost" onclick="stockPick('${esc(s.serial)}','reg')">ลงทะเบียน</button>
+        <button class="danger" onclick="stockDelete('${esc(s.serial)}')">ลบ</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function stockListHtml() {
+  const filters = [["all", "ทั้งหมด"], ["available", "พร้อมขาย"], ["sold", "ขายแล้ว"], ["pending", "รอลงทะเบียน"], ["registered", "ลงทะเบียนแล้ว"], ["fail", "FAIL ทรู"]];
+  return `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      ${filters.map(([k, l]) => `<button class="${stockFilter === k ? "primary" : "ghost"}" onclick="stockSetFilter('${k}')">${l}</button>`).join("")}
+    </div>
+    <input placeholder="ค้นหา Serial / ชื่อ / Order ID / จังหวัด" value="${esc(stockQ)}" oninput="stockSetQ(this.value)" style="margin-bottom:10px">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Serial</th><th>จังหวัด</th><th>สถานะทรู</th><th>ขาย</th><th>ลูกค้า</th><th>ลงทะเบียน</th><th></th></tr></thead>
+      <tbody id="stockRows">${stockRowsHtml()}</tbody>
+    </table></div>
+    <div style="color:var(--muted);font-size:12px;margin-top:8px">ทั้งหมด ${stockList.length} ซิม (แสดงสูงสุด 300 รายการ)</div>`;
+}
+
+function stockSellHtml() {
+  const avail = stockList.filter(s => !s.sold && s.simStatus === "SUCCESS").length;
+  return `
+    <div class="grid2">
+      <div>
+        <label>Serial ซิม (8966...)<input id="sSerial" value="${esc(stockSelected)}" placeholder="896604..."></label>
+        <label>ช่องทางการขาย<select id="sPlatform">${STOCK_PLATFORMS.map(p => `<option>${p}</option>`).join("")}</select></label>
+        <label>Order ID<input id="sOrder" placeholder="เช่น SPX240101..."></label>
+        <label>ชื่อลูกค้า *<input id="sName"></label>
+        <label>เบอร์โทร<input id="sPhone"></label>
+        <div style="margin-top:12px"><button class="primary" onclick="stockSaveSell()">บันทึกการขาย</button></div>
+      </div>
+      <div style="color:var(--muted);font-size:13px">พร้อมขาย ${avail} ซิม<br>เลือกซิมจากแท็บ "รายการทั้งหมด" แล้วกด "ขาย" หรือพิมพ์ Serial ทางซ้าย</div>
+    </div>`;
+}
+
+async function stockSaveSell() {
+  const serial = document.getElementById("sSerial").value.replace(/\D/g, "");
+  const name = document.getElementById("sName").value.trim();
+  const s = stockList.find(x => x.serial === serial);
+  if (!s) return toast("ไม่พบ Serial นี้ในสต๊อก", false);
+  if (s.sold) return toast("ซิมนี้บันทึกขายแล้ว", false);
+  if (!name) return toast("กรุณากรอกชื่อลูกค้า", false);
+  const ok = await stockSave(serial, {
+    sold: true,
+    soldAt: Date.now(),
+    platform: document.getElementById("sPlatform").value,
+    orderId: document.getElementById("sOrder").value.trim(),
+    customerName: name,
+    customerPhone: document.getElementById("sPhone").value.trim()
+  });
+  if (ok) { toast("บันทึกการขายแล้ว"); stockSelected = ""; }
+  render();
+}
+
+function stockRegHtml() {
+  const waiting = stockList.filter(s => s.sold && !s.registered);
+  const list = waiting.sort((a, b) => (b.soldAt || 0) - (a.soldAt || 0)).slice(0, 50);
+  const rows = list.map(s => `<tr>
+      <td><code>${esc(s.serial)}</code></td>
+      <td>${esc(s.customerName || "-")}</td>
+      <td><button class="ghost" onclick="stockPick('${esc(s.serial)}','reg')">เลือก</button></td>
+    </tr>`).join("");
+  return `
+    <div class="grid2">
+      <div>
+        <label>Serial ซิม (8966...)<input id="rSerial" value="${esc(stockSelected)}" placeholder="896604..."></label>
+        <label>เบอร์โทรที่ได้รับ (ถ้ามี)<input id="rPhone"></label>
+        <div style="margin-top:12px"><button class="primary" onclick="stockSaveReg()">บันทึกการลงทะเบียน</button></div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:6px">รอลงทะเบียน (${waiting.length})</div>
+        <div class="table-wrap" style="max-height:360px;overflow:auto"><table>
+          <tbody>${rows || `<tr><td style="color:var(--muted);padding:12px">ไม่มีซิมที่รอลงทะเบียน</td></tr>`}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+async function stockSaveReg() {
+  const serial = document.getElementById("rSerial").value.replace(/\D/g, "");
+  const s = stockList.find(x => x.serial === serial);
+  if (!s) return toast("ไม่พบ Serial นี้ในสต๊อก", false);
+  if (s.registered) return toast("ซิมนี้ลงทะเบียนแล้ว", false);
+  const ok = await stockSave(serial, {
+    registered: true,
+    registeredAt: Date.now(),
+    customerRegPhone: document.getElementById("rPhone").value.trim()
+  });
+  if (ok) { toast("บันทึกการลงทะเบียนแล้ว"); stockSelected = ""; }
+  render();
+}
+
+async function stockDelete(serial) {
+  if (!confirm("ลบซิม " + serial + " ออกจากสต๊อก?")) return;
+  try {
+    await stockReq(STOCK_PATH + "/" + stockKey(serial), "DELETE");
+    stockList = stockList.filter(s => s.serial !== serial);
+    toast("ลบแล้ว");
+  } catch (e) {
+    toast(e.message, false);
+  }
+  render();
+}
+
+function stockSumHtml() {
+  const today = bkkDay(Date.now());
+  const sold = stockList.filter(s => s.sold).length;
+  const reg = stockList.filter(s => s.registered).length;
+  const pend = stockList.filter(s => s.sold && !s.registered).length;
+  const avail = stockList.filter(s => !s.sold && s.simStatus === "SUCCESS").length;
+  const fail = stockList.filter(s => s.simStatus && s.simStatus !== "SUCCESS").length;
+  const regToday = stockList.filter(s => s.registeredAt && bkkDay(s.registeredAt) === today);
+  const provs = {};
+  regToday.forEach(s => { const p = s.province || "ไม่ระบุ"; provs[p] = (provs[p] || 0) + 1; });
+  const stat = (label, val) => `<div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${val}</div><div style="color:var(--muted);font-size:12px">${label}</div></div>`;
+  const provRows = Object.entries(provs).map(([p, c]) => `<tr><td>${esc(p)}</td><td style="text-align:right;font-weight:700">${c}</td></tr>`).join("");
+  return `
+    <div class="grid3" style="margin-bottom:14px">
+      ${stat("ซิมทั้งหมด", stockList.length)}${stat("พร้อมขาย", avail)}${stat("ขายแล้ว", sold)}
+      ${stat("ลงทะเบียนแล้ว", reg)}${stat("รอลงทะเบียน", pend)}${stat("FAIL ทรู", fail)}
+    </div>
+    <div style="font-weight:700;margin-bottom:6px">ลงทะเบียนวันนี้ (${regToday.length} ซิม)</div>
+    ${provRows ? `<table><tbody>${provRows}</tbody></table>` : `<div style="color:var(--muted)">ยังไม่มีการลงทะเบียนวันนี้</div>`}`;
+}
+
+function stockImportHtml() {
+  return `
+    <label>ไฟล์ Excel จากทรู (.xls, .xlsx)<input type="file" accept=".xls,.xlsx" onchange="stockParseFile(this.files[0])"></label>
+    <div id="stockImportMsg" style="margin-top:12px"></div>`;
+}
+
+function loadXlsx() {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) return resolve();
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("โหลดตัวอ่าน Excel ไม่ได้ ตรวจสอบอินเทอร์เน็ต"));
+    document.head.appendChild(s);
+  });
+}
+
+function stockMsg(html) {
+  const el = document.getElementById("stockImportMsg");
+  if (el) el.innerHTML = html;
+}
+
+async function stockParseFile(file) {
+  if (!file) return;
+  stockPending = [];
+  stockMsg(`<span style="color:var(--muted)">กำลังอ่านไฟล์...</span>`);
+  try {
+    await loadXlsx();
+    const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellText: true, raw: false });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: "" });
+    let hi = rows.findIndex(r => r.some(c => /หมายเลข SIM|serial/i.test(String(c))));
+    if (hi < 0) hi = 0;
+    const header = rows[hi].map(h => String(h));
+    const col = kws => { for (const kw of kws) { const i = header.findIndex(h => h.includes(kw)); if (i >= 0) return i; } return -1; };
+    const cSerial = col(["หมายเลข SIM", "serial", "SIM"]);
+    const cDate = col(["วันที่สแกน", "scan"]);
+    const cPC = col(["รหัสพันธมิตร"]);
+    const cPN = col(["ชื่อพันธมิตร"]);
+    const cSt = col(["สถานะ", "status"]);
+    const cRe = col(["เหตุผล", "reason"]);
+    const cTy = col(["ประเภท"]);
+    const val = (r, i) => (i >= 0 ? String(r[i] ?? "").trim() : "");
+    const sims = rows.slice(hi + 1).map(r => {
+      const serial = val(r, cSerial).replace(/\.0+$/, "").replace(/\s/g, "");
+      const pc = val(r, cPC);
+      return {
+        serial, scanDate: val(r, cDate), partnerCode: pc, partnerName: val(r, cPN),
+        province: STOCK_PROVINCE[pc] || "ไม่ระบุ", simStatus: val(r, cSt),
+        failReason: val(r, cRe), simType: val(r, cTy),
+        importedAt: Date.now(), sold: false, registered: false
+      };
+    }).filter(s => /^8966\d+$/.test(s.serial));
+    if (!sims.length) return stockMsg(`<span style="color:var(--err)">ไม่พบซิม (8966...) ในไฟล์นี้</span>`);
+    const existing = new Set(stockList.map(s => s.serial));
+    const fresh = sims.filter(s => !existing.has(s.serial));
+    stockPending = fresh;
+    stockMsg(`พบซิม ${sims.length} รายการ · ใหม่ ${fresh.length} · มีอยู่แล้ว ${sims.length - fresh.length}` +
+      (fresh.length ? `<div style="margin-top:10px"><button class="primary" onclick="stockConfirmImport()">นำเข้า ${fresh.length} ซิม</button></div>` : ""));
+  } catch (e) {
+    stockMsg(`<span style="color:var(--err)">อ่านไฟล์ไม่ได้: ${esc(e.message)}</span>`);
+  }
+}
+
+async function stockConfirmImport() {
+  const list = stockPending;
+  if (!list.length) return;
+  try {
+    for (let i = 0; i < list.length; i += 300) {
+      const part = {};
+      list.slice(i, i + 300).forEach(s => { part[stockKey(s.serial)] = s; });
+      await stockReq(STOCK_PATH, "PATCH", part);
+    }
+    stockList = stockList.concat(list);
+    stockPending = [];
+    stockSub = "list";
+    toast("นำเข้า " + list.length + " ซิมแล้ว");
+  } catch (e) {
+    toast(e.message, false);
+  }
+  render();
+}
+
+function viewStock() {
+  if (!stockLoaded) return `<div class="card">กำลังโหลดข้อมูลสต๊อก...</div>`;
+  const subs = [["list", "รายการทั้งหมด"], ["sell", "บันทึกขาย"], ["reg", "ลงทะเบียน"], ["sum", "สรุปยอด"], ["import", "นำเข้า Excel"]];
+  const bodies = { list: stockListHtml, sell: stockSellHtml, reg: stockRegHtml, sum: stockSumHtml, import: stockImportHtml };
+  return `<div class="card">
+    <div class="head"><h3>สต๊อกซิม</h3><button class="ghost" onclick="loadStock()">โหลดข้อมูลใหม่</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      ${subs.map(([k, l]) => `<button class="${stockSub === k ? "primary" : "ghost"}" onclick="stockSetSub('${k}')">${l}</button>`).join("")}
+    </div>
+    ${bodies[stockSub]()}
+  </div>`;
 }
 
 /* ==========================================================
