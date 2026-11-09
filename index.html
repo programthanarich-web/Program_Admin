@@ -2275,13 +2275,38 @@ async function stockParseFile(file) {
   }
 }
 
+// สร้างไฟล์ Excel เฉพาะซิมของพาร์ทเนอร์นี้ (ไม่รวมของพาร์ทเนอร์อื่นในไฟล์เดียวกัน)
+async function stockBuildPartnerFile(list) {
+  await loadXlsx();
+  const aoa = [["Serial", "รหัสพันธมิตร", "ชื่อพันธมิตร", "วันที่สแกน", "สถานะทรู", "เหตุผล", "ประเภท"]];
+  list.forEach(s => aoa.push([s.serial, s.partnerCode, stockName(), s.scanDate, s.simStatus, s.failReason, s.simType]));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "SIM");
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+async function stockUploadFile(list) {
+  const fd = new FormData();
+  fd.append("file", await stockBuildPartnerFile(list), `sim_stock_${stockPartner}.xlsx`);
+  fd.append("partner", stockPartner);
+  const r = await api("/admin/stock/file", { method: "POST", body: fd });
+  return r.id;
+}
+
 async function stockConfirmImport() {
   const list = stockPending;
   if (!list.length) return;
   let added = 0, existing = 0;
+  let fileId = "";
+  try {
+    fileId = await stockUploadFile(list);
+  } catch (e) {
+    toast("แนบไฟล์ไม่สำเร็จ นำเข้าต่อโดยไม่มีลิงก์ไฟล์: " + e.message, false);
+  }
   try {
     for (let i = 0; i < list.length; i += 1000) {
-      const r = await api("/admin/stock/import", { method: "POST", json: { partner: stockPartner, rows: list.slice(i, i + 1000) } });
+      const r = await api("/admin/stock/import", { method: "POST", json: { partner: stockPartner, rows: list.slice(i, i + 1000), fileId } });
       added += r.added;
       existing += r.existing;
     }
