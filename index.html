@@ -2158,9 +2158,34 @@ function stockRegisteredHtml() {
 
 function stockWaitingHtml() {
   const rows = stockSims.filter(s => !s.registered).sort((a, b) => (b.importedAt || 0) - (a.importedAt || 0));
-  return `<div style="font-weight:700;margin-bottom:8px">รอลงทะเบียน (${rows.length})</div>` +
-    stockTableHtml(rows.slice(0, 500).map(s => `<tr><td><code>${esc(s.serial)}</code></td><td>${esc(s.simStatus || "-")}</td><td>${esc(s.scanDate || "-")}</td></tr>`),
-      ["Serial", "สถานะทรู", "วันที่สแกน"]);
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="font-weight:700">รอลงทะเบียน (${rows.length})</div>
+      <button class="ghost" style="color:var(--err)" onclick="stockDeleteAllWaiting()" ${rows.length ? "" : "disabled"}>ลบทั้งหมดที่รอลงทะเบียน</button>
+    </div>` +
+    stockTableHtml(rows.slice(0, 500).map(s => `<tr><td><code>${esc(s.serial)}</code></td><td>${esc(s.simStatus || "-")}</td><td>${esc(s.scanDate || "-")}</td><td><button class="ghost" style="color:var(--err)" onclick="stockDeleteOne('${esc(s.serial)}')">ลบ</button></td></tr>`),
+      ["Serial", "สถานะทรู", "วันที่สแกน", ""]);
+}
+
+async function stockDeleteOne(serial) {
+  if (!confirm(`ลบซิม ${serial} ออกจากสต๊อก?`)) return;
+  await stockDeleteCall({ partner: stockPartner, serials: [serial] });
+}
+
+async function stockDeleteAllWaiting() {
+  const n = stockSims.filter(s => !s.registered).length;
+  if (!n) return;
+  if (!confirm(`ลบซิมที่รอลงทะเบียนทั้งหมดของ ${stockName()} (${n} ซิม)?\nซิมที่ลงทะเบียนแล้วจะไม่ถูกลบ`)) return;
+  await stockDeleteCall({ partner: stockPartner, all: true });
+}
+
+async function stockDeleteCall(body) {
+  try {
+    const r = await api("/admin/stock/delete", { method: "POST", json: body });
+    toast(`ลบแล้ว ${r.deleted} ซิม`);
+    await loadStock();
+  } catch (e) {
+    toast("ลบไม่สำเร็จ: " + e.message, false);
+  }
 }
 
 function stockSummaryHtml() {
