@@ -2072,7 +2072,6 @@ let stockPartner = STOCK_PARTNERS[0].code;
 let stockSub = "import";
 let stockSims = [];
 let stockGroupId = "";
-let stockNotifyId = "";
 let stockLoaded = false;
 let stockPending = [];
 let stockSumDate = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
@@ -2086,7 +2085,6 @@ async function loadStock() {
     const d = await api("/admin/stock?partner=" + encodeURIComponent(stockPartner));
     stockSims = d.sims || [];
     stockGroupId = ((d.partners || []).find(p => p.code === stockPartner) || {}).lineGroupId || "";
-    stockNotifyId = d.importNotifyGroupId || "";
     stockLoaded = true;
   } catch (e) {
     toast("โหลดสต๊อกไม่สำเร็จ: " + e.message, false);
@@ -2124,18 +2122,6 @@ async function stockSumLoad() {
 function stockSumAll() {
   stockSumDate = "";
   stockSumLoad();
-}
-
-async function stockSaveNotify() {
-  const gid = document.getElementById("stockNotifyGroup").value.trim();
-  try {
-    await api("/admin/stock/notify", { method: "POST", json: { lineGroupId: gid } });
-    stockNotifyId = gid;
-    toast("บันทึกกลุ่มแจ้งเตือนการนำเข้าแล้ว");
-  } catch (e) {
-    toast("บันทึกไม่สำเร็จ: " + e.message, false);
-  }
-  render();
 }
 
 async function stockSaveGroup() {
@@ -2202,12 +2188,8 @@ function viewStock() {
     <div class="head"><h3>สต๊อกซิม ${esc(stockName())} (รหัส ${esc(stockPartner)})</h3><button class="ghost" onclick="loadStock()">โหลดข้อมูลใหม่</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${partners}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px">
-      <label style="flex:1;min-width:240px">LINE Group ID ของพาร์ทเนอร์ (แจ้งเตือนเมื่อลูกค้าลงทะเบียน)<input id="stockGroup" value="${esc(stockGroupId)}" placeholder="C..."></label>
+      <label style="flex:1;min-width:240px">LINE Group ID ของพาร์ทเนอร์ (แจ้งเตือนเมื่อลูกค้าลงทะเบียนและเมื่อนำเข้าซิม)<input id="stockGroup" value="${esc(stockGroupId)}" placeholder="C..."></label>
       <button class="ghost" onclick="stockSaveGroup()">บันทึก Group ID</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px">
-      <label style="flex:1;min-width:240px">LINE Group ID กลุ่มกาฬสินธุ์ (แจ้งเตือนทุกครั้งที่นำเข้าซิม)<input id="stockNotifyGroup" value="${esc(stockNotifyId)}" placeholder="C..."></label>
-      <button class="ghost" onclick="stockSaveNotify()">บันทึกกลุ่มกาฬสินธุ์</button>
     </div>
     <div style="color:var(--muted);font-size:13px;margin-bottom:12px">ทั้งหมด ${total} ซิม · ลงทะเบียนแล้ว ${reg} · รอลงทะเบียน ${total - reg}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${sections}</div>
