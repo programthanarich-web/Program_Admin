@@ -1093,6 +1093,7 @@ function viewSettings() {
       <p class="hint">ใส่ LINE userId ของแอดมิน (คั่นด้วยคอมมาถ้ามีหลายคน) แอดมินที่อยู่ในรายการนี้เท่านั้นที่พิมพ์ <b>ยอด</b> / <b>รายการ</b> ในแชท LINE OA และกดอัปเดตสถานะได้<br>
       ยังไม่รู้ userId? ให้ทักบัญชีทางการหนึ่งครั้ง ระบบจะตอบ userId กลับมา (ระบบจะหยุดตอบเมื่อมีการตั้งค่าแล้ว)</p>
       <label>LINE userId ของแอดมิน<input value="${esc(settings.adminLineIds || "")}" placeholder="U1234abcd..." oninput="settings.adminLineIds=this.value;markDirty()"></label>
+      <label>แอดมินที่ไม่อนุญาตให้ดู "ลูกค้าสมัครเน็ตวันนี้" (userId คั่นด้วยคอมมา)<input value="${esc(settings.adminApplyDeniedIds || "")}" placeholder="U1234abcd..." oninput="settings.adminApplyDeniedIds=this.value;markDirty()"></label>
     </div>
 
     <div class="card">
