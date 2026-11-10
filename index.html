@@ -576,13 +576,13 @@ function pkgSection(title) {
   return `<div style="font-size:12px;font-weight:800;color:#64748b;letter-spacing:.3px;margin:14px 0 6px;text-transform:uppercase">${title}</div>`;
 }
 
-function pkgCardHTML(p, i) {
+function pkgCardHTML(p, i, pos = 0, total = 1) {
   const color = p.color || "#0b5ed7";
   const isNew = p.id === lastAddedPkg;
   return `
     <details class="pkg-card" ${isNew ? "open" : ""} style="border:1px solid var(--line);border-left:6px solid ${esc(color)};border-radius:14px;margin-bottom:14px;background:#fff">
       <summary style="cursor:pointer;list-style:none;padding:12px 14px;display:flex;align-items:center;gap:10px">
-        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:${esc(color)};color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center">${i + 1}</span>
+        <span style="flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:${esc(color)};color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center">${pos + 1}</span>
         <span style="flex:1;min-width:0">
           <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name || "แพ็กเกจใหม่ (ยังไม่ได้ตั้งชื่อ)")}</b>
           <small style="color:var(--muted)">${esc(p.price || 0)} บาท/เดือน${p.discType === "none" ? " · ไม่ลดร้าน" : ""}${p.shopOnly ? " · เฉพาะทางร้าน" : ""}</small>
@@ -626,7 +626,13 @@ function pkgCardHTML(p, i) {
         <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${p.shopVisible ? "checked" : ""} onchange="setShopVisible(${i},this.checked)"> สมัครเน็ตกับทางร้าน (ติ๊ก = แสดงในเมนูสมัครเน็ตกับทางร้านบนเว็บ ไม่ติ๊ก = ไม่แสดง)</label>
 
         <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);text-align:right">
-          <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${i + 1}</button>
+          <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:8px">
+              <button class="ghost" ${pos === 0 ? "disabled" : ""} onclick="movePkg(${i}, -1)">▲ เลื่อนขึ้น</button>
+              <button class="ghost" ${pos >= total - 1 ? "disabled" : ""} onclick="movePkg(${i}, 1)">▼ เลื่อนลง</button>
+            </div>
+            <button class="danger" onclick="delPkg(${i})">ลบแพ็กเกจที่ ${pos + 1}</button>
+          </div>
         </div>
       </div>
     </details>`;
@@ -646,7 +652,7 @@ function viewPackages() {
   const second = all.filter(x => x.p.month2 && !x.p.simAge);
   const third = all.filter(x => x.p.simAge);
   const list = (rows) => rows.length
-    ? rows.map(x => pkgCardHTML(x.p, x.i)).join("")
+    ? rows.map((x, pos) => pkgCardHTML(x.p, x.i, pos, rows.length)).join("")
     : `<p class="hint">ยังไม่มีแพ็กเกจในกลุ่มนี้</p>`;
   return `
     <div class="card">
@@ -699,6 +705,19 @@ function viewPackages() {
 }
 
 let lastAddedPkg = null;
+
+// เลื่อนลำดับแพ็กเกจ: สลับกับแพ็กเกจถัดไปในกลุ่มเดียวกัน (เครือข่ายและประเภทเดียวกัน)
+function movePkg(i, dir) {
+  const list = settings.PACKAGES;
+  const me = list[i];
+  const same = x => pkgCarrierOf(x) === pkgCarrierOf(me) && !!x.month2 === !!me.month2 && !!x.simAge === !!me.simAge;
+  let j = i + dir;
+  while (j >= 0 && j < list.length && !same(list[j])) j += dir;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  markDirty();
+  render();
+}
 
 function upd(key, i, field, val) {
   settings[key][i][field] = val;
