@@ -210,6 +210,7 @@ const TABS = [
   ["coupons", "คูปองส่วนลด"],
   ["stock", "สต๊อกซิม"],
   ["settings", "การตั้งค่า"],
+  ["shopee", "เชื่อม Shopee"],
   ["danger", "ลบประวัติ"]
 ];
 
@@ -361,12 +362,45 @@ function setTab(t) {
   render();
 }
 
+let shopeeStatusData = null;
+async function loadShopeeStatus() {
+  try { shopeeStatusData = await api("/admin/shopee/status"); } catch (e) { shopeeStatusData = { error: e.message }; }
+  render();
+}
+
+function viewShopee() {
+  if (!shopeeStatusData) { loadShopeeStatus(); return `<div class="card"><p class="hint">กำลังโหลดสถานะ...</p></div>`; }
+  const s = shopeeStatusData;
+  const statusText = s.error ? "โหลดสถานะไม่ได้: " + esc(s.error)
+    : s.connected ? `เชื่อมแล้ว · shop_id ${esc(s.shopId)}` : "ยังไม่ได้เชื่อมร้าน";
+  return `
+    <div class="card">
+      <h3>เชื่อมร้าน Shopee</h3>
+      <p class="hint">ใช้ตรวจคำสั่งซื้อ Shopee ตอนลูกค้าสมัครแพ็กเกจที่ต้องสมัครกับทางร้าน กดปุ่มด้านล่าง แล้วเข้าสู่ระบบบัญชีร้าน Shopee และกดอนุญาต ระบบจะบันทึกให้เอง</p>
+      <p><b>สถานะ:</b> ${statusText}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="primary" onclick="startShopeeAuth()">เชื่อมร้าน Shopee</button>
+        <button class="ghost" onclick="loadShopeeStatus()">รีเฟรชสถานะ</button>
+      </div>
+      <p class="hint" style="margin-top:12px">หลังกดอนุญาตแล้ว หน้าจะขึ้นว่าเชื่อมสำเร็จ กลับมากดรีเฟรชสถานะในหน้านี้ได้</p>
+    </div>`;
+}
+
+async function startShopeeAuth() {
+  try {
+    const d = await api("/admin/shopee/auth-link", { method: "POST", json: {} });
+    window.open(d.url, "_blank", "noopener");
+  } catch (e) {
+    alert("เชื่อมร้านไม่สำเร็จ: " + e.message);
+  }
+}
+
 function render() {
   renderTabs();
   const views = {
     packages: viewPackages, lucky: viewLucky, luckyrules: viewLuckyRules, shop: viewShop,
     orders: viewOrders, settings: viewSettings, danger: viewDanger, coupons: viewCoupons,
-    stock: viewStock
+    stock: viewStock, shopee: viewShopee
   };
   $("content").innerHTML = (views[tab] || viewPackages)();
 }
