@@ -383,7 +383,35 @@ function viewShopee() {
         <button class="ghost" onclick="loadShopeeStatus()">รีเฟรชสถานะ</button>
       </div>
       <p class="hint" style="margin-top:12px">หลังกดอนุญาตแล้ว หน้าจะขึ้นว่าเชื่อมสำเร็จ กลับมากดรีเฟรชสถานะในหน้านี้ได้</p>
+    </div>
+    <div class="card">
+      <h3>🖼️ รูปตัวอย่างคำสั่งซื้อบน Shopee</h3>
+      <p class="hint">รูปนี้จะแสดงในหน้าต่างกรอกหมายเลขคำสั่งซื้อ ให้ลูกค้าเห็นว่าหมายเลขอยู่ตรงไหน</p>
+      <div class="ph" style="width:100%;min-height:160px;margin:8px 0">${settings.shopeeSample ? `<img src="${esc(settings.shopeeSample)}" alt="" style="width:100%;height:auto;display:block">` : "ยังไม่มีรูปตัวอย่าง"}</div>
+      <label style="cursor:pointer;color:var(--blue);font-weight:700">
+        📁 เลือกรูปตัวอย่างคำสั่งซื้อ Shopee
+        <input type="file" accept="image/*" class="hidden" onchange="uploadShopeeSample(this.files[0])">
+      </label>
+      ${settings.shopeeSample ? `<div style="margin-top:6px"><button class="danger" onclick="clearShopeeSample()">ลบรูปตัวอย่าง</button></div>` : ""}
     </div>`;
+}
+
+async function uploadShopeeSample(file) {
+  if (!file) return;
+  try {
+    settings.shopeeSample = await uploadFile(file);
+    markDirty(); saveAll();
+    render();
+    toast("อัปโหลดรูปตัวอย่างคำสั่งซื้อ Shopee แล้ว");
+  } catch (e) {
+    toast("อัปโหลดรูปไม่สำเร็จ: ตรวจว่าเป็นไฟล์รูปภาพ (JPG/PNG) และลองใหม่อีกครั้ง", false);
+  }
+}
+
+function clearShopeeSample() {
+  settings.shopeeSample = "";
+  markDirty(); saveAll();
+  render();
 }
 
 async function startShopeeAuth() {
@@ -632,6 +660,12 @@ function pkgCardHTML(p, i, pos = 0, total = 1) {
         </div>
         <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
         <label>คำค้นชื่อสินค้า Shopee (ใช้ตรวจคำสั่งซื้อ) <small>ใส่คำที่อยู่ในชื่อสินค้า/ตัวเลือกบน Shopee เช่น 30 Mbps</small><input value="${esc(p.shopeeKeyword || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'shopeeKeyword',this.value)"></label>
+        <label>ช่องทางคำสั่งซื้อ (สำหรับแพ็กเกจที่ต้องสมัครกับทางร้าน)
+          <select onchange="upd('PACKAGES',${i},'orderChannel',this.value)">
+            <option value="shopee" ${p.orderChannel !== "photo" ? "selected" : ""}>Shopee (ลูกค้ากรอกหมายเลขคำสั่งซื้อ ระบบตรวจอัตโนมัติ)</option>
+            <option value="photo" ${p.orderChannel === "photo" ? "selected" : ""}>อื่น ๆ เช่น TikTok (ลูกค้าถ่ายรูปคำสั่งซื้อส่งให้ร้าน)</option>
+          </select>
+        </label>
         <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
         <div class="grid2">
           <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
