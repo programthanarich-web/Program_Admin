@@ -597,6 +597,7 @@ function pkgCardHTML(p, i, pos = 0, total = 1) {
           <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
         </div>
         <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
+        <label>คำค้นชื่อสินค้า Shopee (ใช้ตรวจคำสั่งซื้อ) <small>ใส่คำที่อยู่ในชื่อสินค้า/ตัวเลือกบน Shopee เช่น 30 Mbps</small><input value="${esc(p.shopeeKeyword || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'shopeeKeyword',this.value)"></label>
         <label>จุดเด่น (บรรทัดละ 1 ข้อ)<textarea rows="3" oninput="setFeatures(${i},this.value)">${esc((p.features || []).join("\n"))}</textarea></label>
         <div class="grid2">
           <label>ป้ายมุมการ์ด (ไม่บังคับ)<input value="${esc(p.badge || "")}" placeholder="เช่น แนะนำสุดคุ้ม" oninput="upd('PACKAGES',${i},'badge',this.value)"></label>
