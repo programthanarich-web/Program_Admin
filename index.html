@@ -393,7 +393,21 @@ function viewShopee() {
         <input type="file" accept="image/*" class="hidden" onchange="uploadShopeeSample(this.files[0])">
       </label>
       ${settings.shopeeSample ? `<div style="margin-top:6px"><button class="danger" onclick="clearShopeeSample()">ลบรูปตัวอย่าง</button></div>` : ""}
+    </div>
+    <div class="card">
+      <h3>🔎 ช่องตรวจสอบหมายเลขคำสั่งซื้อ</h3>
+      <p class="hint">เปิด: ลูกค้ากรอกหมายเลขคำสั่งซื้อ Shopee เพื่อให้ระบบตรวจแพ็กเกจ · ปิด: ซ่อนช่องกรอกและปุ่มตรวจสอบ แต่ยังแสดงข้อความจำกัดสิทธิ์และคำแนะนำให้ติดต่อร้าน</p>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">
+        <input type="checkbox" ${settings.shopeeCheckEnabled === false ? "" : "checked"} onchange="setShopeeCheck(this.checked)">
+        เปิดใช้งานช่องตรวจสอบคำสั่งซื้อ
+      </label>
     </div>`;
+}
+
+function setShopeeCheck(on) {
+  settings.shopeeCheckEnabled = !!on;
+  markDirty(); saveAll();
+  render();
 }
 
 async function uploadShopeeSample(file) {
