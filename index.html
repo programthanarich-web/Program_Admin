@@ -1206,9 +1206,12 @@ function viewSettings() {
 
     <div class="card">
       <h3>🧪 โหมดตรวจสอบสลิป</h3>
-      <p class="hint"><b>เปิด</b> = ลูกค้าต้องแนบสลิปที่ระบบตรวจผ่านก่อนจึงส่งคำสั่งซื้อได้ (ใช้งานจริง)<br><b>ปิด</b> = ไม่ตรวจสลิป ลูกค้าส่งคำสั่งซื้อได้โดยไม่ต้องจ่ายจริง ใช้เฉพาะตอนทดสอบระบบ และต้องเปิดกลับทุกครั้งหลังทดสอบเสร็จ</p>
-      <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${slipOn ? "checked" : ""} onchange="setSlipCheck(this.checked)"> ตรวจสอบสลิปอัตโนมัติ</label>
-      ${slipOn ? "" : `<p class="hint" style="color:#b91c1c;font-weight:700">⚠️ ตอนนี้ปิดการตรวจสลิปอยู่ ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง</p>`}
+      <p class="hint"><b>🧾 ตรวจสอบสลิปอัตโนมัติ</b> = ระบบตรวจสลิปจริงก่อนส่งคำสั่งซื้อ (ใช้งานจริง)<br><b>🧪 จำลองแนบสลิป</b> = ลูกค้าแนบรูปอะไรก็ได้ ไม่มีการตรวจสลิป ระบบจะส่งรูปเข้าแชท LINE ให้ทดสอบ ใช้เฉพาะตอนทดสอบ และต้องกลับมาเปิดตรวจสลิปอัตโนมัติหลังทดสอบเสร็จ</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+        <button class="${slipOn ? "primary" : "ghost"}" onclick="setSlipCheck(true)">🧾 ตรวจสอบสลิปอัตโนมัติ${slipOn ? " (กำลังใช้งาน)" : ""}</button>
+        <button class="${slipOn ? "ghost" : "danger"}" onclick="setSlipCheck(false)">🧪 จำลองแนบสลิป${slipOn ? "" : " (กำลังใช้งาน)"}</button>
+      </div>
+      ${slipOn ? "" : `<p class="hint" style="color:#b91c1c;font-weight:700">⚠️ ตอนนี้กำลังจำลองแนบสลิปอยู่ ลูกค้าจะสั่งซื้อได้โดยไม่ต้องจ่ายจริง</p>`}
     </div>
 
     <div class="card">
