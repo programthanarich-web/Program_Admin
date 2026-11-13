@@ -34,6 +34,21 @@
   .grid4{display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
   .grid4 button{height:38px}
 
+  /* คูปอง: จัดหน้าให้อ่านง่ายบนมือถือ */
+  .cp-muted{color:var(--muted);font-size:12.5px}
+  .cp-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .cp-preview{width:96px;height:96px;flex:0 0 auto;border-radius:10px;background:#eef3fa;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden;text-align:center;padding:6px}
+  .cp-preview img{width:100%;height:100%;object-fit:contain}
+  .cp-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .cp-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tbl-wrap{overflow-x:auto}
+  .cp-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .cp-tbl th,.cp-tbl td{white-space:normal;vertical-align:middle;padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+  .cp-tbl th{color:var(--muted);font-weight:700;background:#f8fafd;font-size:12.5px}
+  .cp-pill{display:inline-block;padding:2px 9px;border-radius:999px;background:#eef3fa;font-size:12px;margin:2px 4px 2px 0;color:var(--text);white-space:nowrap}
+  .cp-pill.ok{background:#e6f7ee;color:var(--ok)}
+  @media (max-width:600px){.cp-fields{grid-template-columns:1fr}}
+
   /* login */
   .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
   .login-card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
@@ -2035,19 +2050,22 @@ function couponBatchesHtml() {
   couponBatchNames = Object.keys(map);
   if (!couponBatchNames.length) return "";
   const rows = couponBatchNames.map((b, i) => `<tr>
-      <td style="padding:8px">${esc(b)}</td>
-      <td style="padding:8px">${fmt(map[b].amount)}</td>
-      <td style="padding:8px">ทั้งหมด ${map[b].total} · ยังไม่ใช้ ${map[b].unused} · ใช้แล้ว ${map[b].used}</td>
-      <td style="padding:8px;white-space:nowrap"><button onclick="printCouponBatch(${i})" ${map[b].unused ? "" : "disabled"}>🖨️ พิมพ์</button>
-        <button class="ghost" onclick="removeCouponBatch(couponBatchNames[${i}])" ${map[b].unused ? "" : "disabled"}>🗑️ ลบที่ยังไม่ใช้</button></td>
+      <td><b>${esc(b)}</b></td>
+      <td>${fmt(map[b].amount)} บาท</td>
+      <td><span class="cp-pill">ทั้งหมด ${map[b].total}</span><span class="cp-pill ok">ยังไม่ใช้ ${map[b].unused}</span><span class="cp-pill">ใช้แล้ว ${map[b].used}</span></td>
+      <td><div class="cp-btns">
+        <button class="primary" onclick="printCouponBatch(${i})" ${map[b].unused ? "" : "disabled"}>🖨️ พิมพ์</button>
+        <button class="ghost" onclick="removeCouponBatch(couponBatchNames[${i}])" ${map[b].unused ? "" : "disabled"}>🗑️ ลบที่ยังไม่ใช้</button>
+      </div></td>
     </tr>`).join("");
   return `
     <div class="card">
-      <div class="head"><h3>ชุดคูปอง & การพิมพ์</h3><small style="color:var(--muted)">พิมพ์ได้ 4 คูปองต่อ 1 แผ่น A4</small></div>
-      <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="head"><h3>ชุดคูปอง & การพิมพ์</h3><small class="cp-muted">พิมพ์ได้ 4 คูปองต่อ 1 แผ่น A4</small></div>
+      <div class="tbl-wrap">
+        <table class="cp-tbl">
+          <thead><tr><th>ชุด</th><th>มูลค่า</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </div>`;
 }
@@ -2102,29 +2120,27 @@ function viewCoupons() {
   }).join("");
   return `
     <div class="card">
-      <div class="head"><h3>🖼️ โลโก้บนคูปองที่พิมพ์</h3><small style="color:var(--muted)">ใช้โลโก้แยกจากโลโก้หน้าร้าน ไม่ตั้งก็ได้</small></div>
-      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-        <div class="ph" style="width:120px;height:120px;flex:0 0 auto">${settings && settings.couponLogo ? `<img src="${esc(settings.couponLogo)}" alt="" style="object-fit:contain">` : "ยังไม่มีโลโก้"}</div>
-        <div>
-          <label style="cursor:pointer;color:var(--blue);font-weight:700">
-            📁 เลือกโลโก้คูปอง
-            <input type="file" accept="image/*" class="hidden" onchange="uploadCouponLogo(this.files[0])">
-          </label>
-          ${settings && settings.couponLogo ? `<div style="margin-top:8px"><button class="danger" onclick="clearCouponLogo()">ลบโลโก้คูปอง</button></div>` : ""}
+      <div class="head"><h3>🖼️ โลโก้บนคูปองที่พิมพ์</h3><small class="cp-muted">ใช้โลโก้แยกจากโลโก้หน้าร้าน ไม่ตั้งก็ได้</small></div>
+      <div class="cp-row">
+        <div class="cp-preview">${settings && settings.couponLogo ? `<img src="${esc(settings.couponLogo)}" alt="">` : "ยังไม่มีโลโก้"}</div>
+        <div class="cp-btns">
+          <button class="primary" onclick="document.getElementById('cpLogoFile').click()">📁 เลือกโลโก้คูปอง</button>
+          ${settings && settings.couponLogo ? `<button class="danger" onclick="clearCouponLogo()">ลบโลโก้คูปอง</button>` : ""}
+          <input type="file" id="cpLogoFile" accept="image/*" class="hidden" onchange="uploadCouponLogo(this.files[0])">
         </div>
       </div>
     </div>
     <div class="card">
       <div class="head"><h3>🎟️ สร้างคูปองส่วนลด</h3></div>
       <p class="hint">สร้างเป็นชุด แล้วพิมพ์หรือส่งรหัสให้ลูกค้าที่ซื้อซิมในช้อปปี้ ใช้ได้ 1 ครั้ง และ 1 คูปองต่อ 1 เบอร์ ใช้ได้เฉพาะแพ็กเกจที่ติ๊ก "สมัครเน็ตกับทางร้าน" และไม่มีส่วนลดร้านอยู่แล้ว (ไม่ซ้อนกัน)</p>
-      <div class="grid3">
+      <div class="cp-fields">
         <label>จำนวนคูปอง (1-500)<input id="cpCount" type="number" min="1" max="500" value="10"></label>
         <label>อายุคูปอง (วัน)<input id="cpDays" type="number" min="1" max="730" value="90"></label>
         <label>มูลค่าคูปอง (บาท)<input id="cpAmount" type="number" min="1" max="5000" value="50"></label>
         <label>ชื่อชุด (ไม่บังคับ)<input id="cpBatch" placeholder="เช่น ชุดช้อปปี้ พ.ย. 69"></label>
       </div>
-      <div class="actions" style="justify-content:flex-start;margin-top:10px">
-        <button onclick="createCouponBatch()">➕ สร้างคูปองชุดใหม่</button>
+      <div class="cp-btns" style="margin-top:12px">
+        <button class="primary" onclick="createCouponBatch()">➕ สร้างคูปองชุดใหม่</button>
         <button class="ghost" onclick="loadCoupons()">🔄 รีเฟรช</button>
       </div>
     </div>
@@ -2141,16 +2157,13 @@ function viewCoupons() {
     ${couponBatchesHtml()}
     <div class="card">
       <div class="head"><h3>รายการคูปอง (${couponList.length})</h3>
-        <small style="color:var(--muted)">ยังไม่ใช้ ${n("unused")} · ใช้แล้ว ${n("used")} · หมดอายุ ${n("expired")} · ยกเลิก ${n("void")}</small>
+        <small class="cp-muted">ยังไม่ใช้ ${n("unused")} · ใช้แล้ว ${n("used")} · หมดอายุ ${n("expired")} · ยกเลิก ${n("void")}</small>
       </div>
-      <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <thead><tr style="text-align:left;border-bottom:1px solid var(--line)">
-          <th style="padding:8px">รหัส</th><th style="padding:8px">ชุด</th><th style="padding:8px">สถานะ</th>
-          <th style="padding:8px">หมดอายุ</th><th style="padding:8px">เบอร์ที่ใช้</th><th style="padding:8px">เวลาที่ใช้</th><th style="padding:8px"></th>
-        </tr></thead>
-        <tbody>${rows || `<tr><td colspan="7" style="padding:12px;color:var(--muted)">ยังไม่มีคูปอง</td></tr>`}</tbody>
-      </table>
+      <div class="tbl-wrap">
+        <table class="cp-tbl">
+          <thead><tr><th>รหัส</th><th>ชุด</th><th>สถานะ</th><th>หมดอายุ</th><th>เบอร์ที่ใช้</th><th>เวลาที่ใช้</th><th></th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="7" class="cp-muted">ยังไม่มีคูปอง</td></tr>`}</tbody>
+        </table>
       </div>
     </div>`;
 }
