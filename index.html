@@ -234,6 +234,7 @@ function normalize(s) {
     QR_IMAGE_URL: "",
     ...s,
     PACKAGES: s.PACKAGES || [],
+    PACKAGE_CATEGORIES: s.PACKAGE_CATEGORIES || [],
     luckyNumbers: s.luckyNumbers || [],
     carrierLogos: s.carrierLogos || {},
     carrierRegister: s.carrierRegister || {},
@@ -670,6 +671,7 @@ function pkgCardHTML(p, i, pos = 0, total = 1) {
         ${pkgSection("ข้อความที่แสดงบนการ์ด")}
         <div class="grid2">
           <label>ชื่อเต็ม (ใช้ในรายการสั่งซื้อ)<input value="${esc(p.name)}" oninput="upd('PACKAGES',${i},'name',this.value)"></label>
+          <label>หมวดหมู่ (ตั้งชื่อหมวดที่หน้าเครือข่ายด้านบน)<select onchange="upd('PACKAGES',${i},'category',this.value)">${catOptions(p)}</select></label>
           <label>ความเร็ว (หัวการ์ด)<input value="${esc(p.speed || "")}" placeholder="เช่น 30 Mbps" oninput="upd('PACKAGES',${i},'speed',this.value)"></label>
         </div>
         <label>คำอธิบายใต้หัว<input value="${esc(p.desc || "")}" placeholder="เช่น เน็ตไม่อั้น ไม่ลดความเร็ว" oninput="upd('PACKAGES',${i},'desc',this.value)"></label>
@@ -729,6 +731,53 @@ function stepsOfCarrier(c) {
   return c === "truemove H" ? settings.SELF_STEPS : ((settings.SELF_STEPS_BY || {})[c] || []);
 }
 
+// ---- หมวดหมู่แพ็กเกจ (แยกตามเครือข่าย) ----
+function catsOf(c) { return (settings.PACKAGE_CATEGORIES || []).filter(x => (x.carrier || "truemove H") === c); }
+function catOptions(p) {
+  return `<option value="">ไม่ระบุ (อยู่กลุ่ม "อื่น ๆ")</option>` +
+    catsOf(pkgCarrierOf(p)).map(c => `<option value="${esc(c.id)}" ${p.category === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("");
+}
+function addCategory() {
+  if (!settings.PACKAGE_CATEGORIES) settings.PACKAGE_CATEGORIES = [];
+  settings.PACKAGE_CATEGORIES.push({ id: "C" + Date.now().toString(36), name: "หมวดใหม่", carrier: pkgTab });
+  markDirty(); render();
+}
+function updCategory(id, val) {
+  const c = settings.PACKAGE_CATEGORIES.find(x => x.id === id);
+  if (c) { c.name = val; markDirty(); }
+}
+function moveCategory(id, dir) {
+  const list = settings.PACKAGE_CATEGORIES;
+  const i = list.findIndex(x => x.id === id);
+  let j = i + dir;
+  while (j >= 0 && j < list.length && (list[j].carrier || "truemove H") !== (list[i].carrier || "truemove H")) j += dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  markDirty(); render();
+}
+function delCategory(id) {
+  if (!confirm("ลบหมวดหมู่นี้? แพ็กเกจในหมวดนี้จะไปอยู่กลุ่ม \"อื่น ๆ\"")) return;
+  settings.PACKAGE_CATEGORIES = settings.PACKAGE_CATEGORIES.filter(x => x.id !== id);
+  settings.PACKAGES.forEach(p => { if (p.category === id) delete p.category; });
+  markDirty(); render();
+}
+function viewCategories() {
+  const cats = catsOf(pkgTab);
+  return `
+    <div class="card">
+      <div class="head"><h3>หมวดหมู่แพ็กเกจ (${pkgTab === "truemove H" ? "True" : pkgTab})</h3>
+        <button class="ghost" onclick="addCategory()">+ เพิ่มหมวดหมู่</button></div>
+      <p class="hint">ตั้งชื่อหมวดเองได้ เช่น "ต้องสมัครกับทางร้านเท่านั้น" หรือ "ลูกค้าสมัครเองได้" หน้าร้านจะแสดงแพ็กเกจแยกตามหมวดตามลำดับนี้ แพ็กเกจที่ไม่ได้เลือกหมวดจะไปอยู่กลุ่ม "อื่น ๆ"</p>
+      ${cats.length ? cats.map(c => `
+        <div style="display:flex;gap:8px;align-items:center;margin:6px 0">
+          <input value="${esc(c.name)}" oninput="updCategory('${c.id}',this.value)" style="flex:1">
+          <button class="ghost" onclick="moveCategory('${c.id}',-1)">▲</button>
+          <button class="ghost" onclick="moveCategory('${c.id}',1)">▼</button>
+          <button class="ghost" onclick="delCategory('${c.id}')">ลบ</button>
+        </div>`).join("") : `<p class="hint">ยังไม่มีหมวดหมู่ของเครือข่ายนี้</p>`}
+    </div>`;
+}
+
 function viewPackages() {
   const all = settings.PACKAGES.map((p, i) => ({ p, i })).filter(x => pkgCarrierOf(x.p) === pkgTab);
   const first = all.filter(x => !x.p.month2 && !x.p.simAge);
@@ -745,6 +794,8 @@ function viewPackages() {
         ${CARRIERS.map(c => `<button class="${pkgTab === c ? "primary" : "ghost"}" onclick="setPkgTab('${c}')">${c === "truemove H" ? "True" : c}</button>`).join("")}
       </div>
     </div>
+
+    ${viewCategories()}
 
     <div class="card">
       <div class="head"><h3>แพ็กเกจเดือนแรก (${pkgTab === "truemove H" ? "True" : pkgTab}) <small style="color:var(--muted);font-weight:500">(${first.length} แพ็กเกจ)</small></h3>
